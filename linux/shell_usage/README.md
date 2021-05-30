@@ -969,11 +969,15 @@ until 命令要求你指定一个通常返回非零退出状态码的测试命�
 
 ## 14. 处理用户输入
 
+向shell脚本传递数据的最基本方法是使用命令行参数。
+
 ### 14.1 命令行参数
 
 #### 14.1.1 读取参数
 
 bash shell会将一些称为位置参数（positional parameter）的特殊变量分配给输入到命令行中的所有参数。
+
+这也包括shell所执行的脚本名称，位置参数变量是标准的数字： `$0` 是程序名，`$1` 是第一个参数。
 
 ```shell
 [root@mylnx tools]# cat test_pos.sh 
@@ -1015,6 +1019,8 @@ the script name is: test_script_name.sh
 
 #### 14.1.3 测试参数
 
+在下面的示例中使用了 `if [ -n "$1"]` 来测试命令行参数是否存在数据。
+
 ```shell
 $ cat test7.sh
 #!/bin/bash
@@ -1036,6 +1042,8 @@ $
 ```
 
 ### 14.2 特殊参数变量
+
+在bash shell中有些特殊变量，它们会记录命令行参数。本节将会介绍这些变量及其用法。
 
 #### 14.2.1 参数统计
 
@@ -1061,6 +1069,8 @@ The last parameter is 5
 #### 14.2.2 抓取所有的数据
 
 `$*` 和 `$@` 变量可以用来轻松访问所有的参数。这两个变量都能够在单个变量中存储所有的命令行参数。
+
+ `$*` 变量会将所有参数当成单个参数，而 `$@` 变量会单独处理每个参数。这是遍历命令行参数的一个绝妙方法。
 
 ```shell
 [root@mylnx tools]# cat test_all.sh 
@@ -1146,6 +1156,37 @@ Found the -a option
 ```
 
 **2. 分离参数和选项**
+
+你会经常遇到想在shell脚本中同时使用选项和参数的情况。Linux中处理这个问题的标准方式是用特殊字符来将二者分开，该字符会告诉脚本何时选项结束以及普通参数何时开始。
+
+对Linux来说，这个特殊字符是双破折线 `--` ，shell会用双破折线来表明选项列表结束。
+
+```shell
+#!/bin/bash
+
+echo
+while [ -n "$1" ]; do
+  case "$1" in
+  -a) echo "Found the -a option" ;;
+  -b) echo "Found the -b option" ;;
+  -c) echo "Found the -c option" ;;
+  --) shift
+    break ;;
+  *) echo "$1 is not an option"
+  esac
+  shift
+done
+
+count=1
+for param in $@
+do
+  echo "Parameter #$count: $param"
+  count=$[ $count + 1 ]
+done
+
+```
+
+**3. 处理带值的选项**
 
 #### 14.4.2 使用getopt命令
 
