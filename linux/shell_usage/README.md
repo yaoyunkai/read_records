@@ -1393,3 +1393,135 @@ $
 
 #### 15.2.1 临时重定向 ####
 
+如果有意在脚本中生成错误消息，可以将单独的一行输出重定向到 STDERR 。你所需要做的是使用输出重定向符来将输出信息重定向到 STDERR 文件描述符。在重定向到文件描述符时，你必须在文件描述符数字之前加一个&
+
+`echo "This is an error message" >&2`
+
+使用方式:
+
+`./test2 2> test9`
+
+这个方法非常适合在脚本中生成错误消息。如果有人用了你的脚本，他们可以像上面的例子中那样轻松地通过 STDERR 文件描述符重定向错误消息。
+
+#### 15.2.2 永久重定向 ####
+
+如果脚本中有大量数据需要重定向，那重定向每个 echo 语句就会很烦琐。取而代之，你可以用 exec 命令告诉shell在脚本执行期间重定向某个特定文件描述符。
+
+```shell
+$ cat test10
+#!/bin/bash
+# redirecting all output to a file
+exec 1>testout
+echo "This is a test of redirecting all output"
+echo "from a script to another file."
+echo "without having to redirect every individual line"
+$ ./test10
+$ cat testout
+This is a test of redirecting all output
+from a script to another file.
+without having to redirect every individual line
+$
+```
+
+exec命令会启动一个新shell并将STDOUT文件描述符重定向到文件。脚本中发给 STDOUT 的所有输出会被重定向到文件。
+
+### 15.3 在脚本中重定向输入 ###
+
+你可以使用与脚本中重定向 STDOUT 和 STDERR 相同的方法来将 STDIN 从键盘重定向到其他
+位置。 exec 命令允许你将 STDIN 重定向到Linux系统上的文件中：
+
+`exec 0< testfile`
+
+这个命令会告诉shell它应该从文件 testfile 中获得输入，而不是 STDIN 。这个重定向只要在脚本需要输入时就会作用。
+
+### 15.4 创建自己的重定向 ###
+
+在脚本中重定向输入和输出时，并不局限于这3个默认的文件描述符。我曾提到过，在shell中最多可以有9个打开的文件描述符。其他6个从 3 ~ 8 的文件描述符均可用作输入或输出重定向。
+
+#### 15.4.1 创建输出文件描述符 ####
+
+可以用 exec 命令来给输出分配文件描述符。和标准的文件描述符一样，一旦将另一个文件描述符分配给一个文件，这个重定向就会一直有效，直到你重新分配。
+
+```shell
+#!/bin/bash
+# using an alternative file descriptor
+exec 3>test13out
+echo "This should display on the monitor"
+echo "and this should be stored in the file" >&3
+echo "Then this should be back on the monitor"
+$ ./test13
+This should display on the monitor
+Then this should be back on the monitor
+$ cat test13out
+and this should be stored in the file
+```
+
+#### 15.4.2 重定向文件描述符 ####
+
+现在介绍怎么恢复已重定向的文件描述符。你可以分配另外一个文件描述符给标准文件描述符，反之亦然。这意味着你可以将 STDOUT 的原来位置重定向到另一个文件描述符，然后再利用该文件描述符重定向回 STDOUT 。
+
+```shell
+$ cat test14
+#!/bin/bash
+# storing STDOUT, then coming back to it
+exec 3>&1
+exec 1>test14out
+echo "This should store in the output file"
+echo "along with this line."
+exec 1>&3
+echo "Now things should be back to normal"
+
+$ ./test14
+Now things should be back to normal
+$ cat test14out
+This should store in the output file
+along with this line.
+```
+
+#### 15.4.3 创建输入文件描述符 ####
+
+可以用和重定向输出文件描述符同样的办法重定向输入文件描述符。在重定向到文件之前，先将 STDIN 文件描述符保存到另外一个文件描述符，然后在读取完文件之后再将 STDIN 恢复到它原来的位置。
+
+```shell
+$ cat test15
+#!/bin/bash
+# redirecting input file descriptors
+exec 6<&0
+exec 0< testfile
+count=1
+while read line
+do
+	echo "Line #$count: $line"
+	count=$[ $count + 1 ]
+done
+exec 0<&6
+read -p "Are you done now? " answer
+case $answer in
+Y|y) echo "Goodbye";;
+N|n) echo "Sorry, this is the end.";;
+esac
+
+$ ./test15
+Line #1: This is the first line.
+Line #2: This is the second line.
+Line #3: This is the third line.
+Are you done now? y
+Goodbye
+```
+
+#### 15.4.4 创建读写文件描述符 ####
+
+列出写法： `exec 3<> testfile`
+
+#### 15.4.5 关闭文件描述符 ####
+
+如果你创建了新的输入或输出文件描述符，shell会在脚本退出时自动关闭它们。然而在有些情况下，你需要在脚本结束前手动关闭文件描述符。
+
+要关闭文件描述符，将它重定向到特殊符号 &- 。脚本中看起来如下： `exec 3>&-`
+
+一旦关闭了文件描述符，就不能在脚本中向它写入任何数据，否则shell会生成错误消息。
+
+### 15.5 列出打开的文件描述符 ###
+
+lsof 命令会列出整个Linux系统打开的所有文件描述符。这是个有争议的功能，因为它会向非系统管理员用户提供Linux系统的信息。鉴于此，许多Linux系统隐藏了该命令，这样用户就不会一不小心就发现了。
+
