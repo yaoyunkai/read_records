@@ -1525,3 +1525,65 @@ Goodbye
 
 lsof 命令会列出整个Linux系统打开的所有文件描述符。这是个有争议的功能，因为它会向非系统管理员用户提供Linux系统的信息。鉴于此，许多Linux系统隐藏了该命令，这样用户就不会一不小心就发现了。
 
+该命令会产生大量的输出。它会显示当前Linux系统上打开的每个文件的有关信息。这包括后台运行的所有进程以及登录到系统的任何用户。
+
+有大量的命令行选项和参数可以用来帮助过滤 lsof 的输出。最常用的有 -p 和 -d ，前者允许指定进程ID（PID），后者允许指定要显示的文件描述符编号。-a 选项用来对其他两个选项的结果执行布尔 AND 运算
+
+```console
+liberty@ubuntu20:/dev$ lsof -a -p $$ -d 0,1,2
+COMMAND  PID    USER   FD   TYPE DEVICE SIZE/OFF NODE NAME
+bash    3616 liberty    0u   CHR  136,0      0t0    3 /dev/pts/0
+bash    3616 liberty    1u   CHR  136,0      0t0    3 /dev/pts/0
+bash    3616 liberty    2u   CHR  136,0      0t0    3 /dev/pts/0
+```
+
+FD 栏中 u:表示读写，r:读 w:写
+
+TYPE 文件的类型（ CHR 代表字符型， BLK 代表块型， DIR 代表目录， REG 代表常规文件）
+
+DEVICE 设备的设备号（主设备号和从设备号）
+
+### 15.6 阻止命令输出 ###
+
+要解决这个问题，可以将 STDERR 重定向到一个叫作null文件的特殊文件。null文件跟它的名字很像，文件里什么都没有： `/dev/null`
+
+### 15.7 创建临时文件 ###
+
+Linux系统有特殊的目录，专供临时文件使用。Linux使用/tmp目录来存放不需要永久保留的文件。大多数Linux发行版配置了系统在启动时自动删除/tmp目录的所有文件。
+
+有个特殊命令可以用来创建临时文件。 mktemp 命令可以在/tmp目录中创建一个唯一的临时文件。
+
+#### 15.7.1 创建本地临时文件 ####
+
+默认情况下， mktemp 会在本地目录中创建一个文件。要用 mktemp 命令在本地目录中创建一个临时文件，你只要指定一个文件名模板就行了。模板可以包含任意文本文件名，在文件名末尾加上6个 X 就行了。
+
+```console
+liberty@ubuntu20:~$ mktemp testing.XXX
+testing.i4t
+liberty@ubuntu20:~$ ls -l testing.*
+-rw------- 1 liberty liberty 0 May 30 23:03 testing.i4t
+```
+
+#### 15.7.2 在 /tmp 目录创建临时文件 ####
+
+可以加上选项 -t 强制 mktemp 命令来在系统的临时目录来创建该文件
+
+#### 15.7.3 创建临时目录 ####
+
+-d 选项告诉 mktemp 命令来创建一个临时目录而不是临时文件
+
+### 15.8 记录消息 ###
+
+将输出同时发送到显示器和日志文件，这种做法有时候能够派上用场。你不用将输出重定向两次，只要用特殊的 tee 命令就行。
+
+tee 命令相当于管道的一个T型接头。它将从 STDIN 过来的数据同时发往两处。一处是STDOUT ，另一处是 tee 命令行所指定的文件名： `tee filename`
+
+```console
+liberty@ubuntu20:~$ date | tee testing.i4t 
+Sun 30 May 2021 11:07:46 PM CST
+liberty@ubuntu20:~$ cat testing.i4t 
+Sun 30 May 2021 11:07:46 PM CST
+```
+
+如果你想将数据追加到文件中，必须用 -a 选项。
+
