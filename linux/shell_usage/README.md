@@ -1587,3 +1587,138 @@ Sun 30 May 2021 11:07:46 PM CST
 
 如果你想将数据追加到文件中，必须用 -a 选项。
 
+## 16. 控制脚本 ##
+
+在本书中，到目前为止，我们运行脚本的唯一方式就是以实时模式在命令行界面上直接运行。这并不是Linux上运行脚本的唯一方式。有不少方法可以用来运行shell脚本。另外还有一些选项能够用于控制脚本。这些控制方法包括向脚本发送信号、修改脚本的优先级以及在脚本运行时切换到运行模式。
+
+### 16.1 处理信号 ###
+
+Linux利用信号与运行在系统中的进程进行通信。第4章介绍了不同的Linux信号以及Linux如何用这些信号来停止、启动、终止进程。可以通过对脚本进行编程，使其在收到特定信号时执行某些命令，从而控制shell脚本的操作。
+
+| 信号 | 值      | 描述                           |
+| ---- | ------- | ------------------------------ |
+| 1    | SIGHUP  | 挂起进程                       |
+| 2    | SiGINT  | 终止进程                       |
+| 3    | SIGOUIT | 停止进程                       |
+| 9    | SIGKILL | 无条件终止进程                 |
+| 15   | SIGTERM | 尽可能终止进程                 |
+| 17   | SIGSTOP | 无条件停止进程，但不是终止进程 |
+| 18   | SIGTSTP | 停止或暂停进程，但不终止进程   |
+| 19   | SIGCONT | 继续运行停止的进程             |
+
+默认情况下，bash shell会忽略收到的任何 SIGQUIT (3) 和 SIGTERM (15) 信号，但是bash shell会处理收到的 SIGHUP (1) 和 SIGINT (2) 信号。
+
+如果bash shell收到了 SIGHUP 信号，比如当你要离开一个交互式shell，它就会退出。但在退出之前，它会将 SIGHUP 信号传给所有由该shell所启动的进程（包括正在运行的shell脚本）。
+
+shell会将这些信号传给shell脚本程序来处理。而shell脚本的默认行为是忽略这些信号。它们可能会不利于脚本的运行。要避免这种情况，你可以脚本中加入识别信号的代码，并执行命令来处理信号。
+
+#### 16.1.2 生成信号 ####
+
+**1. 中断进程** Ctrl+C --> SIGINT
+
+**2. 暂停进程** Ctrl+Z --> SIGTSTP
+
+```console
+liberty@ubuntu20:~$ sleep 100
+^Z
+[1]+  Stopped                 sleep 100
+liberty@ubuntu20:~$ exit
+exit
+There are stopped jobs.
+liberty@ubuntu20:~$ ps -l
+F S   UID     PID    PPID  C PRI  NI ADDR SZ WCHAN  TTY          TIME CMD
+0 S  1000   28377   28366  0  80   0 -  2059 do_wai pts/0    00:00:00 bash
+0 T  1000   28396   28377  0  80   0 -  1362 do_sig pts/0    00:00:00 sleep
+0 R  1000   28399   28377  0  80   0 -  2189 -      pts/0    00:00:00 ps
+```
+
+在 S 列中（进程状态）， ps 命令将已停止作业的状态为显示为 T 。
+
+#### 16.1.3 捕获信号 ####
+
+ trap 命令允许你来指定shell脚本要监看并从shell中拦截的Linux信号。如果脚本收到了 trap 命令中列出的信号，该信号不再由shell处理，而是交由本地处理: `trap commands signals`
+
+```console
+#!/bin/bash
+# testing signal trapping
+
+trap "echo ' Sorry! I have trapped Ctrl-C'" SIGINT
+echo "this is a test script"
+
+count=1
+while [ $count -le 10 ]
+do
+  echo "Loop #$count"
+  sleep 1
+  count=$[ $count + 1 ]
+done
+
+echo "This is the end of the test script"
+
+liberty@ubuntu20:~/PycharmProjects/pythonProject/shells/16$ ./test1.sh 
+this is a test script
+Loop #1
+Loop #2
+^C Sorry! I have trapped Ctrl-C
+Loop #3
+Loop #4
+^C Sorry! I have trapped Ctrl-C
+Loop #5
+Loop #6
+Loop #7
+Loop #8
+^C Sorry! I have trapped Ctrl-C
+Loop #9
+Loop #10
+This is the end of the test script
+```
+
+#### 16.1.4 捕获脚本退出 ####
+
+```shell
+#!/bin/bash
+
+trap "echo Goodbye..." EXIT
+
+count=1
+while [ $count -le 4 ]
+do
+  echo "Loop #$count"
+  sleep 1
+  count=$[ $count + 1 ]
+done
+```
+
+要捕获shell脚本的退出，只要在 trap 命令后加上 EXIT 信号就行。
+
+#### 16.1.5 修改或移除捕获 ####
+
+```shell
+#!/bin/bash
+
+trap "echo ' Sorry... Ctrl-C is trapped.'" SIGINT
+count=1
+while [ $count -le 5 ]; do
+  echo "Loop #$count"
+  sleep 1
+  count=$(($count + 1))
+done
+
+trap "echo ' I modified the trap!'" SIGINT
+count=1
+while [ $count -le 5 ]; do
+  echo "Second Loop #$count"
+  sleep 1
+  count=$(($count + 1))
+done
+```
+
+也可以删除已设置好的捕获。只需要在 trap 命令与希望恢复默认行为的信号列表之间加上两个破折号就行了: `trap -- SIGINT`
+
+### 16.2 以后台模式运行脚本 ###
+
+#### 16.2.1 后台运行脚本 ####
+
+以后台模式运行shell脚本非常简单。只要在命令后加个 & 符就行了
+
+注意，当后台进程运行时，它仍然会使用终端显示器来显示 STDOUT 和 STDERR 消息。
