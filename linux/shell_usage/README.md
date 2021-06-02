@@ -1835,3 +1835,156 @@ cron程序会用提交作业的用户账户运行该脚本。因此，你必须�
 
 .bashrc文件通常也是通过某个bash启动文件来运行的。因为.bashrc文件会运行两次：一次是当你登入bash shell时，另一次是当你启动一个bash shell时。如果你需要一个脚本在两个时刻都得以运行，可以把这个脚本放进该文件中。
 
+## 17. 创建函数 ##
+
+### 17.1 基本的脚本函数 ###
+
+#### 17.1.1 创建函数 ####
+
+有两种创建函数的方式：
+
+```bash
+#!/bin/bash
+
+function demo {
+    echo "hello world"
+}
+
+demo1() {
+  echo "hello world1"
+}
+```
+
+#### 17.1.2 使用函数 ####
+
+```shell
+#!/bin/bash
+
+function demo {
+    echo "hello world"
+}
+
+demo1() {
+  echo "hello world1"
+}
+
+demo
+demo1
+```
+
+### 17.2 返回值 ###
+
+bash shell会把函数当作一个小型脚本，运行结束时会返回一个退出状态码。有3种不同的方法来为函数生成退出状态码。
+
+#### 17.2.1 默认退出状态码 ####
+
+默认情况下，函数的退出状态码是函数中最后一条命令返回的退出状态码。在函数执行结束后，可以用标准变量 $? 来确定函数的退出状态码。
+
+```shell
+#!/bin/bash
+
+func1() {
+  echo "trying to display a non-existent file"
+  ls -l badfile
+}
+
+echo "testing the function: "
+func1
+echo "The exit status is: $?"
+```
+
+#### 17.2.2 使用return命令 ####
+
+bash shell使用 return 命令来退出函数并返回特定的退出状态码。 return 命令允许指定一个整数值来定义函数的退出状态码，从而提供了一种简单的途径来编程设定函数退出状态码。
+
+```shell
+#!/bin/bash
+
+function db1 {
+  read -p "Enter a value: " value
+  echo "doubling the value"
+  return $[ $value * 2 ]
+}
+
+db1
+echo "the new value is $?"
+
+# Enter a value: 12
+# doubling the value
+# the new value is 24
+```
+
+#### 17.2.3 使用函数输出 ####
+
+```shell
+#!/bin/bash
+
+function dbl() {
+  read -p "Enter a value: " value
+  echo $[ $value * 2 ]
+}
+result=$(dbl)
+echo "The new value is $result"
+```
+
+### 17.3 在函数中使用变量 ###
+
+bash shell会将函数当作小型脚本来对待。这意味着你可以像普通脚本那样向函数传递参数
+
+函数可以使用标准的参数环境变量来表示命令行上传给函数的参数。例如，函数名会在 `$0`变量中定义，函数命令行上的任何参数都会通过 `$1` 、` $2` 等定义。也可以用特殊变量 ​`$#` 来判断传给函数的参数数目。
+
+```shell
+#!/bin/bash
+
+function addem() {
+  if [ $# -eq 0 ] || [ $# -gt 2 ]; then
+    echo -1
+  elif [ $# -eq 1 ]; then
+    echo $(($1 + $1))
+  else
+    echo $(($1 + $2))
+  fi
+}
+
+echo -n "Adding 10 and 15: "
+value=$(addem 10 15)
+echo $value
+echo -n "Let's try adding just one number: "
+value=$(addem 10)
+echo $value
+echo -n "Now trying adding no numbers: "
+value=$(addem)
+echo $value
+echo -n "Finally, try adding three numbers: "
+value=$(addem 10 15 20)
+echo $value
+```
+
+#### 17.3.2 在函数中处理变量 ####
+
+给shell脚本程序员带来麻烦的原因之一就是变量的作用域。作用域是变量可见的区域。函数中定义的变量与普通变量的作用域不同。也就是说，对脚本的其他部分而言，它们是隐藏的。
+
+**1. 全局变量**
+
+全局变量是在shell脚本中任何地方都有效的变量。如果你在脚本的主体部分定义了一个全局变量，那么可以在函数内读取它的值。类似地，如果你在函数内定义了一个全局变量，可以在脚本的主体部分读取它的值。
+
+```shell
+#!/bin/bash
+
+function test1 {
+  value=$[ $value * 2 ]
+}
+
+read -p "Enter a value: " value
+test1
+echo "The new value is: $value"
+```
+
+**2. 局部变量**
+
+无需在函数中使用全局变量，函数内部使用的任何变量都可以被声明成局部变量。要实现这一点，只要在变量声明的前面加上 local 关键字就可以了。
+
+local 关键字保证了变量只局限在该函数中。如果脚本中在该函数之外有同样名字的变量，那么shell将会保持这两个变量的值是分离的。现在你就能很轻松地将函数变量和脚本变量隔离开了，只共享需要共享的变量。
+
+### 17.4 数组变量和函数 ###
+
