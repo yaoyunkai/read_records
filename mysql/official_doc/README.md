@@ -341,6 +341,74 @@ mysql>
 
 ### 3.5 在批处理模式下使用mysql ###
 
+## 4. MySQL Programs ##
+
+**Table of Contents**
+
+- [4.1 Overview of MySQL Programs](https://dev.mysql.com/doc/refman/5.7/en/programs-overview.html)
+- [4.2 Using MySQL Programs](https://dev.mysql.com/doc/refman/5.7/en/programs-using.html)
+- [4.3 Server and Server-Startup Programs](https://dev.mysql.com/doc/refman/5.7/en/programs-server.html)
+- [4.4 Installation-Related Programs](https://dev.mysql.com/doc/refman/5.7/en/programs-installation.html)
+- [4.5 Client Programs](https://dev.mysql.com/doc/refman/5.7/en/programs-client.html)
+- [4.6 Administrative and Utility Programs](https://dev.mysql.com/doc/refman/5.7/en/programs-admin-utils.html)
+- [4.7 Program Development Utilities](https://dev.mysql.com/doc/refman/5.7/en/programs-development.html)
+- [4.8 Miscellaneous Programs](https://dev.mysql.com/doc/refman/5.7/en/programs-miscellaneous.html)
+- [4.9 Environment Variables](https://dev.mysql.com/doc/refman/5.7/en/environment-variables.html)
+- [4.10 Unix Signal Handling in MySQL](https://dev.mysql.com/doc/refman/5.7/en/unix-signal-response.html)
+
+### 4.1 Overview ###
+
+大多数MySQL发行版包括所有这些程序，除了那些特定于平台的程序。(例如，Windows系统不使用服务器启动脚本。) 例外的是RPM发行版更加专门化。
+
+几乎所有的mysql 程序都可以使用 `--help` 获取帮助信息。
+
+The MySQL server, [**mysqld**](https://dev.mysql.com/doc/refman/5.7/en/mysqld.html), is the main program that does most of the work in a MySQL installation. 
+
+- mysqld: SQL daemon. 要使用客户端程序，mysqld 必须运行。
+- mysqld_safe: A server startup script. attempts to start mysqld, See [Section 4.3.2, “mysqld_safe — MySQL Server Startup Script”](https://dev.mysql.com/doc/refman/5.7/en/mysqld-safe.html).
+- mysql.server: A server startup script.此脚本用于使用 System V-style 运行目录的系统，这些目录包含启动特定运行级别的系统服务的脚本。调用 mysqld_safe 启动mysql server。 See [Section 4.3.3, “mysql.server — MySQL Server Startup Script”](https://dev.mysql.com/doc/refman/5.7/en/mysql-server.html).
+- mysqld_multi: A server startup script that can start or stop multiple servers installed on the system. See [Section 4.3.4, “mysqld_multi — Manage Multiple MySQL Servers”](https://dev.mysql.com/doc/refman/5.7/en/mysqld-multi.html).
+
+mysql 还提供了在升级和安装过程中使用的程序:
+
+- comp_err
+- mysql_install_db
+- mysql_plugin
+- mysql_secure_installation
+- mysql_ssl_rsa_setup
+- mysql_tzinfo_to_sql
+- mysql_upgrade
+
+MySQL client programs that connect to the MySQL server:
+
+- mysql
+- mysqladmin
+- mysqlcheck
+- mysqldump
+- mysqlimport
+- mysqlpump
+- mysqlsh
+- mysqlshow
+- mysqlslap
+
+......
+
+使用MySQL客户端/服务器库与服务器通信的MySQL客户端程序使用以下环境变量。
+
+| Environment Variable | Meaning                                                      |
+| :------------------- | :----------------------------------------------------------- |
+| `MYSQL_UNIX_PORT`    | The default Unix socket file; used for connections to `localhost` |
+| `MYSQL_TCP_PORT`     | The default port number; used for TCP/IP connections         |
+| `MYSQL_PWD`          | The default password                                         |
+| `MYSQL_DEBUG`        | Debug trace options when debugging                           |
+| `TMPDIR`             | The directory where temporary tables and files are created   |
+
+### 4.2 using MySQL Programs ###
+
+#### 4.2.1 invoking MySQL Programs ####
+
+
+
 ## 8. 优化 ##
 
 ## 9. 语言结构 ##
