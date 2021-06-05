@@ -407,6 +407,204 @@ MySQL client programs that connect to the MySQL server:
 
 #### 4.2.1 invoking MySQL Programs ####
 
+#### 4.2.2 Specifying Program Options ####
+
+There are several ways to specify options for MySQL programs:
+
+- 在程序名后面列出命令行上的选项。
+- 在选项文件中列出程序启动时读取的选项。
+- List the options in environment variables
+
+##### 4.2.2.1 在命令行中使用选项 #####
+
+MySQL服务器有一些命令选项只能在启动时指定，还有一组系统变量，其中一些可以在启动时、运行时或两者都设置。系统变量名使用下划线而不是破折号，当在运行时引用(例如，使用SET或SELECT语句)时，必须使用下划线:
+
+```mysql
+SET GLOBAL general_log = ON;
+SELECT @@GLOBAL.general_log;
+```
+
+##### 4.2.2.2 using Option files #####
+
+使用 `mysqld --verbose --help` 确定程序是否读取选项文件.
+
+Many option files are plain text files, created using any text editor. The exception is the `.mylogin.cnf` file that contains login path options. This is an encrypted file created by the [**mysql_config_editor**](https://dev.mysql.com/doc/refman/5.7/en/mysql-config-editor.html) utility. See [Section 4.6.6, “mysql_config_editor — MySQL Configuration Utility”](https://dev.mysql.com/doc/refman/5.7/en/mysql-config-editor.html). 
+
+**Option File Processing Order**
+
+window中文件读取的顺序：
+
+| file name                            | purpose                                         |
+| ------------------------------------ | ----------------------------------------------- |
+| `%WINDIR%\my.ini`  `%WINDIR%\my.cnf` | global options                                  |
+| `C:\my.ini` `C:\my.cnf`              | global options                                  |
+| `BASEDIR\my.ini`                     | global options                                  |
+| defaults-extra-file                  | the file specified with `--defaults-extra-file` |
+| `%APPDATA%\MySQL\.mylogin.cnf`       | login path options                              |
+
+在linux中读取的顺序如下：
+
+| file name            | purpose                                         |
+| -------------------- | ----------------------------------------------- |
+| /etc/my.cnf          | global                                          |
+| /etc/mysql/my.cnf    | global                                          |
+| `SYSCONFDIR/my.cnf`  | global                                          |
+| `$MYSQL_HOME/my.cnf` | Server-specific                                 |
+| defaults-extra-file  | the file specified with `--defaults-extra-file` |
+| `~/.my.cnf`          | user-specific                                   |
+| `~/.mylogin.cnf`     | User-specific login path options (clients only) |
+
+#### 4.2.3 连接服务器的命令选项 ####
+
+**连接服务器的选项**
+
+| Option Name                                                  | Description                                                  | Deprecated |
+| :----------------------------------------------------------- | :----------------------------------------------------------- | :--------- |
+| [--default-auth](https://dev.mysql.com/doc/refman/5.7/en/connection-options.html#option_general_default-auth) | Authentication plugin to use                                 |            |
+| [--host](https://dev.mysql.com/doc/refman/5.7/en/connection-options.html#option_general_host) | Host on which MySQL server is located                        |            |
+| [--password](https://dev.mysql.com/doc/refman/5.7/en/connection-options.html#option_general_password) | Password to use when connecting to server                    |            |
+| [--pipe](https://dev.mysql.com/doc/refman/5.7/en/connection-options.html#option_general_pipe) | Connect to server using named pipe (Windows only)            |            |
+| [--plugin-dir](https://dev.mysql.com/doc/refman/5.7/en/connection-options.html#option_general_plugin-dir) | Directory where plugins are installed                        |            |
+| [--port](https://dev.mysql.com/doc/refman/5.7/en/connection-options.html#option_general_port) | TCP/IP port number for connection                            |            |
+| [--protocol](https://dev.mysql.com/doc/refman/5.7/en/connection-options.html#option_general_protocol) | Transport protocol to use                                    |            |
+| [--secure-auth](https://dev.mysql.com/doc/refman/5.7/en/connection-options.html#option_general_secure-auth) | Do not send passwords to server in old (pre-4.1) format      | Yes        |
+| [--shared-memory-base-name](https://dev.mysql.com/doc/refman/5.7/en/connection-options.html#option_general_shared-memory-base-name) | Shared-memory name for shared-memory connections (Windows only) |            |
+| [--socket](https://dev.mysql.com/doc/refman/5.7/en/connection-options.html#option_general_socket) | Unix socket file or Windows named pipe to use                |            |
+| [--user](https://dev.mysql.com/doc/refman/5.7/en/connection-options.html#option_general_user) | MySQL user name to use when connecting to server             |            |
+
+**加密连接命令选项**
+
+| Option Name                                                  | Description                                                  | Introduced |
+| :----------------------------------------------------------- | :----------------------------------------------------------- | :--------- |
+| [--get-server-public-key](https://dev.mysql.com/doc/refman/5.7/en/connection-options.html#option_general_get-server-public-key) | Request RSA public key from server                           | 5.7.23     |
+| [--server-public-key-path](https://dev.mysql.com/doc/refman/5.7/en/connection-options.html#option_general_server-public-key-path) | Path name to file containing RSA public key                  |            |
+| [--skip-ssl](https://dev.mysql.com/doc/refman/5.7/en/connection-options.html#option_general_ssl) | Disable connection encryption                                |            |
+| [--ssl](https://dev.mysql.com/doc/refman/5.7/en/connection-options.html#option_general_ssl) | Enable connection encryption                                 |            |
+| [--ssl-ca](https://dev.mysql.com/doc/refman/5.7/en/connection-options.html#option_general_ssl-ca) | File that contains list of trusted SSL Certificate Authorities |            |
+| [--ssl-capath](https://dev.mysql.com/doc/refman/5.7/en/connection-options.html#option_general_ssl-capath) | Directory that contains trusted SSL Certificate Authority certificate files |            |
+| [--ssl-cert](https://dev.mysql.com/doc/refman/5.7/en/connection-options.html#option_general_ssl-cert) | File that contains X.509 certificate                         |            |
+| [--ssl-cipher](https://dev.mysql.com/doc/refman/5.7/en/connection-options.html#option_general_ssl-cipher) | Permissible ciphers for connection encryption                |            |
+| [--ssl-crl](https://dev.mysql.com/doc/refman/5.7/en/connection-options.html#option_general_ssl-crl) | File that contains certificate revocation lists              |            |
+| [--ssl-crlpath](https://dev.mysql.com/doc/refman/5.7/en/connection-options.html#option_general_ssl-crlpath) | Directory that contains certificate revocation-list files    |            |
+| [--ssl-key](https://dev.mysql.com/doc/refman/5.7/en/connection-options.html#option_general_ssl-key) | File that contains X.509 key                                 |            |
+| [--ssl-mode](https://dev.mysql.com/doc/refman/5.7/en/connection-options.html#option_general_ssl-mode) | Desired security state of connection to server               | 5.7.11     |
+| [--ssl-verify-server-cert](https://dev.mysql.com/doc/refman/5.7/en/connection-options.html#option_general_ssl-verify-server-cert) | Verify host name against server certificate Common Name identity |            |
+| [--tls-version](https://dev.mysql.com/doc/refman/5.7/en/connection-options.html#option_general_tls-version) | Permissible TLS protocols for encrypted connections          | 5.7.10     |
+
+### 4.3 Server & Server Startup ###
+
+#### 4.3.1 mysqld ####
+
+#### 4.3.2 mysqld_safe ####
+
+下面列出了mysqld_safe的选项：
+
+| Option Name                                                  | Description                                                  | Introduced | Deprecated |
+| :----------------------------------------------------------- | :----------------------------------------------------------- | :--------- | :--------- |
+| [--basedir](https://dev.mysql.com/doc/refman/5.7/en/mysqld-safe.html#option_mysqld_safe_basedir) | Path to MySQL installation directory                         |            |            |
+| [--core-file-size](https://dev.mysql.com/doc/refman/5.7/en/mysqld-safe.html#option_mysqld_safe_core-file-size) | Size of core file that mysqld should be able to create       |            |            |
+| [--datadir](https://dev.mysql.com/doc/refman/5.7/en/mysqld-safe.html#option_mysqld_safe_datadir) | Path to data directory                                       |            |            |
+| [--defaults-extra-file](https://dev.mysql.com/doc/refman/5.7/en/mysqld-safe.html#option_mysqld_safe_defaults-extra-file) | Read named option file in addition to usual option files     |            |            |
+| [--defaults-file](https://dev.mysql.com/doc/refman/5.7/en/mysqld-safe.html#option_mysqld_safe_defaults-file) | Read only named option file                                  |            |            |
+| [--help](https://dev.mysql.com/doc/refman/5.7/en/mysqld-safe.html#option_mysqld_safe_help) | Display help message and exit                                |            |            |
+| [--ledir](https://dev.mysql.com/doc/refman/5.7/en/mysqld-safe.html#option_mysqld_safe_ledir) | Path to directory where server is located                    |            |            |
+| [--log-error](https://dev.mysql.com/doc/refman/5.7/en/mysqld-safe.html#option_mysqld_safe_log-error) | Write error log to named file                                |            |            |
+| [--malloc-lib](https://dev.mysql.com/doc/refman/5.7/en/mysqld-safe.html#option_mysqld_safe_malloc-lib) | Alternative malloc library to use for mysqld                 |            |            |
+| [--mysqld](https://dev.mysql.com/doc/refman/5.7/en/mysqld-safe.html#option_mysqld_safe_mysqld) | Name of server program to start (in ledir directory)         |            |            |
+| [--mysqld-safe-log-timestamps](https://dev.mysql.com/doc/refman/5.7/en/mysqld-safe.html#option_mysqld_safe_mysqld-safe-log-timestamps) | Timestamp format for logging                                 | 5.7.11     |            |
+| [--mysqld-version](https://dev.mysql.com/doc/refman/5.7/en/mysqld-safe.html#option_mysqld_safe_mysqld-version) | Suffix for server program name                               |            |            |
+| [--nice](https://dev.mysql.com/doc/refman/5.7/en/mysqld-safe.html#option_mysqld_safe_nice) | Use nice program to set server scheduling priority           |            |            |
+| [--no-defaults](https://dev.mysql.com/doc/refman/5.7/en/mysqld-safe.html#option_mysqld_safe_no-defaults) | Read no option files                                         |            |            |
+| [--open-files-limit](https://dev.mysql.com/doc/refman/5.7/en/mysqld-safe.html#option_mysqld_safe_open-files-limit) | Number of files that mysqld should be able to open           |            |            |
+| [--pid-file](https://dev.mysql.com/doc/refman/5.7/en/mysqld-safe.html#option_mysqld_safe_pid-file) | Path name of server process ID file                          |            |            |
+| [--plugin-dir](https://dev.mysql.com/doc/refman/5.7/en/mysqld-safe.html#option_mysqld_safe_plugin-dir) | Directory where plugins are installed                        |            |            |
+| [--port](https://dev.mysql.com/doc/refman/5.7/en/mysqld-safe.html#option_mysqld_safe_port) | Port number on which to listen for TCP/IP connections        |            |            |
+| [--skip-kill-mysqld](https://dev.mysql.com/doc/refman/5.7/en/mysqld-safe.html#option_mysqld_safe_skip-kill-mysqld) | Do not try to kill stray mysqld processes                    |            |            |
+| [--skip-syslog](https://dev.mysql.com/doc/refman/5.7/en/mysqld-safe.html#option_mysqld_safe_syslog) | Do not write error messages to syslog; use error log file    |            | Yes        |
+| [--socket](https://dev.mysql.com/doc/refman/5.7/en/mysqld-safe.html#option_mysqld_safe_socket) | Socket file on which to listen for Unix socket connections   |            |            |
+| [--syslog](https://dev.mysql.com/doc/refman/5.7/en/mysqld-safe.html#option_mysqld_safe_syslog) | Write error messages to syslog                               |            | Yes        |
+| [--syslog-tag](https://dev.mysql.com/doc/refman/5.7/en/mysqld-safe.html#option_mysqld_safe_syslog-tag) | Tag suffix for messages written to syslog                    |            | Yes        |
+| [--timezone](https://dev.mysql.com/doc/refman/5.7/en/mysqld-safe.html#option_mysqld_safe_timezone) | Set TZ time zone environment variable to named value         |            |            |
+| [--user](https://dev.mysql.com/doc/refman/5.7/en/mysqld-safe.html#option_mysqld_safe_user) | Run mysqld as user having name user_name or numeric user ID user_id |            |            |
+
+### 4.4 Installation-Related Programs ###
+
+#### 4.4.2 mysql_install_db ####
+
+> 在MySQL5.7.6 之后被弃用，可以使用选项 mysqld --initialize
+
+该脚本会生成一个密码，密码会被执行该脚本的home目录下的 `.mysql_secret` 里面。
+
+因为MySQL服务器mysqld在以后运行时必须访问数据目录，所以您应该从运行mysqld时使用的相同系统帐户运行mysql_install_db，或者以root身份运行，并指定`——user`选项来指示mysqld运行的用户名。如果mysql_install_db没有使用正确的安装目录位置，可能需要指定其他选项。
+
+该脚本默认会创建： an administrative account named `'root'@'localhost'` 
+
+该脚本的选项如下：
+
+| Option Name                                                  | Description                                                  |
+| :----------------------------------------------------------- | :----------------------------------------------------------- |
+| [--admin-auth-plugin](https://dev.mysql.com/doc/refman/5.7/en/mysql-install-db.html#option_mysql_install_db_admin-auth-plugin) | Administrative account authentication plugin                 |
+| [--admin-host](https://dev.mysql.com/doc/refman/5.7/en/mysql-install-db.html#option_mysql_install_db_admin-host) | Administrative account name host part                        |
+| [--admin-require-ssl](https://dev.mysql.com/doc/refman/5.7/en/mysql-install-db.html#option_mysql_install_db_admin-require-ssl) | Require SSL for administrative account                       |
+| [--admin-user](https://dev.mysql.com/doc/refman/5.7/en/mysql-install-db.html#option_mysql_install_db_admin-user) | Administrative account name user part                        |
+| [--basedir](https://dev.mysql.com/doc/refman/5.7/en/mysql-install-db.html#option_mysql_install_db_basedir) | Path to base directory                                       |
+| [--builddir](https://dev.mysql.com/doc/refman/5.7/en/mysql-install-db.html#option_mysql_install_db_builddir) | Path to build directory (for out-of-source builds)           |
+| [--datadir](https://dev.mysql.com/doc/refman/5.7/en/mysql-install-db.html#option_mysql_install_db_datadir) | Path to data directory                                       |
+| [--defaults](https://dev.mysql.com/doc/refman/5.7/en/mysql-install-db.html#option_mysql_install_db_defaults) | Read default option files                                    |
+| [--defaults-extra-file](https://dev.mysql.com/doc/refman/5.7/en/mysql-install-db.html#option_mysql_install_db_defaults-extra-file) | Read named option file in addition to usual option files     |
+| [--defaults-file](https://dev.mysql.com/doc/refman/5.7/en/mysql-install-db.html#option_mysql_install_db_defaults-file) | Read only named option file                                  |
+| [--extra-sql-file](https://dev.mysql.com/doc/refman/5.7/en/mysql-install-db.html#option_mysql_install_db_extra-sql-file) | Optional SQL file to execute during bootstrap                |
+| [--help](https://dev.mysql.com/doc/refman/5.7/en/mysql-install-db.html#option_mysql_install_db_help) | Display help message and exit                                |
+| [--insecure](https://dev.mysql.com/doc/refman/5.7/en/mysql-install-db.html#option_mysql_install_db_insecure) | Do not generate administrative account random password       |
+| [--lc-messages](https://dev.mysql.com/doc/refman/5.7/en/mysql-install-db.html#option_mysql_install_db_lc-messages) | Locale for error messages                                    |
+| [--lc-messages-dir](https://dev.mysql.com/doc/refman/5.7/en/mysql-install-db.html#option_mysql_install_db_lc-messages-dir) | Directory where error messages are installed                 |
+| [--login-file](https://dev.mysql.com/doc/refman/5.7/en/mysql-install-db.html#option_mysql_install_db_login-file) | File to read for login path information                      |
+| [--login-path](https://dev.mysql.com/doc/refman/5.7/en/mysql-install-db.html#option_mysql_install_db_login-path) | Read login path options from .mylogin.cnf                    |
+| [--mysqld-file](https://dev.mysql.com/doc/refman/5.7/en/mysql-install-db.html#option_mysql_install_db_mysqld-file) | Path to mysqld binary                                        |
+| [--no-defaults](https://dev.mysql.com/doc/refman/5.7/en/mysql-install-db.html#option_mysql_install_db_no-defaults) | Read no option files                                         |
+| [--random-password-file](https://dev.mysql.com/doc/refman/5.7/en/mysql-install-db.html#option_mysql_install_db_random-password-file) | File in which to write administrative account random password |
+| [--skip-sys-schema](https://dev.mysql.com/doc/refman/5.7/en/mysql-install-db.html#option_mysql_install_db_skip-sys-schema) | Do not install or upgrade the sys schema                     |
+| [--srcdir](https://dev.mysql.com/doc/refman/5.7/en/mysql-install-db.html#option_mysql_install_db_srcdir) | For internal use                                             |
+| [--user](https://dev.mysql.com/doc/refman/5.7/en/mysql-install-db.html#option_mysql_install_db_user) | Operating system user under which to execute mysqld          |
+| [--verbose](https://dev.mysql.com/doc/refman/5.7/en/mysql-install-db.html#option_mysql_install_db_verbose) | Verbose mode                                                 |
+| [--version](https://dev.mysql.com/doc/refman/5.7/en/mysql-install-db.html#option_mysql_install_db_version) | Display version information and exit                         |
+
+### 4.5 客户端程序 ###
+
+#### 4.5.1 mysql  ####
+
+##### 4.5.1.2 mysql client commands #####
+
+mysql将发送给服务器执行的每一条SQL语句。还有一组mysql自己解释的命令。要查看这些命令的列表，请在mysql>提示符下输入help或\h:
+
+- charset , \C charset_name 
+
+  Change the default character set and issue a [`SET NAMES`](https://dev.mysql.com/doc/refman/5.7/en/set-names.html) statement.
+
+- delimiter str, \d str
+
+##### 4.5.1.6 Tips #####
+
+- 垂直显示输出结果：使用 `\G`
+
+#### 4.5.2 mysqladmin ####
+
+```console
+mysqladmin [options] command [command-arg] [command [command-arg]] ...
+```
+
+- create [db_name] : create a new database named db_name
+- debug: Tell the server to write debug information to the error log
+- drop *db_name* 
+
+#### 4.5.7 mysqlshow -- Display databse,table column ####
+
+### 4.6 Administrative and Utility Programs ###
+
+#### 4.4.6 mysql_config_editor ####
+
+## 5. MySQL Server Administration ##
+
 
 
 ## 8. 优化 ##
