@@ -605,7 +605,237 @@ mysqladmin [options] command [command-arg] [command [command-arg]] ...
 
 ## 5. MySQL Server Administration ##
 
+### 5.1 The MySQL Server ###
 
+[5.1.1 Configuring the Server](https://dev.mysql.com/doc/refman/5.7/en/server-configuration.html)
+
+[5.1.2 Server Configuration Defaults](https://dev.mysql.com/doc/refman/5.7/en/server-configuration-defaults.html)
+
+[5.1.3 Server Option, System Variable, and Status Variable Reference](https://dev.mysql.com/doc/refman/5.7/en/server-option-variable-reference.html)
+
+[5.1.4 Server System Variable Reference](https://dev.mysql.com/doc/refman/5.7/en/server-system-variable-reference.html)
+
+[5.1.5 Server Status Variable Reference](https://dev.mysql.com/doc/refman/5.7/en/server-status-variable-reference.html)
+
+[5.1.6 Server Command Options](https://dev.mysql.com/doc/refman/5.7/en/server-options.html)
+
+[5.1.7 Server System Variables](https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html)
+
+[5.1.8 Using System Variables](https://dev.mysql.com/doc/refman/5.7/en/using-system-variables.html)
+
+[5.1.9 Server Status Variables](https://dev.mysql.com/doc/refman/5.7/en/server-status-variables.html)
+
+[5.1.10 Server SQL Modes](https://dev.mysql.com/doc/refman/5.7/en/sql-mode.html)
+
+[5.1.11 Connection Management](https://dev.mysql.com/doc/refman/5.7/en/connection-management.html)
+
+[5.1.12 IPv6 Support](https://dev.mysql.com/doc/refman/5.7/en/ipv6-support.html)
+
+[5.1.13 MySQL Server Time Zone Support](https://dev.mysql.com/doc/refman/5.7/en/time-zone-support.html)
+
+[5.1.14 Server-Side Help Support](https://dev.mysql.com/doc/refman/5.7/en/server-side-help-support.html)
+
+[5.1.15 Server Tracking of Client Session State Changes](https://dev.mysql.com/doc/refman/5.7/en/session-state-tracking.html)
+
+[5.1.16 The Server Shutdown Process](https://dev.mysql.com/doc/refman/5.7/en/server-shutdown.html)
+
+- 服务器支持的启动选项。您可以通过配置文件或在命令行上指定这些选项。
+- 服务器系统变量。这些变量反映了启动选项的当前状态和值，其中一些可以在服务器运行时修改。
+- 服务器状态变量。这些变量包含关于运行时操作的计数器和统计信息。
+- 如何设置服务器的SQL模式。此设置修改SQL语法和语义的某些方面，例如与其他数据库系统的代码兼容，或控制特定情况下的错误处理。
+- 服务器如何管理客户端连接。
+
+#### 5.5.1 配置server ####
+
+使用 `mysql --verbose --help` 查看当前使用options
+
+要查看服务器运行时实际使用的当前系统变量值，请连接到服务器并执行以下语句:
+
+```mysql
+SHOW VARIABLES;
+```
+
+要查看正在运行的服务器的一些统计和状态指示器，请执行以下语句:
+
+```mysql
+SHOW STATUS;
+```
+
+More detailed monitoring information is available from the Performance Schema; see [Chapter 25, *MySQL Performance Schema*](https://dev.mysql.com/doc/refman/5.7/en/performance-schema.html). In addition, the MySQL `sys` schema is a set of objects that provides convenient access to data collected by the Performance Schema; see [Chapter 26, *MySQL sys Schema*](https://dev.mysql.com/doc/refman/5.7/en/sys-schema.html).
+
+#### 5.1.3 Server Option, System Variable, and Status Variable Reference ####
+
+该表在一个统一列表中列出了命令行选项 (Cmd-line)、配置文件中有效的选项 (Option file)、服务器系统变量 (System Var) 和状态变量 (Status var)，并指示每个选项的位置或变量有效。如果在命令行或选项文件中设置的服务器选项与相应系统变量的名称不同，则在相应选项的正下方注明变量名称。对于系统变量和状态变量，变量的作用域（Var Scope）是Global、Session，或者两者都有。
+
+| Name                                                         | Cmd-Line | Option File | System Var | Status Var | Var Scope | Dynamic |
+| :----------------------------------------------------------- | :------- | :---------- | :--------- | :--------- | :-------- | :------ |
+| [abort-slave-event-count](https://dev.mysql.com/doc/refman/5.7/en/replication-options-replica.html#option_mysqld_abort-slave-event-count) | Yes      | Yes         |            |            |           |         |
+| [Aborted_clients](https://dev.mysql.com/doc/refman/5.7/en/server-status-variables.html#statvar_Aborted_clients) |          |             |            | Yes        | Global    | No      |
+| [Aborted_connects](https://dev.mysql.com/doc/refman/5.7/en/server-status-variables.html#statvar_Aborted_connects) |          |             |            | Yes        | Global    | No      |
+| [allow-suspicious-udfs](https://dev.mysql.com/doc/refman/5.7/en/server-options.html#option_mysqld_allow-suspicious-udfs) | Yes      | Yes         |            |            |           |         |
+| [ansi](https://dev.mysql.com/doc/refman/5.7/en/server-options.html#option_mysqld_ansi) | Yes      | Yes         |            |            |           |         |
+| [audit-log](https://dev.mysql.com/doc/refman/5.7/en/audit-log-reference.html#option_mysqld_audit-log) | Yes      | Yes         |            |            |           |         |
+| [audit_log_buffer_size](https://dev.mysql.com/doc/refman/5.7/en/audit-log-reference.html#sysvar_audit_log_buffer_size) | Yes      | Yes         | Yes        |            | Global    | No      |
+| [audit_log_compression](https://dev.mysql.com/doc/refman/5.7/en/audit-log-reference.html#sysvar_audit_log_compression) | Yes      | Yes         | Yes        |            | Global    | No      |
+| [audit_log_connection_policy](https://dev.mysql.com/doc/refman/5.7/en/audit-log-reference.html#sysvar_audit_log_connection_policy) | Yes      | Yes         | Yes        |            | Global    | Yes     |
+
+#### 5.1.4 Server system variable  ####
+
+#### 5.1.5 Server status variable ####
+
+#### 5.1.6 Server Command Options ####
+
+[**mysqld**](https://dev.mysql.com/doc/refman/5.7/en/mysqld.html) reads options from the `[mysqld]` and `[server]` groups. [**mysqld_safe**](https://dev.mysql.com/doc/refman/5.7/en/mysqld-safe.html) reads options from the `[mysqld]`, `[server]`, `[mysqld_safe]`, and `[safe_mysqld]` groups. [**mysql.server**](https://dev.mysql.com/doc/refman/5.7/en/mysql-server.html) reads options from the `[mysqld]` and `[mysql.server]` groups.
+
+#### 5.1.8 使用系统变量 ####
+
+MySQL 服务器维护了许多配置其操作的系统变量。[第 5.1.7 节，“服务器系统变量”](https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html)，描述了这些变量的含义。每个系统变量都有一个默认值。可以在服务器启动时使用命令行或选项文件中的选项设置系统变量。其中大部分可以在服务器运行时通过[`SET`](https://dev.mysql.com/doc/refman/5.7/en/set-variable.html) 语句动态更改 ，这使您无需停止和重新启动服务器即可修改服务器的操作。您还可以在表达式中使用系统变量值。
+
+系统变量存在两个作用域。全局变量影响服务器的整体运行。会话变量会影响其对单个客户端连接的操作。给定的系统变量可以同时具有全局值和会话值。全局和会话系统变量的关系如下：
+
+- 当服务器启动时，它会将每个全局变量初始化为其默认值。这些默认值可以通过在命令行或选项文件中指定的选项进行更改。
+
+  ```mysql
+  SET GLOBAL max_connections = 1000;
+  SET @@GLOBAL.max_connections = 1000;
+  ```
+
+- 服务器还为每个连接的客户端维护一组会话变量。客户端的会话变量在连接时使用相应全局变量的当前值进行初始化。
+
+  ```mysql
+  SET SESSION sql_mode = 'TRADITIONAL';
+  SET @@SESSION.sql_mode = 'TRADITIONAL';
+  SET @@sql_mode = 'TRADITIONAL';
+  ```
+
+查看系统变量:
+
+```mysql
+SHOW VARIABLES LIKE 'max_join_size';
+SHOW SESSION VARIABLES LIKE 'max_join_size';
+
+SHOW VARIABLES LIKE '%size%';
+SHOW GLOBAL VARIABLES LIKE '%size%';
+```
+
+##### 5.1.8.2 动态系统变量 #####
+
+##### 5.1.8.3 结构化系统变量 #####
+
+#### 5.1.9 服务器状态变量 ####
+
+```mysql
+mysql> SHOW GLOBAL STATUS;
++-----------------------------------+------------+
+| Variable_name                     | Value      |
++-----------------------------------+------------+
+| Aborted_clients                   | 0          |
+| Aborted_connects                  | 0          |
+| Bytes_received                    | 155372598  |
+| Bytes_sent                        | 1176560426 |
+...
+| Connections                       | 30023      |
+| Created_tmp_disk_tables           | 0          |
+| Created_tmp_files                 | 3          |
+| Created_tmp_tables                | 2          |
+...
+| Threads_created                   | 217        |
+| Threads_running                   | 88         |
+| Uptime                            | 1389872    |
++-----------------------------------+------------+
+```
+
+#### 5.1.10 SQL Mode ####
+
+**设置SQL模式**
+
+Mysql5.7 的默认模式：[`ONLY_FULL_GROUP_BY`](https://dev.mysql.com/doc/refman/5.7/en/sql-mode.html#sqlmode_only_full_group_by)， [`STRICT_TRANS_TABLES`](https://dev.mysql.com/doc/refman/5.7/en/sql-mode.html#sqlmode_strict_trans_tables)， [`NO_ZERO_IN_DATE`](https://dev.mysql.com/doc/refman/5.7/en/sql-mode.html#sqlmode_no_zero_in_date)， [`NO_ZERO_DATE`](https://dev.mysql.com/doc/refman/5.7/en/sql-mode.html#sqlmode_no_zero_date)， [`ERROR_FOR_DIVISION_BY_ZERO`](https://dev.mysql.com/doc/refman/5.7/en/sql-mode.html#sqlmode_error_for_division_by_zero)， [`NO_AUTO_CREATE_USER`](https://dev.mysql.com/doc/refman/5.7/en/sql-mode.html#sqlmode_no_auto_create_user)， [`NO_ENGINE_SUBSTITUTION`](https://dev.mysql.com/doc/refman/5.7/en/sql-mode.html#sqlmode_no_engine_substitution)
+
+在运行中设置SQL mode:
+
+```mysql
+SET GLOBAL sql_mode = 'modes';
+SET SESSION sql_mode = 'modes';
+```
+
+怎么查看当前的SQL mode:
+
+```mysql
+SELECT @@GLOBAL.sql_mode;
+SELECT @@SESSION.sql_mode;
+```
+
+**重要的SQL Mode**
+
+- ANSI : 这种模式改变语法和行为以更接近标准SQL
+- STRICT_TRANS_TABLES: 如果不能按照给定的方式将值插入事务表中，则终止该语句。
+- TRADITIONAL : 使MySQL的行为像一个“传统的”SQL数据库系统。这种模式的一个简单描述是，当向列中插入不正确的值时，“给出错误而不是警告”。
+- ANSI_QUOTES: 将"作为标识符引号字符(就像'引号字符一样)，而不是字符串引号字符。
+- HIGH_NOT_PRECEDENCE
+- NO_AUTO_CREATE_USER: 除非指定了身份验证信息，否则防止GRANT语句自动创建新用户帐户。
+- NO_ENGINE_SUBSTITUTION： 当CREATE TABLE或ALTER TABLE等语句指定了禁用或未编译的存储引擎时，控制默认存储引擎的自动替换。
+
+### 5.2 mysql 数据目录 ###
+
+### 5.3 MySQL 系统数据库 ###
+
+**Grant System Tables**
+
+- user
+- db
+- tables_priv: table-level privileges
+- columns_priv
+- procs_priv: Stored procedure and function privileges.
+- proxies_priv: Proxy-user privileges.
+
+**Object Information System Tables**
+
+### 5.4 MySQL Server Logs ###
+
+MySQL Server has several logs that can help you find out what activity is taking place.
+
+| Log Type               | Information Written to Log                                   |
+| :--------------------- | :----------------------------------------------------------- |
+| Error log              | Problems encountered starting, running, or stopping [**mysqld**](https://dev.mysql.com/doc/refman/5.7/en/mysqld.html) |
+| General query log      | Established client connections and statements received from clients |
+| Binary log             | Statements that change data (also used for replication)      |
+| Relay log              | Data changes received from a replication source server       |
+| Slow query log         | Queries that took more than [`long_query_time`](https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_long_query_time) seconds to execute |
+| DDL log (metadata log) | Metadata operations performed by DDL statements              |
+
+#### 5.4.1 选择通用查询日志和慢查询日志输出目的地 ####
+
+`log_output`系统变量指定日志输出的目的地。设置这个变量本身并不会启用日志;它们必须单独启用。
+
+`general_log` 系统变量控制日志记录到所选日志目的地的通用查询日志
+
+`slow_query_log` 
+
+#### 5.4.2 Error log ####
+
+#### 5.4.3 General Query Log ####
+
+#### 5.4.4 Binary Log ####
+
+二进制日志包含描述数据库更改(如表创建操作或表数据更改)的“事件”。它还包含可能已经进行更改的语句的事件(例如，没有匹配任何行的DELETE)，除非使用基于行的日志记录。它的目的：
+
+- 对于复制，复制源服务器上的二进制日志提供了要发送到副本的数据更改的记录。源将其二进制日志中包含的事件发送到其副本，副本执行这些事件以进行与源上所做的相同的数据更改。
+- 某些数据恢复操作需要使用二进制日志。
+
+二进制日志通常对意外的暂停具有弹性，因为只有完整的事务才会被记录或读回。
+
+要启用二进制日志，请使用`--log-bin[=base_name]`选项启动服务器。如果没有给出base_name值，则默认名称是——pid-file选项(默认情况下是主机的名称)后跟-bin的值。如果给出了基名，则服务器将文件写入数据目录，除非基名带有前置绝对路径名以指定另一个目录。
+
+为了跟踪使用了哪些二进制日志文件，mysqld还创建了一个二进制日志索引文件，其中包含二进制日志文件的名称。默认情况下，它与二进制日志文件具有相同的基本名称，扩展名为'.index'。可以使用`--log-bin-index[=file_name]`选项更改二进制日志索引文件的名称。
+
+二进制日志中记录的事件格式取决于二进制日志格式。支持三种格式类型，基于行的日志记录、基于语句的日志记录和混合基日志记录。
+
+##### 5.4.4.1 二进制日志格式 #####
+
+`--binlog-format=ROW|STATEMENT|MIXED`
+
+- MySQL中的复制功能最初是基于SQL语句从源到副本的传播。
+- 在基于行的日志记录中，源将事件写入二进制日志，以表明单个表行受到的影响。
 
 ## 8. 优化 ##
 
