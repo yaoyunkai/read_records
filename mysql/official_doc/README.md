@@ -2159,3 +2159,223 @@ mysql> SELECT something FROM tbl_name
     -> WHERE DATE_SUB(CURDATE(),INTERVAL 30 DAY) <= date_col;
 ```
 
+期望日期值的函数通常接受日期时间值，而忽略时间部分。期望时间值的函数通常接受日期时间值，而忽略日期部分。
+
+返回当前日期或时间的函数在每次查询开始执行时只计算一次。
+
+一些日期函数可以用于“零”日期或不完整的日期，如“2001-11-00”，而其他的不能。提取部分日期的函数通常处理不完整的日期，因此在您可能期望非零值时可以返回0。例如:
+
+```mysql
+mysql> SELECT DAYOFMONTH('2001-11-00'), MONTH('2005-00-00');
+        -> 0, 0
+```
+
+- `ADDDATE(date,INTERVAL expr unit), ADDDATE(expr,days)`
+
+- `DATE_ADD(date,INTERVAL expr unit), DATE_SUB(date,INTERVAL expr unit)`
+
+  ```mysql
+  mysql> SELECT DATE_ADD('2018-05-01',INTERVAL 1 DAY);
+          -> '2018-05-02'
+  mysql> SELECT DATE_SUB('2018-05-01',INTERVAL 1 YEAR);
+          -> '2017-05-01'
+  mysql> SELECT DATE_ADD('2020-12-31 23:59:59',
+      ->                 INTERVAL 1 SECOND);
+          -> '2021-01-01 00:00:00'
+  mysql> SELECT DATE_ADD('2018-12-31 23:59:59',
+      ->                 INTERVAL 1 DAY);
+          -> '2019-01-01 23:59:59'
+  mysql> SELECT DATE_ADD('2100-12-31 23:59:59',
+      ->                 INTERVAL '1:1' MINUTE_SECOND);
+          -> '2101-01-01 00:01:00'
+  mysql> SELECT DATE_SUB('2025-01-01 00:00:00',
+      ->                 INTERVAL '1 1:1:1' DAY_SECOND);
+          -> '2024-12-30 22:58:59'
+  mysql> SELECT DATE_ADD('1900-01-01 00:00:00',
+      ->                 INTERVAL '-1 10' DAY_HOUR);
+          -> '1899-12-30 14:00:00'
+  mysql> SELECT DATE_SUB('1998-01-02', INTERVAL 31 DAY);
+          -> '1997-12-02'
+  mysql> SELECT DATE_ADD('1992-12-31 23:59:59.000002',
+      ->            INTERVAL '1.999999' SECOND_MICROSECOND);
+          -> '1993-01-01 00:00:01.000001'
+  ```
+
+- `DATE_FORMAT(date,format)`
+
+### 12.8 String函数和操作符 ###
+
+- CHAR_LENGTH
+
+- CONCAT
+
+  返回由连接参数而产生的字符串。可能有一个或多个参数。如果所有参数都是非二进制字符串，则结果是非二进制字符串。如果参数包含任何二进制字符串，则结果是二进制字符串。数值参数被转换为其等效的非二进制字符串形式
+
+- LENGTH
+
+#### 12.8.1 字符串比较函数和操作符 ####
+
+| Name       | Description                         |
+| :--------- | :---------------------------------- |
+| `LIKE`     | Simple pattern matching             |
+| `NOT LIKE` | Negation of simple pattern matching |
+| `STRCMP()` | Compare two strings                 |
+
+如果给一个字符串函数一个二进制字符串作为参数，结果字符串也是一个二进制字符串。转换为字符串的数字被视为二进制字符串。这只会影响比较。
+
+通常情况下，如果字符串比较中的任何表达式是区分大小写的，则该比较将以区分大小写的方式执行。
+
+- `expr LIKE pat [ESCAPE 'escape_char']`
+
+  根据SQL标准，LIKE按每个字符执行匹配，因此它可以产生不同于=比较运算符的结果:
+
+  ```mysql
+  mysql> SELECT 'ä' LIKE 'ae' COLLATE latin1_german2_ci;
+  +-----------------------------------------+
+  | 'ä' LIKE 'ae' COLLATE latin1_german2_ci |
+  +-----------------------------------------+
+  |                                       0 |
+  +-----------------------------------------+
+  mysql> SELECT 'ä' = 'ae' COLLATE latin1_german2_ci;
+  +--------------------------------------+
+  | 'ä' = 'ae' COLLATE latin1_german2_ci |
+  +--------------------------------------+
+  |                                    1 |
+  +--------------------------------------+
+  ```
+
+  特别是，尾随空格很重要，但对于使用=操作符执行的非二进制字符串(CHAR、VARCHAR和TEXT值)的比较则不适用:
+
+  ```mysql
+  mysql> SELECT 'a' = 'a ', 'a' LIKE 'a ';
+  +------------+---------------+
+  | 'a' = 'a ' | 'a' LIKE 'a ' |
+  +------------+---------------+
+  |          1 |             0 |
+  +------------+---------------+
+  1 row in set (0.00 sec)
+  ```
+
+使用LIKE你可以在模式中使用以下两个通配符:
+
+- % : matches any number of characters, even zero characters.
+- _ : matches exactly one character.
+
+#### 12.8.2 正则表达式 ####
+
+#### 12.8.3 Character Set and Collation of Function Results ####
+
+### 12.10 全文搜索功能 ###
+
+### 12.11 转换函数和运算符 ###
+
+| 名称        | 描述                       |
+| :---------- | :------------------------- |
+| `BINARY`    | 将字符串转换为二进制字符串 |
+| `CAST()`    | 将值转换为特定类型         |
+| `CONVERT()` | 将值转换为特定类型         |
+
+CONVERT 使用 using在不同的字符集之间转换
+
+```mysql
+CONVERT(expr USING transcoding_name);
+CONVERT(string, CHAR[(N)] CHARACTER SET charset_name);
+CAST(string AS CHAR[(N)] CHARACTER SET charset_name);
+```
+
+### 12.13 位函数和运算符 ###
+
+### 12.15 Locking functions ###
+
+| Name                  | Description                                                  |
+| :-------------------- | :----------------------------------------------------------- |
+| `GET_LOCK()`          | Get a named lock                                             |
+| `IS_FREE_LOCK()`      | Whether the named lock is free                               |
+| `IS_USED_LOCK()`      | Whether the named lock is in use; return connection identifier if true |
+| `RELEASE_ALL_LOCKS()` | Release all current named locks                              |
+| `RELEASE_LOCK()`      | Release the named lock                                       |
+
+- `GET_LOCK(str, timeout)` 
+
+  尝试str使用字符串指定的名称获取锁， 超时时间为 timeout秒。负值 timeout意味着无限超时。锁是排他的。由一个会话持有时，其他会话无法获得同名锁。
+
+### 12.16 信息函数 ###
+
+![image-20210606223342969](.assets/image-20210606223342969.png)
+
+### 12.20 聚合函数 ###
+
+![image-20210606223518735](.assets/image-20210606223518735.png)
+
+#### 12.20.1 聚合函数描述 ####
+
+它们通常与`GROUP BY`子句一起使用以将值分组为子集。如果在不包含GROUP BY子句的语句中使用聚合函数，则相当于对所有行进行分组。
+
+除非另有说明，聚合函数会忽略 `NULL`值。
+
+对于数值参数，方差和标准偏差函数返回DOUBLE值。SUM()和AVG()函数返回精确值参数(integer或DECIMAL)的DECIMAL值，以及近似值参数(FLOAT或DOUBLE)的DOUBLE值。
+
+SUM()和AVG()聚合函数不能处理时间值。像SUM()或AVG()这样期望有数字参数的函数在必要时将参数转换为数字。
+
+- `AVG([DISTINCT] expr)`
+
+  ```mysql
+  select stu_id, avg(score) as average
+  from score
+  group by stu_id;
+  ```
+
+#### 12.20.2 GROUP_BY 修饰符 ####
+
+该`GROUP BY`子句允许一个`WITH ROLLUP`修饰符使汇总输出包括表示更高级别（即超级聚合）汇总操作的额外行。`ROLLUP` 因此，您可以使用单个查询回答多个分析级别的问题。
+
+```mysql
+CREATE TABLE sales
+(
+    year    INT,
+    country VARCHAR(20),
+    product VARCHAR(32),
+    profit  INT
+);
+
+mysql> SELECT year, SUM(profit) AS profit
+       FROM sales
+       GROUP BY year;
++------+--------+
+| year | profit |
++------+--------+
+| 2000 |   4525 |
+| 2001 |   3010 |
++------+--------+
+
+mysql> SELECT year, SUM(profit) AS profit
+       FROM sales
+       GROUP BY year WITH ROLLUP;
++------+--------+
+| year | profit |
++------+--------+
+| 2000 |   4525 |
+| 2001 |   3010 |
+| NULL |   7535 |
++------+--------+
+```
+
+#### 12.20.3 GROUP BY的处理 ####
+
+SQL-92及以前的版本不允许查询选择列表、HAVING条件或ORDER BY列表引用GROUP BY子句中没有命名的非聚合列, 例如，这个查询在标准SQL-92中是非法的，因为选择列表中的非聚合name列没有出现在GROUP BY中:
+
+```mysql
+SELECT o.custid, c.name, MAX(o.payment)
+  FROM orders AS o, customers AS c
+  WHERE o.custid = c.custid
+  GROUP BY o.custid;
+```
+
+MySQL有个sql_mode: [`ONLY_FULL_GROUP_BY`](https://dev.mysql.com/doc/refman/5.7/en/sql-mode.html#sqlmode_only_full_group_by) 与之相关。
+
+### 12.22 Precision Math ###
+
+## 13. SQL 语句 ##
+
+
+
