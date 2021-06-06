@@ -1911,3 +1911,251 @@ CHAR列的长度固定为创建表时声明的长度。长度可以是0到255之
 
 ### 11.7 Date Type Storage ###
 
+在磁盘上存储表数据的要求取决于几个因素。不同的存储引擎表示数据类型，并以不同的方式存储原始数据。表数据可能被压缩，要么是针对一列，要么是针对整行，这会使计算表或列的存储需求变得复杂。
+
+**Numeric**
+
+| Data Type                    | Storage Required                                          |
+| :--------------------------- | :-------------------------------------------------------- |
+| `TINYINT`                    | 1 byte                                                    |
+| `SMALLINT`                   | 2 bytes                                                   |
+| `MEDIUMINT`                  | 3 bytes                                                   |
+| `INT`, `INTEGER`             | 4 bytes                                                   |
+| `BIGINT`                     | 8 bytes                                                   |
+| FLOAT(*p*)                   | 4 bytes if 0 <= *`p`* <= 24, 8 bytes if 25 <= *`p`* <= 53 |
+| `FLOAT`                      | 4 bytes                                                   |
+| `DOUBLE [PRECISION]`, `REAL` | 8 bytes                                                   |
+| DECIMAL(M,D), NUMERIC(M,D)   | Varies; see following discussion                          |
+| BIT(M)                       | approximately (*M*+7)/8 bytes                             |
+
+**Date and Time**
+
+| Data Type | Storage Required                     |
+| --------- | ------------------------------------ |
+| YEAR      | 1bytes                               |
+| DATE      | 3bytes                               |
+| TIME      | 3bytes + fractional seconds storage  |
+| DATETIME  | 5 bytes + fractional seconds storage |
+| TIMESTAMP | 4 bytes + fractional seconds storage |
+
+## 12. 函数和操作符 ##
+
+包含NULL的表达式总是生成NULL值，除非文档中针对特定函数或操作符另有说明。
+
+默认情况下，函数名和后面的圆括号之间不能有空格。这有助于MySQL解析器区分函数调用和对与函数同名的表或列的引用。但是，函数参数周围的空格是允许的。
+
+### 12.1 内置函数和操作符引用 ###
+
+see detail as: https://dev.mysql.com/doc/refman/5.7/en/built-in-function-reference.html
+
+### 12.2 可加载的函数引用 ###
+
+see detail: https://dev.mysql.com/doc/refman/5.7/en/loadable-function-reference.html
+
+### 12.3 表达式求值中的类型转换 ###
+
+当操作符与不同类型的操作数一起使用时，会进行类型转换以使操作数兼容。有些转换是隐式发生的。
+
+```console
+mysql> SELECT 1+'1';
+        -> 2
+mysql> SELECT CONCAT(2,' test');
+        -> '2 test'
+```
+
+也可以使用CAST()函数将数字显式转换为字符串。CONCAT()函数隐式地进行转换，因为它需要字符串参数。
+
+```console
+mysql> SELECT 38.8, CAST(38.8 AS CHAR);
+        -> 38.8, '38.8'
+mysql> SELECT 38.8, CONCAT(38.8);
+        -> 38.8, '38.8'
+```
+
+以下规则描述了比较操作的转换过程：
+
+- 如果一个或两个参数为NULL，则比较的结果为NULL, NULL安全的`<=>`相等比较操作符除外。对于NULL `<=>` NULL，结果为true。不需要转换。
+
+- 如果比较操作中的两个参数都是字符串，则将它们作为字符串进行比较。
+
+- 如果两个参数都是整数，则将它们作为整数进行比较。
+
+- 如果不与数字比较，十六进制值将被视为二进制字符串。
+
+- 如果其中一个参数是TIMESTAMP或DATETIME列，而另一个参数是常量，则在执行比较之前将常量转换为时间戳。为安全起见，在进行比较时，总是使用完整的日期时间、日期或时间字符串。例如，在使用BETWEEN和日期或时间值时，要获得最佳结果，请使用`CAST()`显式地将值转换为所需的数据类型。
+
+  来自一个或多个表的单行子查询不被认为是常量。例如，如果子查询返回一个要与DATETIME值进行比较的整数，则比较将作为两个整数进行
+
+- 如果其中一个参数是十进制值，则比较取决于另一个参数。
+
+- 在所有其他情况下，将参数作为浮点数(实数)进行比较。例如，字符串和数字操作数的比较发生在浮点数的比较中。
+
+对于字符串列与数字列的比较，MySQL不能使用列上的索引来快速查找值。如果str_col是一个索引字符串列，在执行以下语句的查找时不能使用索引:
+
+```mysql
+SELECT * FROM tbl_name WHERE str_col=1;
+```
+
+### 12.4 操作符 ###
+
+| Name                  | Description                                 |
+| --------------------- | ------------------------------------------- |
+| &                     | Bitwise AND                                 |
+| >                     |                                             |
+| `>>`                  | 右移                                        |
+| `>=`                  |                                             |
+| `<>` `!=`             | Not equal operator                          |
+| `<=>`                 | NULL-safe equal to operator                 |
+| AND &&                | logical AND                                 |
+| `BETWEEN ... AND ...` | Whether a value is within a range of values |
+| `IN()`                | Whether a value is within a set of values   |
+
+#### 12.4.1 操作符优先级 ####
+
+操作符优先级显示在下面的列表中，从最高优先级到最低优先级。一起显示在一行上的运算符具有相同的优先级。
+
+```mysql
+INTERVAL
+BINARY, COLLATE
+!
+- (unary minus), ~ (unary bit inversion)
+^
+*, /, DIV, %, MOD
+-, +
+<<, >>
+&
+|
+= (comparison), <=>, >=, >, <=, <, <>, !=, IS, LIKE, REGEXP, IN
+BETWEEN, CASE, WHEN, THEN, ELSE
+NOT
+AND, &&
+XOR
+OR, ||
+= (assignment), :=
+```
+
+#### 12.4.2 比较函数和操作符 ####
+
+![image-20210606173618678](.assets/image-20210606173618678.png)
+
+比较操作的结果是1 (TRUE)、0 (FALSE)或NULL。这些操作对数字和字符串都有效。字符串会自动转换为数字，数字也会根据需要自动转换为字符串。
+
+#### 12.4.3 逻辑运算符 ####
+
+| Name    | Description   |
+| :------ | :------------ |
+| AND &&  | Logical AND   |
+| NOT !   | Negates value |
+| OR \|\| | Logical OR    |
+| XOR     | Logical XOR   |
+
+在SQL中，所有逻辑运算符的计算结果都是TRUE、FALSE或NULL (UNKNOWN)。在MySQL中，它们被实现为1 (TRUE)、0 (FALSE)和NULL。
+
+#### 12.4.4 赋值运算符 ####
+
+| Name | Description    |
+| :--- | :------------- |
+| `=`  | Assign a value |
+| `:=` | Assign a value |
+
+- `:=`
+
+  赋值运算符。使运算符左侧的用户变量接受其右侧的值。右边的值可以是一个文字值，另一个存储值的变量，或者任何产生标量值的合法表达式，包括查询的结果(假设这个值是标量值)。您可以在同一SET语句中执行多个赋值。您可以在同一语句中执行多个赋值。
+
+  与=不同，:=操作符永远不会被解释为比较操作符。这意味着您可以在任何有效的SQL语句中(不仅仅是在SET语句中)使用:=来为变量赋值。
+
+  ```mysql
+  mysql> SELECT @var1, @var2;
+          -> NULL, NULL
+  mysql> SELECT @var1 := 1, @var2;
+          -> 1, NULL
+  mysql> SELECT @var1, @var2;
+          -> 1, NULL
+  mysql> SELECT @var1, @var2 := @var1;
+          -> 1, 1
+  mysql> SELECT @var1, @var2;
+          -> 1, 1
+  
+  mysql> SELECT @var1:=COUNT(*) FROM t1;
+          -> 4
+  mysql> SELECT @var1;
+          -> 4
+  ```
+
+### 12.5 流程控制 ###
+
+有四个流程控制操作符：`CASE` `IF` `IFNULL` `NULLIF`
+
+**CASE**:
+
+`CASE value WHEN compare_value THEN result [WHEN compare_value THEN result ...] [ELSE result] END`
+
+`CASE WHEN condition THEN result [WHEN condition THEN result ...] [ELSE result] END`
+
+```mysql
+mysql> SELECT CASE 1 WHEN 1 THEN 'one'
+    ->     WHEN 2 THEN 'two' ELSE 'more' END;
+        -> 'one'
+mysql> SELECT CASE WHEN 1>0 THEN 'true' ELSE 'false' END;
+        -> 'true'
+mysql> SELECT CASE BINARY 'B'
+    ->     WHEN 'a' THEN 1 WHEN 'b' THEN 2 END;
+        -> NULL
+```
+
+**IF**:
+
+`IF(expr1,expr2,expr3)`
+
+If expr1 is TRUE (expr1 <> 0 and expr1 <> NULL), IF() returns expr2. Otherwise, it returns expr3.
+
+```mysql
+mysql> SELECT IF(1>2,2,3);
+        -> 3
+mysql> SELECT IF(1<2,'yes','no');
+        -> 'yes'
+mysql> SELECT IF(STRCMP('test','test1'),'no','yes');
+        -> 'no'
+```
+
+**IFNULL**:
+
+`IFNULL(expr1,expr2)`
+
+If expr1 is not NULL, `IFNULL()` returns expr1; otherwise it returns expr2.
+
+```mysql
+mysql> SELECT IFNULL(1,0);
+        -> 1
+mysql> SELECT IFNULL(NULL,10);
+        -> 10
+mysql> SELECT IFNULL(1/0,10);
+        -> 10
+mysql> SELECT IFNULL(1/0,'yes');
+        -> 'yes'
+```
+
+**NULLIF**:
+
+`NULLIF(expr1,expr2)`
+
+Returns NULL if expr1 = expr2 is true, otherwise returns expr1. 
+
+```mysql
+mysql> SELECT NULLIF(1,1);
+        -> NULL
+mysql> SELECT NULLIF(1,2);
+        -> 1
+```
+
+### 12.6 数值函数和运算符 ###
+
+### 12.7 date and time 函数 ###
+
+下面的查询选择所有date_col值在最近30天内的行:
+
+```mysql
+mysql> SELECT something FROM tbl_name
+    -> WHERE DATE_SUB(CURDATE(),INTERVAL 30 DAY) <= date_col;
+```
+
