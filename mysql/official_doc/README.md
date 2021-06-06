@@ -1327,9 +1327,13 @@ MySQL Server 支持三种注释样式:
 
 The default MySQL server character set and collation are `latin1` and `latin1_swedish_ci`
 
+```mysql
+SET NAMES 'utf8';
+```
+
 ### 10.1 Character Sets and Collations in General ###
 
-A character set is a set of symbols and encodings. A collation is a set of rules for comparing characters in a character set.
+字符集是一组符号和编码。排序规则是一组用于比较字符集中的字符的规则。
 
 字母“A”是一个符号，数字0是“A”的*编码*，这四个字母及其编码的组合是一个*字符集*。
 
@@ -1337,54 +1341,26 @@ A character set is a set of symbols and encodings. A collation is a set of rules
 
 ### 10.2 MySQL中的字符集和字符比较集 ###
 
+ use the `INFORMATION_SCHEMA` [`CHARACTER_SETS`](https://dev.mysql.com/doc/refman/5.7/en/information-schema-character-sets-table.html) table or the [`SHOW CHARACTER SET`](https://dev.mysql.com/doc/refman/5.7/en/show-character-set.html) statement ：
+
 ```mysql
 mysql> SHOW CHARACTER SET;
 +----------+---------------------------------+---------------------+--------+
 | Charset  | Description                     | Default collation   | Maxlen |
 +----------+---------------------------------+---------------------+--------+
 | big5     | Big5 Traditional Chinese        | big5_chinese_ci     |      2 |
-| dec8     | DEC West European               | dec8_swedish_ci     |      1 |
-| cp850    | DOS West European               | cp850_general_ci    |      1 |
-| hp8      | HP West European                | hp8_english_ci      |      1 |
-| koi8r    | KOI8-R Relcom Russian           | koi8r_general_ci    |      1 |
+...
 | latin1   | cp1252 West European            | latin1_swedish_ci   |      1 |
 | latin2   | ISO 8859-2 Central European     | latin2_general_ci   |      1 |
-| swe7     | 7bit Swedish                    | swe7_swedish_ci     |      1 |
-| ascii    | US ASCII                        | ascii_general_ci    |      1 |
-| ujis     | EUC-JP Japanese                 | ujis_japanese_ci    |      3 |
-| sjis     | Shift-JIS Japanese              | sjis_japanese_ci    |      2 |
-| hebrew   | ISO 8859-8 Hebrew               | hebrew_general_ci   |      1 |
-| tis620   | TIS620 Thai                     | tis620_thai_ci      |      1 |
-| euckr    | EUC-KR Korean                   | euckr_korean_ci     |      2 |
-| koi8u    | KOI8-U Ukrainian                | koi8u_general_ci    |      1 |
-| gb2312   | GB2312 Simplified Chinese       | gb2312_chinese_ci   |      2 |
-| greek    | ISO 8859-7 Greek                | greek_general_ci    |      1 |
-| cp1250   | Windows Central European        | cp1250_general_ci   |      1 |
-| gbk      | GBK Simplified Chinese          | gbk_chinese_ci      |      2 |
-| latin5   | ISO 8859-9 Turkish              | latin5_turkish_ci   |      1 |
-| armscii8 | ARMSCII-8 Armenian              | armscii8_general_ci |      1 |
+...
 | utf8     | UTF-8 Unicode                   | utf8_general_ci     |      3 |
 | ucs2     | UCS-2 Unicode                   | ucs2_general_ci     |      2 |
-| cp866    | DOS Russian                     | cp866_general_ci    |      1 |
-| keybcs2  | DOS Kamenicky Czech-Slovak      | keybcs2_general_ci  |      1 |
-| macce    | Mac Central European            | macce_general_ci    |      1 |
-| macroman | Mac West European               | macroman_general_ci |      1 |
-| cp852    | DOS Central European            | cp852_general_ci    |      1 |
-| latin7   | ISO 8859-13 Baltic              | latin7_general_ci   |      1 |
+...
 | utf8mb4  | UTF-8 Unicode                   | utf8mb4_general_ci  |      4 |
-| cp1251   | Windows Cyrillic                | cp1251_general_ci   |      1 |
-| utf16    | UTF-16 Unicode                  | utf16_general_ci    |      4 |
-| utf16le  | UTF-16LE Unicode                | utf16le_general_ci  |      4 |
-| cp1256   | Windows Arabic                  | cp1256_general_ci   |      1 |
-| cp1257   | Windows Baltic                  | cp1257_general_ci   |      1 |
-| utf32    | UTF-32 Unicode                  | utf32_general_ci    |      4 |
+...
 | binary   | Binary pseudo charset           | binary              |      1 |
-| geostd8  | GEOSTD8 Georgian                | geostd8_general_ci  |      1 |
-| cp932    | SJIS for Windows Japanese       | cp932_japanese_ci   |      2 |
-| eucjpms  | UJIS for Windows Japanese       | eucjpms_japanese_ci |      3 |
-| gb18030  | China National Standard GB18030 | gb18030_chinese_ci  |      4 |
-+----------+---------------------------------+---------------------+--------+
-41 rows in set (0.00 sec)
+...
+
 
 mysql> SHOW CHARACTER SET like 'utf%';
 +---------+------------------+--------------------+--------+
@@ -1397,48 +1373,40 @@ mysql> SHOW CHARACTER SET like 'utf%';
 | utf32   | UTF-32 Unicode   | utf32_general_ci   |      4 |
 +---------+------------------+--------------------+--------+
 5 rows in set (0.00 sec)
+```
 
-mysql> show collation where Charset = 'utf8';
-+--------------------------+---------+-----+---------+----------+---------+
-| Collation                | Charset | Id  | Default | Compiled | Sortlen |
-+--------------------------+---------+-----+---------+----------+---------+
-| utf8_general_ci          | utf8    |  33 | Yes     | Yes      |       1 |
-| utf8_bin                 | utf8    |  83 |         | Yes      |       1 |
-| utf8_unicode_ci          | utf8    | 192 |         | Yes      |       8 |
-| utf8_icelandic_ci        | utf8    | 193 |         | Yes      |       8 |
-| utf8_latvian_ci          | utf8    | 194 |         | Yes      |       8 |
-| utf8_romanian_ci         | utf8    | 195 |         | Yes      |       8 |
-| utf8_slovenian_ci        | utf8    | 196 |         | Yes      |       8 |
-| utf8_polish_ci           | utf8    | 197 |         | Yes      |       8 |
-| utf8_estonian_ci         | utf8    | 198 |         | Yes      |       8 |
-| utf8_spanish_ci          | utf8    | 199 |         | Yes      |       8 |
-| utf8_swedish_ci          | utf8    | 200 |         | Yes      |       8 |
-| utf8_turkish_ci          | utf8    | 201 |         | Yes      |       8 |
-| utf8_czech_ci            | utf8    | 202 |         | Yes      |       8 |
-| utf8_danish_ci           | utf8    | 203 |         | Yes      |       8 |
-| utf8_lithuanian_ci       | utf8    | 204 |         | Yes      |       8 |
-| utf8_slovak_ci           | utf8    | 205 |         | Yes      |       8 |
-| utf8_spanish2_ci         | utf8    | 206 |         | Yes      |       8 |
-| utf8_roman_ci            | utf8    | 207 |         | Yes      |       8 |
-| utf8_persian_ci          | utf8    | 208 |         | Yes      |       8 |
-| utf8_esperanto_ci        | utf8    | 209 |         | Yes      |       8 |
-| utf8_hungarian_ci        | utf8    | 210 |         | Yes      |       8 |
-| utf8_sinhala_ci          | utf8    | 211 |         | Yes      |       8 |
-| utf8_german2_ci          | utf8    | 212 |         | Yes      |       8 |
-| utf8_croatian_ci         | utf8    | 213 |         | Yes      |       8 |
-| utf8_unicode_520_ci      | utf8    | 214 |         | Yes      |       8 |
-| utf8_vietnamese_ci       | utf8    | 215 |         | Yes      |       8 |
-| utf8_general_mysql500_ci | utf8    | 223 |         | Yes      |       1 |
-+--------------------------+---------+-----+---------+----------+---------+
-27 rows in set (0.00 sec)
+To list the display collations for a character set, use the `INFORMATION_SCHEMA` [`COLLATIONS`](https://dev.mysql.com/doc/refman/5.7/en/information-schema-collations-table.html) table or the [`SHOW COLLATION`](https://dev.mysql.com/doc/refman/5.7/en/show-collation.html) statement：
+
+```mysql
+mysql> SHOW COLLATION WHERE Charset = 'latin1';
++-------------------+---------+----+---------+----------+---------+
+| Collation         | Charset | Id | Default | Compiled | Sortlen |
++-------------------+---------+----+---------+----------+---------+
+| latin1_german1_ci | latin1  |  5 |         | Yes      |       1 |
+| latin1_swedish_ci | latin1  |  8 | Yes     | Yes      |       1 |
+| latin1_danish_ci  | latin1  | 15 |         | Yes      |       1 |
+| latin1_german2_ci | latin1  | 31 |         | Yes      |       2 |
+| latin1_bin        | latin1  | 47 |         | Yes      |       1 |
+| latin1_general_ci | latin1  | 48 |         | Yes      |       1 |
+| latin1_general_cs | latin1  | 49 |         | Yes      |       1 |
+| latin1_spanish_ci | latin1  | 94 |         | Yes      |       1 |
++-------------------+---------+----+---------+----------+---------+
+
+show collation where Charset like 'utf8%'
 ```
 
 #### 10.2.1 Character Set Repertoire ####
 
+字符集的保留表是字符集中字符的集合。
+
 字符串表达式有一个repertoire属性，它可以有两个值:
 
-- ASCII
-- UNICODE
+- ASCII : 表达式只能包含ASCII字符;即Unicode范围内的字符U+0000到U+007F。
+- UNICODE : 表达式可以包含Unicode范围U+0000到U+10FFFF的字符。包括BMP范围内的字符(U+0000 ~ U+FFFF)和BMP范围外的补充字符(U+10000 ~ U+10FFFF)。
+
+ASCII范围是UNICODE范围的子集，因此具有ASCII配置表的字符串可以安全地转换为具有UNICODE配置表的任何字符串的字符集，而不会丢失信息。它也可以安全地转换为任何ascii字符集的超集字符集。
+
+1, 字符串常量的配置表取决于字符串内容，可能与字符串字符集的配置表不同。
 
 ```mysql
 SET NAMES utf8; SELECT 'abc';
@@ -1448,10 +1416,22 @@ SELECT N'MySQL';
 
 尽管上述每种情况下的字符集都是utf8，但字符串实际上并不包含ASCII范围之外的任何字符，因此它们的字符集是ASCII而不是UNICODE。
 
+2, 具有ascii字符集的列由于其字符集而具有ascii指令集
+
+```mysql
+CREATE TABLE t1 (c1 CHAR(1) CHARACTER SET ascii);
+```
+
 #### 10.2.2 UTF-8 for Metadata ####
+
+元数据是“关于数据的数据”。任何描述数据库(而不是数据库内容)的内容都是元数据。因此，列名、数据库名、用户名、版本名以及SHOW的大部分字符串结果都是元数据。
 
 - 元数据必须在同一个字符集中
 - 元数据必须包含所有语言中的所有字符。
+
+元数据要求意味着USER()、CURRENT_USER()、SESSION_USER()、SYSTEM_USER()、DATABASE()和VERSION()函数的返回值默认设置为UTF-8字符。
+
+服务器将系统变量character_set_system设置为元数据字符集的名称:
 
 ```mysql
 mysql> SHOW VARIABLES LIKE 'character_set_system';
@@ -1463,7 +1443,11 @@ mysql> SHOW VARIABLES LIKE 'character_set_system';
 1 row in set, 1 warning (0.00 sec)
 ```
 
+使用Unicode存储元数据并不意味着服务器默认以`character_set_system`字符集的形式返回列头和DESCRIBE函数的结果。当您使用`SELECT column1 FROM t`时，名称`column1`本身以`character_set_results`系统变量的值决定的字符集的形式从服务器返回给客户端，
+
 ### 10.3 指定字符集和排序规则 ###
+
+字符集和排序有四个级别的默认设置:服务器、数据库、表和列。
 
 1, server级别：默认是  `latin1` and `latin1_swedish_ci` ，可以在编译时设置或者启动server时指定。
 
@@ -1472,8 +1456,6 @@ mysql> SHOW VARIABLES LIKE 'character_set_system';
 3, 字面量级别：默认字符集和连接设置的字符集相同。由`character_set_connection`和`collation_connection`系统变量定义的排序规则。
 
 4, character Set introducers, 可以看作用什么样的字符集来解释 'string literal',但最终都会根据默认连接的字符集去转义为对应的bytes数据。
-
-设置客户端的连接的字符集:`SET NAMES 'utf8';`
 
 #### 10.3.1 排序集的命名规则 ####
 
@@ -1491,11 +1473,15 @@ mysql> SHOW VARIABLES LIKE 'character_set_system';
   | `_cs`  | Case-sensitive                |
   | `_bin` | Binary                        |
 
-对于二进制字符集的二进制排序，比较是基于数字字节值的。对于非二进制字符集的_bin排序，比较基于数字字符代码(解释为unicode码)值，这与多字节字符的字节值不同。有关二进制字符集的二进制排序和非二进制字符集的_bin排序之间的差异的信息: see [Section 10.8.5, “The binary Collation Compared to _bin Collations”](https://dev.mysql.com/doc/refman/5.7/en/charset-binary-collations.html).Unicode字符集的排序规则名称可以包括版本号，以表示排序规则所基于的Unicode排序规则算法(UCA)的版本。
+对于二进制字符集的二进制排序，比较是基于数字字节值的。对于非二进制字符集的`_bin`排序，比较基于数字字符代码(解释为unicode码)值，这与多字节字符的字节值不同。有关二进制字符集的二进制排序和非二进制字符集的`_bin`排序之间的差异的信息: see [Section 10.8.5, “The binary Collation Compared to _bin Collations”](https://dev.mysql.com/doc/refman/5.7/en/charset-binary-collations.html).Unicode字符集的排序规则名称可以包括版本号，以表示排序规则所基于的Unicode排序规则算法(UCA)的版本。
 
 #### 10.3.2 服务器的字符集和排序集 ####
 
-配置文件方式，启动时的命令行参数.
+MySQL服务器有一个服务器字符集和一个服务器排序。默认情况下，它们是latin1和latin1_swedish_ci.
+
+配置文件方式，启动时的命令行参数 : mysqld --character-set-server=latin1
+
+或者在编译的时候指定：cmake . -DDEFAULT_CHARSET=latin1
 
 #### 10.3.3 Database 字符集和排序集 ####
 
@@ -1516,7 +1502,7 @@ MySQL选择数据库字符集和数据库排序的方式如下:
 - 如果在没有字符集的情况下指定COLLATE collation_name，则使用与collation_name和collation_name关联的字符集。
 - 否则(既没有指定字符集也没有指定排序规则)，将使用服务器字符集和服务器排序规则。
 
-查看数据库默认的字符集和排序集:
+查看数据库级别(给定数据库)默认的字符集和排序集:
 
 ```mysql
 mysql> SELECT @@character_set_database, @@collation_database;
@@ -1548,7 +1534,7 @@ col_name {CHAR | VARCHAR | TEXT} (col_length)
     [COLLATE collation_name]
 ```
 
-#### 10.3.6 字符的 字符集和排序集 ####
+#### 10.3.6 字符串字面值字符集和排序 ####
 
 对于简单语句SELECT 'string'，字符串具有由`character_set_connection`和`collation_connection`系统变量定义的连接默认字符集和排序规则。
 
@@ -1567,21 +1553,35 @@ SELECT _utf8'abc' COLLATE utf8_danish_ci;
 
 #### 10.3.8 Character Set Introducers ####
 
-字符串文字量、十六进制文字量或位值文字量可以具有可选的字符集导入器和COLLATE子句，将其指定为使用特定字符集和排序规则的字符串: `[_charset_name] literal [COLLATE collation_name]`
+字符串字面值、十六进制字面值或位值字面值可以有一个可选的字符集导入器和COLLATE子句，将其指定为使用特定字符集和排序规则的字符串
 
 导入器不会像CONVERT()那样将字符串更改为导入器字符集。它不会改变字符串值，尽管可能会出现填充。引导者只是一个信标。
 
 ### 10.4 连接的字符集和排序集 ###
 
-**一些说明**
+“连接”是客户端程序在连接到服务器时所做的，用来开始与服务器交互的会话。客户端通过会话连接发送SQL语句，比如查询。服务器通过连接将响应(如结果集或错误消息)发送回客户机。
 
-1，`character_set_client` : 作为客户端默认的字符集，SQL中字面量默认的字符集。确认字符串是什么东西。
+**连接字符和字符集的系统变量**
 
-2，当收到SQL时，server应该怎样编码sql语句? ` character_set_connection ` ` collation_connection` 这两个变量将SQL翻译成对应的bytes。
+- `character_set_server`和`collation_server`系统变量表示服务器字符集和排序规则。
+- `character_set_database`和`collation_database`系统变量表示默认数据库的字符集和排序规则。
 
-3，在将查询结果传送回客户端之前，服务器应该将其转换成什么字符集? `character_set_results`
+关于字符集和客户端连接的排序处理的几个问题可以根据系统变量来回答：
 
-4， 查看系统默认怎么样对待连接：
+- `character_set_client`  服务器将character_set_client系统变量作为客户端发送语句的字符集。
+
+- 服务器接收到语句后应该将其转换成什么字符集? 
+
+  为了确定它，服务器使用`character_set_connection`和`collation_connection`系统变量 : 
+
+  - server 将语句从 character_set_client 字符集转换为 character_set_connection 字符集，但是单独指定了字符集的string字面量除外。
+  - `collation_connection`对于字面值字符串的比较很重要。对于字符串与列值的比较，`collation_connection`并不重要，因为列有它们自己的排序规则，它有更高的排序规则优先级
+
+- 在将查询结果发送回客户端之前，服务器应该将其转换成什么字符集? 
+
+  `character_set_results`系统变量表示服务器将查询结果返回给客户端的字符集。这包括结果数据(如列值)、结果元数据(如列名)和错误消息。
+
+要查看应用于当前会话的字符集和排序系统变量的值，使用下面的语句:
 
 ```mysql
 SELECT * FROM performance_schema.session_variables
@@ -1591,65 +1591,32 @@ WHERE VARIABLE_NAME IN (
 ) ORDER BY VARIABLE_NAME;
 ```
 
-5，查看当前session的变量:
+下面的简单语句也显示连接变量，但还包括其他相关变量。它们可以用于查看所有字符集和排序系统变量:
 
 ```mysql
 SHOW SESSION VARIABLES LIKE 'character\_set\_%';
 SHOW SESSION VARIABLES LIKE 'collation\_%';
 ```
 
-**系统变量**
-
-一些字符集和排序系统变量与客户机与服务器的交互有关。
-
-The [`character_set_server`](https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_character_set_server) and [`collation_server`](https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_collation_server) system variables indicate the server character set and collation. See [Section 10.3.2, “Server Character Set and Collation”](https://dev.mysql.com/doc/refman/5.7/en/charset-server.html).
-
-服务器接收语句后应该将语句转换成什么字符集?
-
-- 服务器将客户端发送的语句从转换 [`character_set_client`](https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_character_set_client)为 [`character_set_connection`](https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_character_set_connection)。
-- [`collation_connection`](https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_collation_connection)对于比较文字字符串很重要。对于将字符串与列值进行比较， [`collation_connection`](https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_collation_connection) 没有关系，因为列具有自己的排序规则
-
-在将查询结果发送回客户端之前，服务器应将其转换为什么字符集？
-
-- 所述[`character_set_results`](https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_character_set_results) 系统变量指示的字符集，其中所述服务器查询结果返回到客户端。
-
-```mysql
-mysql> SHOW SESSION VARIABLES LIKE 'character\_set\_%';
-+--------------------------+---------+
-| Variable_name            | Value   |
-+--------------------------+---------+
-| character_set_client     | gbk     |
-| character_set_connection | gbk     |
-| character_set_database   | utf8mb4 |
-| character_set_filesystem | binary  |
-| character_set_results    | gbk     |
-| character_set_server     | latin1  |
-| character_set_system     | utf8    |
-+--------------------------+---------+
-7 rows in set, 1 warning (0.00 sec)
-
-mysql> SHOW SESSION VARIABLES LIKE 'collation\_%';
-+----------------------+--------------------+
-| Variable_name        | Value              |
-+----------------------+--------------------+
-| collation_connection | gbk_chinese_ci     |
-| collation_database   | utf8mb4_general_ci |
-| collation_server     | latin1_swedish_ci  |
-+----------------------+--------------------+
-3 rows in set, 1 warning (0.00 sec)
-```
-
 **用于连接字符集配置的SQL语句**
 
-`SET NAMES`表示客户端使用什么字符集将SQL语句发送到服务器。
+但是有两个更方便的语句将连接相关的字符集系统变量作为一个组来一起设置：
 
-A [`SET NAMES 'charset_name'`](https://dev.mysql.com/doc/refman/5.7/en/set-names.html) statement is equivalent to these three statements:
+- `SET NAMES 'charset_name' [COLLATE 'collation_name']`
 
-```mysql
-SET character_set_client = charset_name;
-SET character_set_results = charset_name;
-SET character_set_connection = charset_name;
-```
+  ```mysql
+  SET character_set_client = charset_name;
+  SET character_set_results = charset_name;
+  SET character_set_connection = charset_name;
+  ```
+
+- ``SET CHARACTER SET 'charset_name'`
+
+  ```mysql
+  SET character_set_client = charset_name;
+  SET character_set_results = charset_name;
+  SET collation_connection = @@collation_database;
+  ```
 
 **对于数据输入而言：**
 
@@ -1671,37 +1638,7 @@ SET character_set_connection = charset_name;
 
 客户端使用的字符集必须通过`character_set_results`来体现，服务器询问客户端字符集，通过`character_set_results`将结果转换为与客户端相同的字符集传递给客户端。(`character_set_results`默认等于`character_set_client`)
 
-### 10.6 Error Message Character Set ###
-
-1.错误消息的构造
-
-2.错误消息的处理
-
-### 10.10 支持的字符集和排序集 ###
-
-`SHOW CHARACTER SET;`
-
-#### 10.10.1 Unicode 字符集 ####
-
-utf8mb4
-
-utf8 (utf8mb3)
-
-ucs2 utf16 utf16le utf32
-
-#### 10.10.8 二进制 字符集 ####
-
-对于存储为二进制字符串的单字节字符，字符和字节边界是相同的，因此在比较中，字母大小写和重音差异是显著的。也就是说，二进制排序是区分大小写和大小写的。
-
-### 10.11 字符集的限制 ###
-
-- 标识符使用utf8存储在mysql数据库表(user、db等)中，但是标识符只能包含基本多语言平面(Basic Multilingual Plane, BMP)中的字符。标识符中不允许使用补充字符。
-- ucs2、utf16、utf16le和utf32字符集有以下限制:
-  - 它们都不能用作客户端字符集。
-  - 目前不可能使用LOAD DATA来加载使用这些字符集的数据文件。
-  - 不能在使用任何这些字符集的列上创建全文索引。但是，您可以在没有索引的情况下对列执行布尔模式搜索。
-
-## 11. Data Types ##
+## 11. 数据类型 ##
 
 ### 11.1 数值数据类型 ###
 
