@@ -837,6 +837,10 @@ MySQL Server has several logs that can help you find out what activity is taking
 - MySQL中的复制功能最初是基于SQL语句从源到副本的传播。
 - 在基于行的日志记录中，源将事件写入二进制日志，以表明单个表行受到的影响。
 
+## 6. 安全 ##
+
+## 7. 备份和恢复 ##
+
 ## 8. 优化 ##
 
 ## 9. 语言结构 ##
@@ -850,6 +854,16 @@ MySQL Server has several logs that can help you find out what activity is taking
 二进制字符串是一串字节。每个二进制字符串都有一个名为binary的字符集和排序规则。非二进制字符串是一串字符。它有二进制以外的字符集和与字符集兼容的排序规则。对于这两种类型的字符串，比较都是基于字符串单位的数值。bytes类型的使用转换之后的二进制进行比较，其他字符集的字符，使用对应的字符码进行比较。
 
 `[_charset_name]'string' [COLLATE collation_name]`
+
+```mysql
+SELECT _latin1'string';
+SELECT _binary'string';
+SELECT _utf8'string' COLLATE utf8_danish_ci;
+
+SELECT N'some text'; -- national character set
+SELECT n'some text';
+SELECT _utf8'some text';
+```
 
 string 的 `\` 具有特殊的意义。反斜杠后面的字符不具备转义的字符将不会被转义。
 
@@ -879,6 +893,24 @@ mysql> SELECT 'hello', '"hello"', '""hello""', 'hel''lo', '\'hello';
 
 #### 9.1.2 Numeric Literals ####
 
+Number literals include exact-value (integer and [`DECIMAL`](https://dev.mysql.com/doc/refman/5.7/en/fixed-point-types.html)) literals and approximate-value (floating-point) literals.
+
+#### 9.1.3 Date & Time 字面量 ####
+
+日期和时间值可以用多种格式表示，例如带引号的字符串或数字，具体取决于值的确切类型和其他因素。例如，在上下文中，其中的MySQL预计日期时，它解释任何的 `'2015-07-21'`，`'20150721'`以及`20150721`作为一个日期。
+
+标准 SQL 要求使用 type 关键字和字符串指定临时文字。关键字和字符串之间的空格是可选的。
+
+```mysql
+DATE 'str'
+TIME 'str'
+TIMESTAMP 'str'
+-- 标准 SQL 语法的 ODBC 语法：
+{ d 'str' }
+{ t 'str' }
+{ ts 'str' }
+```
+
 String and Numeric Literals in Date and Time Context. 
 
 MySQL recognizes [`DATE`](https://dev.mysql.com/doc/refman/5.7/en/datetime.html) values in these formats: YYYY-MM-DD
@@ -892,6 +924,67 @@ MySQL interprets two-digit year values using these rules:
 - Year values in the range `70-99` become `1970-1999`.
 - Year values in the range `00-69` become `2000-2069`.
 
+#### 9.1.4 十六进制文字 ####
+
+十六进制字面量的写法有两种: `X'val'` & `0xval`
+
+```mysql
+X'01AF'
+X'01af'
+x'01AF'
+x'01af'
+0x01AF
+0x01af
+```
+
+使用符号写入的值 必须包含偶数个数字，否则会出现语法错误。
+
+```console
+mysql> SET @s = X'FFF';
+ERROR 1064 (42000): You have an error in your SQL syntax;
+check the manual that corresponds to your MySQL server
+version for the right syntax to use near 'X'FFF''
+
+mysql> SET @s = X'0FFF';
+Query OK, 0 rows affected (0.00 sec)
+
+```
+
+默认情况下，十六进制文字是一个二进制字符串，其中每一对十六进制数字代表一个字符:
+
+```mysql
+mysql> SELECT X'4D7953514C', CHARSET(X'4D7953514C');
++---------------+------------------------+
+| X'4D7953514C' | CHARSET(X'4D7953514C') |
++---------------+------------------------+
+| MySQL         | binary                 |
++---------------+------------------------+
+mysql> SELECT 0x5461626c65, CHARSET(0x5461626c65);
++--------------+-----------------------+
+| 0x5461626c65 | CHARSET(0x5461626c65) |
++--------------+-----------------------+
+| Table        | binary                |
++--------------+-----------------------+
+```
+
+#### 9.1.5 Bit-value 字面量 ####
+
+`b'val'` & `0bval` 这两种写法
+
+实际上不管十六进制还是二进制的字面量，MySQL对其都有两种解释方式，在当作display时，就看成string类型的。在numeric的环境中，MySQL treats a bit literal like an integer (使用方式是加0 或者 使用 CAST 函数)
+
+```mysql
+mysql> SET @v1 = b'1100001';
+mysql> SET @v2 = b'1100001'+0;
+mysql> SET @v3 = CAST(b'1100001' AS UNSIGNED);
+mysql> SELECT @v1, @v2, @v3;
++------+------+------+
+| @v1  | @v2  | @v3  |
++------+------+------+
+| a    |   97 |   97 |
++------+------+------+
+```
+
 #### 9.1.6 Boolean Literals ####
 
 ```mysql
@@ -901,41 +994,54 @@ mysql> SELECT TRUE, true, FALSE, false;
 
 #### 9.1.7 NULL Literals ####
 
-可以使用 `\N` 表示NULL
-
 ### 9.2 Schema Object Names ###
 
 1, 如果 `ANSI_QUOTES`  SQL MODE 启用了，那么也可以用双引号引用标识符。在启用了该模式之后字符串必须用单引号括起来。
 
-Certain objects within MySQL, including database, table, index, column, alias, view, stored procedure, partition, tablespace, and other object names are known as identifiers. [Section 9.2.1, “Identifier Length Limits”](https://dev.mysql.com/doc/refman/5.7/en/identifier-length.html), indicates the maximum length of each type of identifier. [Section 9.2.3, “Identifier Case Sensitivity”](https://dev.mysql.com/doc/refman/5.7/en/identifier-case-sensitivity.html), describes which types of identifiers are case-sensitive and under what conditions.
+MySQL中的某些对象，包括数据库、表、索引、列、别名、视图、存储过程、分区、表空间和其他对象名称，都被称为标识符.
 
-一个标识符可以括起来 可以不用引号括起来，如果一个标识符包含特殊的字符或者保留字，必须用括号括起来。关键字和保留字可以参考: [Section 9.3, “Keywords and Reserved Words”](https://dev.mysql.com/doc/refman/5.7/en/keywords.html).
+标识符可以被引用，也可以不被引用。如果标识符包含特殊字符或保留字，则在引用它时必须引用它。
 
-在内部，标识符被转换为Unicode (UTF-8)并存储为Unicode。标识符中允许的Unicode字符是基本多语言平面（BMP）中的字符。不允许使用补充字符。因此，标识符可能包含以下字符：
+在内部，标识符被转换为Unicode (UTF-8)并存储为Unicode。标识符中允许的Unicode字符是基本多语言平面(BMP)中的字符。不允许使用补充字符。因此，标识符可以包含以下字符:
 
-- 未加引号的标识符中允许的字符：
-  - ASCII：[0-9，az，AZ $ _]（基本拉丁字母，数字0-9，美元，下划线）
-  - 扩展：U + 0080 .. U + FFFF
-- 带引号的标识符中允许的字符包括完整的Unicode基本多语言平面（BMP），但U + 0000除外：
-  - ASCII：U + 0001 .. U + 007F
-  - 扩展：U + 0080 .. U + FFFF
-- 带引号或不带引号的标识符中不允许使用ASCII NUL（U + 0000）和补充字符（U + 10000及更高版本）。
-- 标识符可以以数字开头，但除非加引号，否则不能仅由数字组成。
-- 数据库，表和列的名称不能以空格字符结尾。
+- 不带引号的标识符中允许的字符:
+  - ASCII : `[0-9,a-z,A-Z$_]`  基本拉丁字母，数字0-9，美元，下划线
+  - 扩展: \u0080 -- \uffff
+- 引号标识符中允许的字符包括完整的Unicode基本多语言平面(BMP)， U+0000除外:
+  - ASCII: U+0001 .. U+007F
+  - Extended: U+0080 .. U+FFFF
+- ASCII NUL (U+0000)和补充字符(U+10000及以上)不允许出现在引号或非引号标识符中。
+- 标识符可以以数字开头，但除非用引号括起来，否则不能完全由数字组成。
+- 数据库、表和列名不能以空格字符结尾。
 
 标识符的引号是 : `
 
 ```mysql
-mysql> SELECT * FROM `select` WHERE `select`.id > 100;
+mysql> SELECT * FROM `select` WHERE `select`.`id` > 100;
 ```
 
-如果启用了 `ANSI_QUOTES` SQL模式后，双引号也可以用作标识符引号。如[第5.1.10节“服务器SQL模式”中](https://dev.mysql.com/doc/refman/5.7/en/sql-mode.html)所述，控制[服务器SQL模式](https://dev.mysql.com/doc/refman/5.7/en/sql-mode.html)。
+如果启用了 `ANSI_QUOTES` SQL模式后，双引号也可以用作标识符引号。
 
-如果要包含在标识符中的字符与用于引用标识符本身的字符相同，则需要将该字符加倍。以下语句创建一个名为的表a`b ，其中包含名为的列 c"d：
+如果您引用标识符，标识符引号字符可以包含在标识符中。如果标识符中包含的字符与用来引用标识符本身的字符相同，那么需要将字符双引号。以下语句创建一个名为的表a`b ，其中包含名为的列 c"d：
 
 ```mysql
 mysql> CREATE TABLE `a``b` (`c"d` INT);
 ```
+
+在查询的选择列表中，可以使用标识符或字符串引号字符指定引号括起来的列别名:
+
+```mysql
+mysql> SELECT 1 AS `one`, 2 AS 'two';
++-----+-----+
+| one | two |
++-----+-----+
+|   1 |   2 |
++-----+-----+
+```
+
+在语句的其他地方，对别名的引用必须使用引用的标识符，否则引用将被视为字符串文字。
+
+用户变量不能作为标识符或标识符的一部分直接在SQL语句中使用
 
 #### 9.2.1 标识符长度限制 ####
 
@@ -957,16 +1063,16 @@ mysql> CREATE TABLE `a``b` (`c"d` INT);
 
 #### 9.2.2 Identifier Qualifiers ####
 
-对象的名字必须是有限定符的，或者是无限定符的。在对名称的解释没有歧义的上下文中，允许使用非限定名称。限定名包括至少一个限定符，通过覆盖默认上下文或提供缺失的上下文来澄清解释上下文。
+对象名称可以是非限定的，也可以是限定的。在对名称的解释是明确的上下文中，允许使用非限定名称。限定名包括至少一个限定符，通过覆盖默认上下文或提供缺少的上下文来澄清解释上下文。
 
 限定符的特征:
 
 - 非限定名称由单个标识符组成。限定名由多个标识符组成。
-- 多部分名称的组成部分必须用句点(.)字符分隔。多部分名称的初始部分充当限定符，影响要在其中解释最终标识符的上下文。
-- The qualifier character is a separate token and need not be contiguous with the associated identifiers. For example, `tbl_name.col_name` and `tbl_name.col_name` are equivalent.
-- If any components of a multiple-part name require quoting, quote them individually rather than quoting the name as a whole. For example, write `my-table`.`my-column`, not `my-table.my-column`.
-- 限定名中句点之后的保留字必须是标识符，因此在该上下文中不需要用引号括起来。
-- The syntax `.tbl_name` means the table `tbl_name` in the default database.
+- 由多个部分组成的名称必须用句点(.)字符分隔。多部分名称的初始部分充当限定词，影响在其中解释最终标识符的上下文。
+- 限定符字符是一个单独的标记，不需要与相关标识符相连。
+- 如果包含多个部分的名称的任何组件需要引用，请单独引用它们，而不是引用整个名称。
+- 限定名中句点后面的保留字必须是标识符，因此在该上下文中不需要用引号引用。
+- 语法`.tbl_name`表示默认数据库中的表`tbl_name`。
 
 允许的对象名称限定符依赖于对象类型:
 
@@ -1032,42 +1138,76 @@ MySQL supports built-in (native) functions, user-defined functions (UDFs), and s
 
 **Built-In Function Name Parsing**
 
-解析器仅在解析预期为表达式的内容时，才应将内置函数的名称识别为指示函数调用。即，在非表达式上下文中，允许使用函数名称作为标识符。
+当解析器遇到内置函数的名称时，它必须确定该名称是表示函数调用，还是对表名或列名等标识符的非表达式引用。例如，在下面的语句中，对count的第一个引用是一个函数调用，而第二个引用是一个表名:
+
+```mysql
+SELECT COUNT(*) FROM mytable;
+CREATE TABLE count (i INT);
+```
 
 但是，某些内置函数具有特殊的解析或实现注意事项，因此解析器默认情况下使用以下规则来区分其名称是在非表达式上下文中用作函数调用还是用作标识符：
 
 - 要将名称用作表达式中的函数调用，名称和后面的`(`括号字符之间必须没有空格 。
 - 相反，要将函数名称用作标识符，切勿在其后立即加上括号。
 
+相关的SQL_MODE:  [`IGNORE_SPACE`](https://dev.mysql.com/doc/refman/5.7/en/sql-mode.html#sqlmode_ignore_space) 
+
+**function name resolution**
+
 ### 9.3 关键字和保留字 ###
 
-允许使用非保留关键字作为标识符而无需引用。`BEGIN`和`END`是关键字，但不是保留关键字，因此它们用作标识符不需要引用。
+关键字是SQL中有意义的词。
+
+允许使用非保留关键字作为标识符而无需引用。
 
 **MySQL 5.7关键字和保留字**: https://dev.mysql.com/doc/refman/5.7/en/keywords.html
 
 ### 9.4 用户定义的变量 ###
 
-用户定义的变量是特定于会话的.
+您可以在一条语句中将值存储在用户定义的变量中，稍后在另一条语句中引用它。这使您能够将值从一条语句传递到另一条语句。
 
-设置用户定义变量的一种方法是发出一条 [`SET`](https://dev.mysql.com/doc/refman/5.7/en/set-variable.html) 语句：
+用户变量的写法： `@var_name` 或者用引号将变量引用起来 例如： `@'my-var'`
 
-```sql
+用户定义的变量是特定于会话的. 用户变量名不区分大小写。名称的最大长度为64个字符。
+
+```mysql
 SET @var_name = expr [, @var_name = expr] ...
+```
 
--- X 表示多少进制
+对于SET来说，`=` `:=` 都可以用作赋值语句
+
+用户变量可以从一组有限的数据类型中赋值:整数、十进制、浮点、二进制或非二进制字符串或者 NULL.
+
+如果给用户变量分配了一个非二进制(字符)字符串值，则它具有与字符串相同的字符集和排序规则。
+
+分配给用户变量的十六进制或位值被视为二进制字符串.
+
+```mysql
 mysql> SET @v1 = X'41';
-Query OK, 0 rows affected (0.00 sec)
 mysql> SET @v2 = X'41'+0;
-Query OK, 0 rows affected (0.00 sec)
 mysql> SET @v3 = CAST(X'41' AS UNSIGNED);
-Query OK, 0 rows affected (0.00 sec)
-mysql> SELECT @v1,@v2,@v3;
+mysql> SELECT @v1, @v2, @v3;
 +------+------+------+
 | @v1  | @v2  | @v3  |
 +------+------+------+
 | A    |   65 |   65 |
 +------+------+------+
-1 row in set (0.00 sec)
+```
+
+如果在结果集中选择了用户变量的值，则将其作为字符串返回给客户端。
+
+如果你引用一个没有初始化的变量，它的值是NULL，类型是字符串。
+
+当在SET之外进行赋值时，赋值操作符必须是`:=`而不是`=`，因为后者在除SET之外的语句中被视为比较操作符=
+
+```mysql
+mysql> SET @t1=1, @t2=2, @t3:=4;
+mysql> SELECT @t1, @t2, @t3, @t4 := @t1+@t2+@t3;
++------+------+------+--------------------+
+| @t1  | @t2  | @t3  | @t4 := @t1+@t2+@t3 |
++------+------+------+--------------------+
+|    1 |    2 |    4 |                  7 |
++------+------+------+--------------------+
 ```
 
 ### 9.5 Expressions ###
