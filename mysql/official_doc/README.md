@@ -1288,7 +1288,7 @@ simple_expr:
 
 `INTERVAL expr unit`
 
-```sql
+```mysql
 mysql> SELECT DATE_ADD('2018-05-01',INTERVAL 1 DAY);
         -> '2018-05-02'
 mysql> SELECT DATE_SUB('2018-05-01',INTERVAL 1 YEAR);
@@ -1314,14 +1314,6 @@ mysql> SELECT DATE_ADD('1992-12-31 23:59:59.000002',
     ->            INTERVAL '1.999999' SECOND_MICROSECOND);
         -> '1993-01-01 00:00:01.000001'
 ```
-
-### 9.6 Comments ###
-
-MySQL Server 支持三种注释样式:
-
-- 从 # 字符到行尾
-- 从 `-- ` 序列到行尾
-- `/* xxxxxxxxxx */`
 
 ## 10. Character Sets, Collations, Unicode ##
 
@@ -1721,8 +1713,6 @@ mysql> SELECT IF(2 = FALSE, 'true', 'false');
 
 #### 11.1.2 整数类型 ####
 
-**表11.1 MySQL支持的整数类型的必需存储和范围**
-
 | 类型        | 储存空间（bytes） | 最低签名      | 最小值无符号 | 签名的最大值 | 最大值无符号 |
 | :---------- | :---------------- | :------------ | :----------- | :----------- | :----------- |
 | `TINYINT`   | 1                 | `-128`        | `0`          | `127`        | `255`        |
@@ -1755,27 +1745,31 @@ M:应用程序可以使用这个可选的显示宽度来显示整数值，该整
 
 ### 11.2 Date and Time Data Types ###
 
-日期和时间数据类型用于表示时间值 [`DATE`](https://dev.mysql.com/doc/refman/5.7/en/datetime.html)， [`TIME`](https://dev.mysql.com/doc/refman/5.7/en/time.html)， [`DATETIME`](https://dev.mysql.com/doc/refman/5.7/en/datetime.html)， [`TIMESTAMP`](https://dev.mysql.com/doc/refman/5.7/en/datetime.html)，和 [`YEAR`](https://dev.mysql.com/doc/refman/5.7/en/year.html)。每个时间类型都有一个有效值范围，以及当您指定MySQL无法代表的无效值时可以使用的“零”值。该[`TIMESTAMP`](https://dev.mysql.com/doc/refman/5.7/en/datetime.html)和 [`DATETIME`](https://dev.mysql.com/doc/refman/5.7/en/datetime.html)类型有特殊的自动更新的行为，在描述 [第11.2.6节，“自动初始化和更新TIMESTAMP和DATETIME”](https://dev.mysql.com/doc/refman/5.7/en/timestamp-initialization.html)。
+每种时态类型都有一个有效值范围，以及一个“零”值，当您指定一个MySQL不能表示的无效值时，可以使用这个值。
+
+TIMESTAMP和DATETIME类型具有特殊的自动更新行为。
+
+在处理日期和时间类型时，请记住以下一般注意事项:
+
+- 虽然MySQL尝试用几种格式解释值，但是日期部分必须总是以年-月-日的顺序给出
+- 包含两位数年份的日期是不明确的，因为世纪是未知的。MySQL使用以下规则解释2位数的年份值:
+  - Year values in the range `70-99` become `1970-1999`.
+  - Year values in the range `00-69` become `2000-2069`.
+- MySQL自动将日期或时间值转换为数字，如果该值在数字上下文中使用，反之亦然。
+- MySQL允许您在DATE或DATETIME列中存储日或月或日为零的日期。这对于需要存储您可能不知道确切日期的生日的应用程序是有用的。
+- MySQL允许你存储一个“零”值“0000-00-00”作为一个“虚拟日期”。
 
 #### 11.2.1 Date / Time Data 语法 ####
 
-`DATE TIME DATETIME TIMESTAMP YEAR`
+表示时间值的日期和时间数据类型是DATE、TIME、DATETIME、TIMESTAMP和YEAR。
 
-`TIME TIMESTAMP DATETIME` 支持 fractional seconds
-
-使用语法type_name(fsp)，其中type_name是时间、日期时间或时间戳，fsp是小数秒精度。
-
-表中的任何`TIMESTAMP`或`DATETIME`列都可以自动初始化和更新属性;
+对于 TIME DATETIME TIMESTAMP MySQL提供微秒的支持(0-6)
 
 **DATE** : 1000-01-01 ~ 9999-12-31
 
 **DATETIME [(fsp)]** ： The supported range is `'1000-01-01 00:00:00.000000'` to `'9999-12-31 23:59:59.999999'`.
 
-自动初始化和更新可以使用： `DEFAULT` `ON UPDATE`
-
-**TIMESTAMP[(fsp)]** : The range is `'1970-01-01 00:00:01.000000'` UTC to `'2038-01-19 03:14:07.999999'` UTC
-
-服务器处理时间戳定义的方式取决于explicit_defaults_for_timestamp系统变量的值.
+**TIMESTAMP[(fsp)]** : The range is `'1970-01-01 00:00:01.000000'` UTC to `'2038-01-19 03:14:07.999999'` UTC, timestamp保存的是从1970以来经过的时间的秒数。TIMESTAMP不能表示值'1970-01-01 00:00:00'，因为这相当于从纪元开始的0秒，值0保留来表示'0000-00-00 00:00:00'，即时间戳的“零”值。
 
 **TIME[(fsp)]** : The range is `'-838:59:59.000000'` to `'838:59:59.000000'`. 
 
@@ -1783,37 +1777,80 @@ M:应用程序可以使用这个可选的显示宽度来显示整数值，该整
 
 #### 11.2.2 DATA DATETIME TIMESTAMP Types ####
 
-MySQL将时间戳值从当前时区转换为UTC进行存储，并将UTC转换为当前时区进行检索。
-
-当前时区可以作为`time_zone`系统变量的值使用。更多信息，请参见5.1.13节“MySQL服务器时区支持”。
-
-在严格模式下，不合法的日期值将会被转换为 “0” 值。
+MySQL 将`TIMESTAMP`值从当前时区转换为 UTC 进行存储，然后从 UTC 转换回当前时区以进行检索。
 
 #### 11.2.6 自动初始化和更新 时间戳和日期时间 ####
 
 - 对于未指定该列值的插入行，自动初始化的列被设置为当前时间戳。
 - 当行中任何其他列的值从当前值更改时，自动更新的列将自动更新为当前时间戳。
 
-要指定自动属性，请在列定义中使用默认的`CURRENT_TIMESTAMP`和`UPDATE CURRENT_TIMESTAMP`子句。
+`CURRENT_TIMESTAMP`的同义词与`CURRENT_TIMESTAMP`具有相同的含义。它们是`CURRENT_TIMESTAMP()`、`NOW()`、`LOCALTIME`、`LOCALTIME()`、`LOCALTIMESTAMP`和`LOCALTIMESTAMP()`。
 
-`CURRENT_TIMESTAMP()`、`NOW()`、`LOCALTIME`、`LOCALTIME()`、`LOCALTIMESTAMP`和`LOCALTIMESTAMP()`
+Use of `DEFAULT CURRENT_TIMESTAMP` and `ON UPDATE CURRENT_TIMESTAMP` is specific to [`TIMESTAMP`](https://dev.mysql.com/doc/refman/5.7/en/datetime.html) and [`DATETIME`](https://dev.mysql.com/doc/refman/5.7/en/datetime.html). 
+
+The `DEFAULT` clause also can be used to specify a constant (nonautomatic) default value (for example, `DEFAULT 0` or `DEFAULT '2000-01-01 00:00:00'`).
 
 ![352483-20181009155822082-312374696.jpg (1080×600)](.assets/352483-20181009155822082-312374696.jpg)
 
-**使用`DEFAULT CURRENT_TIMESTAMP`和时 `ON UPDATE CURRENT_TIMESTAMP`，该列具有其默认值的当前时间戳，并自动更新为当前时间戳。**
+1，两者都指定，列具有其默认值的当前时间戳，并自动更新为当前时间戳。
 
-**如果有`ON UPDATE CURRENT_TIMESTAMP` 子句但没有`DEFAULT`子句，则该列会自动更新为当前时间戳，但没有默认值的当前时间戳。**
+```mysql
+CREATE TABLE t1 (
+  ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  dt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+```
+
+2, 如果有一个DEFAULT子句，但没有ON UPDATE CURRENT_TIMESTAMP子句，则列具有给定的默认值，不会自动更新到当前时间戳。
+
+```mysql
+CREATE TABLE t1 (
+  ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  dt DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE t1 (
+  ts TIMESTAMP DEFAULT 0,
+  dt DATETIME DEFAULT 0
+);
+```
+
+3, 使用ON UPDATE CURRENT_TIMESTAMP子句和常量DEFAULT子句，列将自动更新为当前时间戳，并具有给定的常量默认值。
+
+```mysql
+CREATE TABLE t1 (
+  ts TIMESTAMP DEFAULT 0 ON UPDATE CURRENT_TIMESTAMP,
+  dt DATETIME DEFAULT 0 ON UPDATE CURRENT_TIMESTAMP
+);
+```
+
+4, 使用ON UPDATE CURRENT_TIMESTAMP子句但没有DEFAULT子句，列将自动更新为当前时间戳，但没有当前时间戳作为其默认值。
 
 ```mysql
 CREATE TABLE t1 (
   ts1 TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,     -- default 0
   ts2 TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP -- default NULL
 );
+
+CREATE TABLE t1 (
+  dt1 DATETIME ON UPDATE CURRENT_TIMESTAMP,         -- default NULL
+  dt2 DATETIME NOT NULL ON UPDATE CURRENT_TIMESTAMP -- default 0
+);
 ```
 
-#### 11.2.8 Conversion Between Date and Time Types ####
+如果TIMESTAMP或DATETIME列定义在任何地方包含显式的小数秒精度值，则必须在整个列定义中使用相同的值。
+
+```mysql
+CREATE TABLE t1 (
+  ts TIMESTAMP(6) DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)
+);
+```
+
+系统变量： [`explicit_defaults_for_timestamp`](https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_explicit_defaults_for_timestamp) 
 
 ### 11.3 String Data Types ###
+
+字符串数据类型有CHAR、VARCHAR、BINARY、VARBINARY、BLOB、TEXT、ENUM和SET。
 
 #### 11.3.1 String的语法 ####
 
