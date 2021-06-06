@@ -2377,5 +2377,172 @@ MySQL有个sql_mode: [`ONLY_FULL_GROUP_BY`](https://dev.mysql.com/doc/refman/5.7
 
 ## 13. SQL 语句 ##
 
+### 13.1 Data Definition Statements ###
 
+[13.1.1 ALTER DATABASE Statement](https://dev.mysql.com/doc/refman/5.7/en/alter-database.html)
+
+[13.1.2 ALTER EVENT Statement](https://dev.mysql.com/doc/refman/5.7/en/alter-event.html)
+
+[13.1.3 ALTER FUNCTION Statement](https://dev.mysql.com/doc/refman/5.7/en/alter-function.html)
+
+[13.1.4 ALTER INSTANCE Statement](https://dev.mysql.com/doc/refman/5.7/en/alter-instance.html)
+
+[13.1.5 ALTER LOGFILE GROUP Statement](https://dev.mysql.com/doc/refman/5.7/en/alter-logfile-group.html)
+
+[13.1.6 ALTER PROCEDURE Statement](https://dev.mysql.com/doc/refman/5.7/en/alter-procedure.html)
+
+[13.1.7 ALTER SERVER Statement](https://dev.mysql.com/doc/refman/5.7/en/alter-server.html)
+
+[13.1.8 ALTER TABLE Statement](https://dev.mysql.com/doc/refman/5.7/en/alter-table.html)
+
+[13.1.9 ALTER TABLESPACE Statement](https://dev.mysql.com/doc/refman/5.7/en/alter-tablespace.html)
+
+[13.1.10 ALTER VIEW Statement](https://dev.mysql.com/doc/refman/5.7/en/alter-view.html)
+
+[13.1.11 CREATE DATABASE Statement](https://dev.mysql.com/doc/refman/5.7/en/create-database.html)
+
+[13.1.12 CREATE EVENT Statement](https://dev.mysql.com/doc/refman/5.7/en/create-event.html)
+
+[13.1.13 CREATE FUNCTION Statement](https://dev.mysql.com/doc/refman/5.7/en/create-function.html)
+
+[13.1.14 CREATE INDEX Statement](https://dev.mysql.com/doc/refman/5.7/en/create-index.html)
+
+[13.1.15 CREATE LOGFILE GROUP Statement](https://dev.mysql.com/doc/refman/5.7/en/create-logfile-group.html)
+
+[13.1.16 CREATE PROCEDURE and CREATE FUNCTION Statements](https://dev.mysql.com/doc/refman/5.7/en/create-procedure.html)
+
+[13.1.17 CREATE SERVER Statement](https://dev.mysql.com/doc/refman/5.7/en/create-server.html)
+
+[13.1.18 CREATE TABLE Statement](https://dev.mysql.com/doc/refman/5.7/en/create-table.html)
+
+[13.1.19 CREATE TABLESPACE Statement](https://dev.mysql.com/doc/refman/5.7/en/create-tablespace.html)
+
+[13.1.20 CREATE TRIGGER Statement](https://dev.mysql.com/doc/refman/5.7/en/create-trigger.html)
+
+[13.1.21 CREATE VIEW Statement](https://dev.mysql.com/doc/refman/5.7/en/create-view.html)
+
+[13.1.22 DROP DATABASE Statement](https://dev.mysql.com/doc/refman/5.7/en/drop-database.html)
+
+[13.1.23 DROP EVENT Statement](https://dev.mysql.com/doc/refman/5.7/en/drop-event.html)
+
+[13.1.24 DROP FUNCTION Statement](https://dev.mysql.com/doc/refman/5.7/en/drop-function.html)
+
+[13.1.25 DROP INDEX Statement](https://dev.mysql.com/doc/refman/5.7/en/drop-index.html)
+
+[13.1.26 DROP LOGFILE GROUP Statement](https://dev.mysql.com/doc/refman/5.7/en/drop-logfile-group.html)
+
+[13.1.27 DROP PROCEDURE and DROP FUNCTION Statements](https://dev.mysql.com/doc/refman/5.7/en/drop-procedure.html)
+
+[13.1.28 DROP SERVER Statement](https://dev.mysql.com/doc/refman/5.7/en/drop-server.html)
+
+[13.1.29 DROP TABLE Statement](https://dev.mysql.com/doc/refman/5.7/en/drop-table.html)
+
+[13.1.30 DROP TABLESPACE Statement](https://dev.mysql.com/doc/refman/5.7/en/drop-tablespace.html)
+
+[13.1.31 DROP TRIGGER Statement](https://dev.mysql.com/doc/refman/5.7/en/drop-trigger.html)
+
+[13.1.32 DROP VIEW Statement](https://dev.mysql.com/doc/refman/5.7/en/drop-view.html)
+
+[13.1.33 RENAME TABLE Statement](https://dev.mysql.com/doc/refman/5.7/en/rename-table.html)
+
+[13.1.34 TRUNCATE TABLE Statement](https://dev.mysql.com/doc/refman/5.7/en/truncate-table.html)
+
+#### 13.1.8 ALTER TABLE Statement ####
+
+#### 13.1.18 CREATE TABLE ####
+
+默认情况下，使用InnoDB存储引擎在默认数据库中创建表。
+
+**table name**
+
+- table_name: 可以使用 db相关的限定符
+- IF NOT EXISTS
+
+**temporary tables**
+
+在创建表时可以使用TEMPORARY关键字。临时表只在当前会话中可见，并且在会话关闭时自动删除。
+
+**表的克隆和复制**
+
+`CREATE TABLE ... LIKE`  根据另一个表的定义创建一个空表，包括在原始表中定义的任何列属性和索引
+
+**column数据类型和属性**
+
+- data_type
+- NOT NULL | NULL
+- DEFAULT
+- AUTO_INCREMENT
+- COMMENT
+- COLUMN_FORMAT
+
+**Indexes and Foreign Keys**
+
+有几个关键字适用于创建索引和外键
+
+- CONSTRAINT  *symbol*
+- PRIMARY KEY
+- KEY | INDEX
+- FULLTEXT
+
+**Table Options**
+
+### 13.2 Data Mainpulation Statements ###
+
+[13.2.1 CALL Statement](https://dev.mysql.com/doc/refman/5.7/en/call.html)
+
+[13.2.2 DELETE Statement](https://dev.mysql.com/doc/refman/5.7/en/delete.html)
+
+[13.2.3 DO Statement](https://dev.mysql.com/doc/refman/5.7/en/do.html)
+
+[13.2.4 HANDLER Statement](https://dev.mysql.com/doc/refman/5.7/en/handler.html)
+
+[13.2.5 INSERT Statement](https://dev.mysql.com/doc/refman/5.7/en/insert.html)
+
+[13.2.6 LOAD DATA Statement](https://dev.mysql.com/doc/refman/5.7/en/load-data.html)
+
+[13.2.7 LOAD XML Statement](https://dev.mysql.com/doc/refman/5.7/en/load-xml.html)
+
+[13.2.8 REPLACE Statement](https://dev.mysql.com/doc/refman/5.7/en/replace.html)
+
+[13.2.9 SELECT Statement](https://dev.mysql.com/doc/refman/5.7/en/select.html)
+
+[13.2.10 Subqueries](https://dev.mysql.com/doc/refman/5.7/en/subqueries.html)
+
+[13.2.11 UPDATE Statement](https://dev.mysql.com/doc/refman/5.7/en/update.html)
+
+#### 13.2.5 INSERT ####
+
+```mysql
+INSERT [LOW_PRIORITY | DELAYED | HIGH_PRIORITY] [IGNORE]
+    [INTO] tbl_name
+    [PARTITION (partition_name [, partition_name] ...)]
+    [(col_name [, col_name] ...)]
+    {VALUES | VALUE} (value_list) [, (value_list)] ...
+    [ON DUPLICATE KEY UPDATE assignment_list]
+
+INSERT [LOW_PRIORITY | DELAYED | HIGH_PRIORITY] [IGNORE]
+    [INTO] tbl_name
+    [PARTITION (partition_name [, partition_name] ...)]
+    SET assignment_list
+    [ON DUPLICATE KEY UPDATE assignment_list]
+
+INSERT [LOW_PRIORITY | HIGH_PRIORITY] [IGNORE]
+    [INTO] tbl_name
+    [PARTITION (partition_name [, partition_name] ...)]
+    [(col_name [, col_name] ...)]
+    SELECT ...
+    [ON DUPLICATE KEY UPDATE assignment_list]
+
+value:
+    {expr | DEFAULT}
+
+value_list:
+    value [, value] ...
+
+assignment:
+    col_name = value
+
+assignment_list:
+    assignment [, assignment] ...
+```
 
