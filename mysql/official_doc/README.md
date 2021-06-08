@@ -2546,3 +2546,305 @@ assignment_list:
     assignment [, assignment] ...
 ```
 
+HAVING子句与WHERE子句一样，指定了选择条件。WHERE子句为选择列表中的列指定条件，但不能引用聚合函数。HAVING子句指定组的条件，通常由GROUP BY子句构成。查询结果只包含满足HAVING条件的组。
+
+HAVING子句可以引用聚合函数，而WHERE子句不能:
+
+```mysql
+SELECT user, MAX(salary) FROM users
+  GROUP BY user HAVING MAX(salary) > 10;
+```
+
+LIMIT子句可用于约束SELECT语句返回的行数。LIMIT接受一个或两个数值参数，它们都必须是非负整数常量，
+
+对于两个参数，第一个参数指定要返回的第一行的偏移量，第二个参数指定要返回的最大行数。第一行的偏移量为0(不是1)。
+
+```mysql
+SELECT * FROM tbl LIMIT 5,10;  # Retrieve rows 6-15
+```
+
+`SELECT ... INTO` 可以将查询结果保存到文件或者变量中。
+
+如果在使用页锁或行锁的存储引擎中使用`FOR UPDATE`，则查询检查的行将被写锁，直到当前事务结束。
+
+使用`LOCK IN SHARE MODE`设置一个共享锁，允许其他事务读取所检查的行，但不更新或删除它们。
+
+##### 13.2.9.2 JOIN #####
+
+```mysql
+table_references:
+    escaped_table_reference [, escaped_table_reference] ...
+
+escaped_table_reference: {
+    table_reference
+  | { OJ table_reference }
+}
+
+table_reference: {
+    table_factor
+  | joined_table
+}
+
+table_factor: {
+    tbl_name [PARTITION (partition_names)]
+        [[AS] alias] [index_hint_list]
+  | table_subquery [AS] alias
+  | ( table_references )
+}
+
+joined_table: {
+    table_reference [INNER | CROSS] JOIN table_factor [join_specification]
+  | table_reference STRAIGHT_JOIN table_factor
+  | table_reference STRAIGHT_JOIN table_factor ON search_condition
+  | table_reference {LEFT|RIGHT} [OUTER] JOIN table_reference join_specification
+  | table_reference NATURAL [{LEFT|RIGHT} [OUTER]] JOIN table_factor
+}
+
+join_specification: {
+    ON search_condition
+  | USING (join_column_list)
+}
+
+join_column_list:
+    column_name [, column_name] ...
+
+index_hint_list:
+    index_hint [, index_hint] ...
+
+index_hint: {
+    USE {INDEX|KEY}
+      [FOR {JOIN|ORDER BY|GROUP BY}] ([index_list])
+  | {IGNORE|FORCE} {INDEX|KEY}
+      [FOR {JOIN|ORDER BY|GROUP BY}] (index_list)
+}
+
+index_list:
+    index_name [, index_name] ...
+```
+
+如果table_reference项列表中的每个逗号都被认为等同于内连接，那么这就是一个保守扩展:
+
+```mysql
+SELECT * FROM t1 LEFT JOIN (t2, t3, t4)
+                 ON (t2.a = t1.a AND t3.b = t1.b AND t4.c = t1.c);
+             
+SELECT * FROM t1 LEFT JOIN (t2 CROSS JOIN t3 CROSS JOIN t4)
+                 ON (t2.a = t1.a AND t3.b = t1.b AND t4.c = t1.c);
+```
+
+在MySQL中，JOIN、CROSS JOIN和INNER JOIN在语法上是等价的(它们可以互相替换)。在标准SQL中，它们是不相等的。INNER JOIN与ON子句一起使用，否则使用CROSS JOIN。
+
+table_subquery也被称为FROM子句中的派生表或子查询。
+
+```mysql
+SELECT * FROM (SELECT 1, 2, 3) AS t1;
+```
+
+在一个连接中可以引用的最大表数是61。
+
+在没有连接条件的情况下，INNER JOIN和，(逗号)在语义上是等价的:两者都产生指定表之间的笛卡尔积(即，第一个表中的每一行都连接到第二个表中的每一行)。
+
+与ON一起使用的search_condition是可以在WHERE子句中使用的任何形式的条件表达式。通常，ON子句用于指定如何连接表的条件，而WHERE子句限制在结果集中包含哪些行。
+
+如果在LEFT JOIN的ON或USING部分中没有与右表匹配的行，那么右表将使用所有列都设置为NULL的行。你可以使用这个事实来查找一个表中没有对应表的行。
+
+USING(join_column_list)子句命名两个表中必须存在的列列表。如果表a和b都包含列c1、c2和c3，下面的连接将比较两个表中对应的列:
+
+```mysql
+a LEFT JOIN b USING (c1, c2, c3);
+```
+
+#### 12.2.10 Subquries ####
+
+### 13.3 事务和锁 ###
+
+#### 13.3.1 START TRANSACTION,COMMIT,ROLLBACK ####
+
+```mysql
+START TRANSACTION
+    [transaction_characteristic [, transaction_characteristic] ...]
+
+transaction_characteristic: {
+    WITH CONSISTENT SNAPSHOT
+  | READ WRITE
+  | READ ONLY
+}
+
+BEGIN [WORK]
+COMMIT [WORK] [AND [NO] CHAIN] [[NO] RELEASE]
+ROLLBACK [WORK] [AND [NO] CHAIN] [[NO] RELEASE]
+SET autocommit = {0 | 1}
+```
+
+要隐式地禁用单个系列语句的自动提交模式，请使用START TRANSACTION语句:
+
+```mysql
+START TRANSACTION;
+SELECT @A:=SUM(salary) FROM table1 WHERE type=1;
+UPDATE table2 SET summary=@A WHERE type=1;
+COMMIT;
+```
+
+使用START TRANSACTION，自动提交仍然是禁用的，直到使用COMMIT或ROLLBACK结束事务。然后，自动提交模式恢复到之前的状态。
+
+- READ WRITE和READ ONLY修饰符设置事务访问模式。它们允许或禁止更改事务中使用的表。READ ONLY限制防止事务修改或锁定对其他事务可见的事务表和非事务表;
+
+BEGIN和BEGIN WORK作为启动事务的START TRANSACTION的别名被支持。START TRANSACTION是标准的SQL语法，是启动特别事务的推荐方法，并且允许BEGIN不允许的修饰符。
+
+开始一个事务会导致任何挂起的事务被提交。开始一个事务还会导致通过`LOCK TABLES`获取的表锁被释放，就像你执行了`UNLOCK TABLES`一样。
+
+#### 13.3.3 导致隐式提交的语句 ####
+
+- DDL
+- 隐式使用或修改mysql数据库中的表的语句
+- 事务控制和锁定语句。 
+- Data loading statements
+- Administrative statements
+- Replication control statements.
+
+#### 13.3.4 SAVEPOINT,ROLLBACK TO SAVEPOINT,RELEASE SAVEPOINT  ####
+
+```mysql
+SAVEPOINT identifier
+ROLLBACK [WORK] TO [SAVEPOINT] identifier
+RELEASE SAVEPOINT identifier
+```
+
+#### 13.3.5 LOCK TABLES & UNLOCK TABLES ####
+
+```mysql
+LOCK TABLES
+    tbl_name [[AS] alias] lock_type
+    [, tbl_name [[AS] alias] lock_type] ...
+
+lock_type: {
+    READ [LOCAL]
+  | [LOW_PRIORITY] WRITE
+}
+
+UNLOCK TABLES
+```
+
+MySQL允许客户端会话显式地获取表锁，以便与其他会话合作访问表，或者防止其他会话在需要独占访问表时修改表。会话只能为自己获取或释放锁。一个会话不能获取另一个会话的锁，也不能释放另一个会话持有的锁。
+
+如果使用`LOCK TABLES`显式锁定一个表，触发器中使用的任何表也会被隐式锁定。
+
+UNLOCK TABLES显式释放当前会话持有的所有表锁。
+
+**Table Lock Acquisition**
+
+`READ [LOCAL]` lock:
+
+- 持有锁的会话可以读表(但不能写表)。
+- 多个会话可以同时获得该表的READ锁
+- 其他会话可以在不显式获取read锁的情况下读取表。
+- LOCAL修饰符允许其他会话在持有锁时执行非冲突的INSERT语句(并发插入)。
+
+`[LOW_PRIORITY] WRITE ` lock:
+
+- 持有锁的会话可以读写表。
+- 只有持有锁的会话才能访问该表。在释放锁之前，没有其他会话可以访问它。
+- 当持有WRITE锁时，其他会话对表的锁请求阻塞。
+
+WRITE锁通常比READ锁具有更高的优先级，以确保尽快处理更新。需要锁的会话必须在一个LOCK TABLES语句中获取它需要的所有锁。当这样获得的锁被持有时，会话只能访问被锁定的表：
+
+```mysql
+mysql> LOCK TABLES t1 READ;
+mysql> SELECT COUNT(*) FROM t1;
++----------+
+| COUNT(*) |
++----------+
+|        3 |
++----------+
+mysql> SELECT COUNT(*) FROM t2;
+ERROR 1100 (HY000): Table 't2' was not locked with LOCK TABLES
+```
+
+**Table Lock Release**
+
+- use `UNLOCK TABLES`
+- 如果一个会话发出一个LOCK TABLES语句来获取一个已经持有的锁，那么它现有的锁将在授予新锁之前被隐式释放。
+
+**表锁定和事务的交互**
+
+- LOCK TABLES不是事务安全的，在试图锁定表之前会隐式提交任何活动事务。
+- UNLOCK TABLES隐式地提交任何活动的事务，但是只有在LOCK TABLES被用来获取表锁的情况下。
+- 开始一个事务(例如，使用START transaction)隐式地提交任何当前事务并释放现有的表锁。
+
+#### 13.3.6 SET TRANSACTION ####
+
+```mysql
+SET [GLOBAL | SESSION] TRANSACTION
+    transaction_characteristic [, transaction_characteristic] ...
+
+transaction_characteristic: {
+    ISOLATION LEVEL level
+  | access_mode
+}
+
+level: {
+     REPEATABLE READ
+   | READ COMMITTED
+   | READ UNCOMMITTED
+   | SERIALIZABLE
+}
+
+access_mode: {
+     READ WRITE
+   | READ ONLY
+}
+```
+
+### 13.7 数据管理语句 ###
+
+### 13.8 Utility Statements ###
+
+#### 13.8.2 EXPLAIN ####
+
+```mysql
+{EXPLAIN | DESCRIBE | DESC}
+    tbl_name [col_name | wild]
+
+{EXPLAIN | DESCRIBE | DESC}
+    [explain_type]
+    {explainable_stmt | FOR CONNECTION connection_id}
+
+explain_type: {
+    EXTENDED
+  | PARTITIONS
+  | FORMAT = format_name
+}
+
+format_name: {
+    TRADITIONAL
+  | JSON
+}
+
+explainable_stmt: {
+    SELECT statement
+  | DELETE statement
+  | INSERT statement
+  | REPLACE statement
+  | UPDATE statement
+}
+```
+
+**获取表结构信息**
+
+```mysql
+mysql> DESCRIBE City;
++------------+----------+------+-----+---------+----------------+
+| Field      | Type     | Null | Key | Default | Extra          |
++------------+----------+------+-----+---------+----------------+
+| Id         | int(11)  | NO   | PRI | NULL    | auto_increment |
+| Name       | char(35) | NO   |     |         |                |
+| Country    | char(3)  | NO   | UNI |         |                |
+| District   | char(20) | YES  | MUL |         |                |
+| Population | int(11)  | NO   |     | 0       |                |
++------------+----------+------+-----+---------+----------------+
+```
+
+**获取执行计划信息**
+
+EXPLAIN适用于SELECT、DELETE、INSERT、REPLACE和UPDATE语句。
+
