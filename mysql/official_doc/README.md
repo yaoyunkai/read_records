@@ -2850,6 +2850,8 @@ EXPLAIN适用于SELECT、DELETE、INSERT、REPLACE和UPDATE语句。
 
 ## 14. The InnoDB Storage Engine ##
 
+![image-20210609231914089](.assets/image-20210609231914089.png)
+
 ### 14.1 InnoDB概述 ###
 
 #### 14.1.2 InnoDB表的最佳实践 ####
@@ -3218,4 +3220,6 @@ SELECT语句以非锁定的方式执行，但可能会使用行更早的版本�
   对于搜索遇到的索引记录，锁定行和任何关联的索引项，就像对这些行发出UPDATE语句一样。
 
 #### 14.7.4 幻行 ####
+
+### 14.8 InnoDB 配置 ###
 
