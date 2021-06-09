@@ -3046,3 +3046,73 @@ ZIP_PAGE_SIZE: 0
 
 #### 14.7.1 innodb locking ####
 
+**Shard and Exclusive Locks**
+
+InnoDB实现了标准的行级锁，其中有两种类型的锁，共享锁(S)和独占锁(X)。
+
+- 共享(S)锁 允许持有锁的事务读取一行。
+- 排他(X)锁 允许持有锁的事务更新或删除一行。
+
+如果事务T1持有r行上的共享(S)锁，那么来自某个不同事务T2的请求对r行上的锁的处理如下:
+
+- T2对S锁的请求可以立即被批准。因此，T1和T2都对r保持S锁。
+- T2对X锁的请求不能立即被批准。
+
+如果事务T1持有r行上的排他锁(X)，那么某个不同事务T2对r上任意一种类型的锁的请求都不能立即被授予。相反，事务T2必须等待事务T1释放其对r行的锁。
+
+**Intention Locks**
+
+InnoDB支持多粒度锁，允许行锁和表锁共存。为了使多粒度级别的锁更实用，InnoDB使用了意图锁。意图锁是**表级锁**，它指示事务以后对表中的一行需要哪种类型的锁(共享锁或排他锁)。
+
+- 意图共享锁(IS) 表示事务打算对表中的各个行设置共享锁。
+- 意图排他锁(IX) 表示事务打算对表中的各个行设置排他锁。
+
+例如，`SELECT…LOCK IN SHARE MODE`设置IS锁，`SELECT…FOR UPDATE`设置IX锁。
+
+意图锁定协议如下:
+
+- 在事务获得表中一行的共享锁之前，它必须首先获得表上的IS锁或更强的锁。
+- 在事务获得表中一行的排他锁之前，它必须首先获得表上的IX锁。
+
+|      | X        | IX         | S          | IS         |
+| :--- | :------- | :--------- | :--------- | :--------- |
+| X    | Conflict | Conflict   | Conflict   | Conflict   |
+| IX   | Conflict | Compatible | Conflict   | Compatible |
+| S    | Conflict | Conflict   | Compatible | Compatible |
+| IS   | Conflict | Compatible | Compatible | Compatible |
+
+如果一个锁与现有锁兼容，那么它将被授予一个请求事务，但如果它与现有锁冲突，则不会授予它。
+
+意图锁不会阻塞任何东西，除了全表请求(例如，LOCK TABLES…写)。意图锁定的主要目的是表明某人正在锁定表中的一行，或准备锁定表中的一行。
+
+**Record Locks**
+
+A record lock is a lock on an index record. 例如，`SELECT c1 FROM t WHERE c1 = 10 For UPDATE;`防止任何其他事务插入、更新或删除 t.c1 值为10的行。
+
+记录锁总是锁定索引记录，即使一个表没有定义索引。对于这种情况，InnoDB会创建一个隐藏的聚集索引，并使用这个索引来锁定记录。
+
+**Gap Locks**
+
+间隙锁是索引记录之间的间隙上的锁，或者是第一个索引记录之前或最后一个索引记录之后的间隙上的锁。
+
+例如，`SELECT c1 FROM t WHERE c1 BETWEEN 10 and 20 For UPDATE;`防止其他事务将值15插入列t.c1中，无论列中是否已经有这样的值，因为范围内所有现有值之间的间隙被锁定。
+
+一个间隙可以跨越一个索引值，多个索引值，甚至是空的。
+
+间隙锁是性能和并发性之间的折衷，用于某些事务隔离级别，而不适用于其他事务隔离级别。
+
+对于使用唯一索引锁定行以搜索唯一行的语句，不需要间隙锁定。
+
+InnoDB中的Gap锁是“纯抑制的”，这意味着它们的唯一目的是防止其他事务插入到Gap中。间隙锁可以共存。一个事务获得的间隙锁不能阻止另一个事务获得相同间隙上的间隙锁。共享和独占间隙锁之间没有区别。它们彼此不冲突，它们执行相同的功能。
+
+**Next-Key Locks**
+
+next-key lock是索引记录上的记录锁和索引记录之前间隙上的间隙锁的组合。
+
+**AUTO-INC lock**
+
+#### 14.7.2 事务模型 ####
+
+##### 14.7.2.1 事务隔离级别 #####
+
+InnoDB提供了四个事务隔离级别:`READ UNCOMMITTED`, `READ COMMITTED`, `REPEATABLE READ`和`SERIALIZABLE`。InnoDB默认的隔离级别是`REPEATABLE READ`。
