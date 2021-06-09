@@ -2848,3 +2848,201 @@ mysql> DESCRIBE City;
 
 EXPLAIN适用于SELECT、DELETE、INSERT、REPLACE和UPDATE语句。
 
+## 14. The InnoDB Storage Engine ##
+
+### 14.1 InnoDB概述 ###
+
+#### 14.1.2 InnoDB表的最佳实践 ####
+
+- 使用最经常查询的一个或多个列为每个表指定一个主键，如果没有明显的主键，则指定一个自动递增的值。
+- 在基于来自多个表的相同ID值从多个表中提取数据时，使用连接。为了快速连接性能，请在连接列上定义外键，并在每个表中以相同的数据类型声明这些列。添加外键可以确保引用的列被索引，这可以提高性能。外键还将删除和更新传播到所有受影响的表，如果对应的id不在父表中，则防止在子表中插入数据。
+- 关闭自动提交。每秒提交数百次会限制性能(受存储设备写速度的限制)。
+- 通过用START TRANSACTION和COMMIT语句将相关DML操作集括在一起，从而将它们分组到事务中。虽然您不想太频繁地提交，但您也不想发出大量的INSERT、UPDATE或DELETE语句，这些语句在没有提交的情况下运行数小时。
+- 不要使用LOCK TABLES语句。InnoDB可以同时处理多个对同一个表进行读写的会话，而不会牺牲可靠性和高性能。要获得对一组行的独占写访问，使用SELECT…FOR UPDATE语法只锁定要更新的行。
+
+### 14.2 InnoDB and ACID Model ###
+
+ACID模型是一组数据库设计原则，强调对业务数据和关键任务应用程序非常重要的可靠性方面。
+
+**Atomicity**
+
+ACID模型的原子性主要涉及InnoDB事务。MySQL相关特性包括:
+
+- autocommit
+- COMMIT
+- ROLLBACK
+
+**Consistency**
+
+ACID模型的一致性方面主要涉及内部InnoDB处理，以防止数据崩溃。MySQL相关特性包括:
+
+- The innoDB doublewrite buffer.
+- innoDB crash recovery
+
+**Isolation**
+
+ACID模型的隔离方面主要涉及InnoDB事务，特别是适用于每个事务的隔离级别。MySQL相关特性包括:
+
+- autocommit
+- SET TRANSACTION
+- InnoDB锁的底层细节。
+
+**Durability**
+
+- The innoDB doublewrite buffer.
+- system variable: innodb_flush_log_at_trx_commit
+- sync_binlog
+- innodb_file_per_table
+- 存储设备(如磁盘驱动器、SSD或RAID阵列)中的写缓冲区。
+- 存储设备中以电池为后盾的高速缓存。
+- 用于运行MySQL的操作系统，特别是它对`fsync()`系统调用的支持。
+
+### 14.3 InnoDB 多版本 ###
+
+这些信息存储在系统表空间或undo表空间中，在一个称为回滚段的数据结构中。
+
+InnoDB在内部为存储在数据库中的每一行添加三个字段:
+
+- 6字节的`DB_TRX_ID`字段表示插入或更新行的最后一个事务的事务标识符。另外，删除在内部被视为更新，其中行中的特殊位被设置为已删除。
+- 一个7字节的`DB_ROLL_PTR`字段，称为roll指针。roll指针指向写入回滚段的撤销日志记录。如果更新了行，则undo日志记录将包含在更新行之前重新构建该行内容所需的信息。
+- 6字节的`DB_ROW_ID`字段包含一个行ID，当插入新行时，该行ID单调地增加。如果InnoDB自动生成聚集索引，则索引包含行ID值。否则，DB_ROW_ID列不会出现在任何索引中。
+
+回滚段的Undo日志分为插入和更新Undo日志。插入撤销日志只在事务回滚时需要，并且可以在事务提交时立即丢弃。更新undo日志也用于读取一致,但他们只能被丢弃后没有InnoDB的事务存在分配一个快照,以一致的阅读可能需要更新undo日志中的信息建立一个早期版本的数据库行。
+
+在InnoDB多版本方案中，当使用SQL语句删除一行时，不会立即物理地从数据库中删除该行。InnoDB只有在丢弃为删除而写的更新undo日志记录时，才会物理地删除相应的行及其索引记录。这种删除操作称为清除，它非常快，通常与执行删除的SQL语句的时间顺序相同。
+
+### 14.4 InnoDB Architecture ###
+
+![InnoDB architecture diagram showing in-memory and on-disk structures.](.assets/innodb-architecture.png)
+
+### 14.5 InnoDB内存结构 ###
+
+#### 14.5.1 Buffer Pool ####
+
+缓冲池是主存中的一个区域，InnoDB在访问表和索引数据时在这里进行缓存。缓冲池允许直接从内存访问常用数据，从而提高处理速度。在专用服务器上，多达80%的物理内存通常分配给缓冲池。
+
+为了提高大容量读操作的效率，缓冲池被划分为可能包含多行的页。为了提高缓存管理的效率，缓冲池被实现为页面的链表;很少使用的数据将使用LRU算法的变体从缓存中老化出来。
+
+**Buffer Pool LRU Algorithm**
+
+缓冲池使用LRU算法的变体作为列表来管理。当需要空间向缓冲池添加新页时，最近使用最少的页将被排除，并在列表中间添加一个新页。这个中点插入策略将列表视为两个子列表:
+
+- 在头部，一个最近被访问的新(“年轻”)页面的子列表
+- 在尾部，是最近才访问的旧页面的子列表
+
+![Content is described in the surrounding text.](.assets/innodb-buffer-pool-list.png)
+
+该算法将经常使用的页面保存在新的子列表中。旧的子列表包含较少使用的页面;这些页面是被驱逐的候选者。
+
+- 缓冲池的3/8用于旧的子列表。
+- 列表的中点是新子列表的尾部与旧子列表的头部相遇的边界。
+- 当InnoDB将一个页读入缓冲池时，它首先将它插入到中间点(旧子列表的头)。可以读取页面，因为它需要用户发起的操作，比如SQL查询，或者作为InnoDB自动执行的预读操作的一部分。
+- 在旧子列表中访问一个页面会使它“年轻”，将其移动到新子列表的头部。如果读取该页是因为用户发起的操作需要它，那么第一次访问将立即发生，该页将被创建为年轻页。如果该页是由于预读操作而读取的，那么第一次访问不会立即发生，而且在该页被逐出之前可能根本不会发生。
+- 当数据库操作时，缓冲池中未被访问的页通过移动到列表的尾部而“老化”。新子列表和旧子列表中的页面随着其他页面的更新而更新。旧子列表中的页面也会随着页面插入到中点而老化。最终，仍未使用的页面到达旧子列表的尾部并被逐出。
+
+默认情况下，查询读取的页面会立即移动到新的子列表中，这意味着它们在缓冲池中停留的时间更长。
+
+**Buffer Pool Configuration**
+
+- set buffer pool size
+- 在具有足够内存的64位系统上，可以将缓冲池拆分为多个部分，以减少并发操作之间对内存结构的争用。
+- 您可以将频繁访问的数据保存在内存中，而不考虑将大量不频繁访问的数据带入缓冲池的操作的突然活动峰值。
+- 您可以控制如何以及何时执行预读请求，以异步地将页面预取到缓冲池中，以便很快就需要这些页面。
+- 您可以控制何时发生后台刷新，以及是否根据工作负载动态调整刷新速率。
+- 你可以配置InnoDB如何保存当前的缓冲池状态，以避免服务器重启后的长时间预热。
+
+**Monitoring**
+
+`SHOE ENGINE INNODB STATUS`
+
+#### 14.5.2 Change Buffer ####
+
+![Content is described in the surrounding text.](.assets/innodb-change-buffer.png)
+
+#### 14.5.3 自适应hash索引 ####
+
+自适应哈希索引由[`innodb_adaptive_hash_index`](https://dev.mysql.com/doc/refman/5.7/en/innodb-parameters.html#sysvar_innodb_adaptive_hash_index) 变量启用 。
+
+#### 14.5.4 日志缓冲区 ####
+
+日志缓冲区是保存要写入磁盘上日志文件的数据的内存区域。日志缓冲区大小由[`innodb_log_buffer_size`](https://dev.mysql.com/doc/refman/5.7/en/innodb-parameters.html#sysvar_innodb_log_buffer_size)变量定义 。
+
+### 14.6 InnoDB 磁盘结构 ###
+
+#### 14.6.1 tables ####
+
+##### 14.6.1.1 create innodb tables #####
+
+**.frm**
+
+MySQL 将表的数据字典信息[存储](https://dev.mysql.com/doc/refman/5.7/en/glossary.html#glos_frm_file)在数据库目录中的 [.frm 文件](https://dev.mysql.com/doc/refman/5.7/en/glossary.html#glos_frm_file)中。与其他 MySQL 存储引擎不同， `InnoDB`它还在系统表空间内自己的内部数据字典中对有关表的信息进行编码。当 MySQL 删除一个表或一个数据库时，它会删除一个或多个`.frm`文件以及`InnoDB`数据字典中的相应条目。
+
+**行格式**
+
+`InnoDB`表 的行格式决定了其行在磁盘上的物理存储方式。 `InnoDB`支持四种行格式，每种格式具有不同的存储特性。支持行格式包括 `REDUNDANT`，`COMPACT`， `DYNAMIC`，和`COMPRESSED`。
+
+该[`innodb_default_row_format`](https://dev.mysql.com/doc/refman/5.7/en/innodb-parameters.html#sysvar_innodb_default_row_format) 变量定义了默认的行格式。
+
+**主键**
+
+**查看innodb表属性**
+
+```mysql
+mysql> SHOW TABLE STATUS FROM test LIKE 't%' \G;
+*************************** 1. row ***************************
+           Name: t1
+         Engine: InnoDB
+        Version: 10
+     Row_format: Dynamic
+           Rows: 0
+ Avg_row_length: 0
+    Data_length: 16384
+Max_data_length: 0
+   Index_length: 0
+      Data_free: 0
+ Auto_increment: NULL
+    Create_time: 2021-02-18 12:18:28
+    Update_time: NULL
+     Check_time: NULL
+      Collation: utf8mb4_0900_ai_ci
+       Checksum: NULL
+ Create_options: 
+        Comment:
+        
+mysql> SELECT * FROM INFORMATION_SCHEMA.INNODB_SYS_TABLES WHERE NAME='test/t1' \G
+*************************** 1. row ***************************
+     TABLE_ID: 45
+         NAME: test/t1
+         FLAG: 1
+       N_COLS: 5
+        SPACE: 35
+  FILE_FORMAT: Barracuda
+   ROW_FORMAT: Dynamic
+ZIP_PAGE_SIZE: 0
+   SPACE_TYPE: Single
+```
+
+#### 14.6.2 index ####
+
+##### 14.6.2.1 Clustered and Secondary Indexes #####
+
+每个`InnoDB`表都有一个称为聚集索引的特殊索引，用于存储行数据。通常，聚集索引与主键同义。
+
+- 当你在一个表上定义一个主键时，InnoDB使用它作为聚集索引。应该为每个表定义一个主键。如果没有逻辑上唯一且非空的列或列集来使用主键，则添加一个自动递增列。自动递增的列值是惟一的，并且会在插入新行时自动添加。
+- 如果你没有为一个表定义一个PRIMARY KEY, InnoDB会使用第一个UNIQUE索引，所有的键列都定义为not NULL作为聚集索引。
+- 如果一个表没有PRIMARY KEY或合适的UNIQUE索引，InnoDB会在包含行ID值的合成列上生成一个名为GEN_CLUST_INDEX的隐藏聚集索引。这些行按InnoDB分配的行ID排序。行ID是一个6字节的字段，随着新行插入而单调地增加。因此，按行ID排序的行在物理上是按插入顺序排列的。
+
+聚集索引之外的索引称为二级索引。在InnoDB中，次要索引中的每条记录都包含该行的主键列，以及为次要索引指定的列。InnoDB使用这个主键值来搜索聚集索引中的行。
+
+##### 14.6.2.2 InnoDB 索引的物理结构 #####
+
+除空间索引外，`InnoDB` 索引都是[B 树](https://dev.mysql.com/doc/refman/5.7/en/glossary.html#glos_b_tree)数据结构。空间索引使用 [R 树](https://dev.mysql.com/doc/refman/5.7/en/glossary.html#glos_r_tree)，它是用于索引多维数据的专用数据结构。索引记录存储在其 B 树或 R 树数据结构的叶页中。索引页的默认大小为 16KB。页大小由[`innodb_page_size`](https://dev.mysql.com/doc/refman/5.7/en/innodb-parameters.html#sysvar_innodb_page_size)MySQL 实例初始化时的设置决定 。
+
+`InnoDB`创建或重建 B 树索引时执行批量加载。这种创建索引的方法称为排序索引构建。该 [`innodb_fill_factor`](https://dev.mysql.com/doc/refman/5.7/en/innodb-parameters.html#sysvar_innodb_fill_factor)变量定义了在排序索引构建期间填充的每个 B 树页面上的空间百分比，剩余空间保留用于将来的索引增长。
+
+#### 14.6.3 表空间 ####
+
+### 14.7 InnoDB lock and transcation ###
+
+#### 14.7.1 innodb locking ####
+
