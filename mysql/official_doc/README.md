@@ -3116,3 +3116,106 @@ next-key lock是索引记录上的记录锁和索引记录之前间隙上的间�
 ##### 14.7.2.1 事务隔离级别 #####
 
 InnoDB提供了四个事务隔离级别:`READ UNCOMMITTED`, `READ COMMITTED`, `REPEATABLE READ`和`SERIALIZABLE`。InnoDB默认的隔离级别是`REPEATABLE READ`。
+
+InnoDB使用不同的锁定策略支持这里描述的每个事务隔离级别。
+
+**REPEATABLE READ**
+
+同一事务中的一致读取 读取由第一次读取建立的快照。这意味着，如果在同一个事务中发出多个普通(非锁定)SELECT语句，这些SELECT语句之间也会保持一致。
+
+对于读取(`SELECT with For UPDATE`或`LOCK IN SHARE MODE`)、UPDATE和DELETE语句，锁定取决于语句是使用具有唯一搜索条件的唯一索引还是使用范围类型的搜索条件。
+对于具有唯一搜索条件的唯一索引，InnoDB只锁发现的索引记录，而不锁之前的空隙。
+对于其他搜索条件，InnoDB锁定被扫描的索引范围，使用间隙锁或next-key锁来阻塞其他会话对该范围覆盖的间隙的插入。
+
+**READ COMMITED**
+
+每个一致的读取(即使是在同一个事务中)都设置并读取自己的新快照。
+
+对于锁读(`SELECT with For UPDATE` or `LOCK IN SHARE MODE`)、UPDATE语句和DELETE语句，InnoDB只锁索引记录，而不锁它们之前的间隙，因此允许在锁住的记录旁边自由插入新记录。间隙锁定仅用于外键约束检查和重复键检查。
+
+因为间隙锁定是禁用的，所以可能会出现幻像行问题，因为其他会话可能会将新行插入到间隙中。
+
+READ COMMITTED隔离级别只支持基于行的二进制日志记录。如果使用READ COMMITTED和binlog_format=MIXED，服务器会自动使用基于行的日志记录。
+
+使用READ COMMITTED还有其他效果:
+
+- 对于UPDATE或DELETE语句，InnoDB只对它更新或删除的行持有锁。不匹配行的记录锁在MySQL计算WHERE条件后被释放。这大大降低了死锁的可能性，但它们仍然可能发生。
+- 对于UPDATE语句，如果一行已经被锁定，InnoDB会执行一个“半一致”的读取，返回最新提交的版本给MySQL，以便MySQL可以确定这行是否匹配UPDATE的WHERE条件。如果行匹配(必须更新)，MySQL再次读取该行，这一次InnoDB要么锁定它，要么等待它的锁。
+
+考虑下面的例子，从这个表开始:
+
+```mysql
+CREATE TABLE t (a INT NOT NULL, b INT) ENGINE = InnoDB;
+INSERT INTO t VALUES (1,2),(2,3),(3,2),(4,3),(5,2);
+COMMIT;
+```
+
+在这种情况下，表没有索引，所以搜索和索引扫描使用隐藏的聚集索引来锁定记录而不是索引列。
+
+See next demo:
+
+```mysql
+# Session A
+START TRANSACTION;
+UPDATE t SET b = 5 WHERE b = 3;
+
+# Session B
+UPDATE t SET b = 4 WHERE b = 2;
+```
+
+当InnoDB执行每次UPDATE时，它首先为读取的每一行获取一个排他锁，然后决定是否修改它。如果InnoDB不修改该行，则释放锁。否则，InnoDB会一直保留这个锁，直到事务结束。这将对事务处理产生如下影响。
+
+当使用默认REPEATABLE READ隔离级别时，第一个UPDATE获取它所读的每一行的x-lock，并且不释放它们中的任何一行:
+
+```console
+x-lock(1,2); retain x-lock
+x-lock(2,3); update(2,3) to (2,5); retain x-lock
+x-lock(3,2); retain x-lock
+x-lock(4,3); update(4,3) to (4,5); retain x-lock
+x-lock(5,2); retain x-lock
+```
+
+第二个UPDATE会在尝试获取任何锁时阻塞(因为第一次更新保留了所有行的锁)，直到第一次UPDATE提交或回滚时才继续执行:
+
+`x-lock(1,2); block and wait for first UPDATE to commit or roll back`
+
+如果使用READ COMMITTED，则第一个UPDATE获取它读取的每一行的x-lock，并释放那些它没有修改的行:
+
+```
+x-lock(1,2); unlock(1,2)
+x-lock(2,3); update(2,3) to (2,5); retain x-lock
+x-lock(3,2); unlock(3,2)
+x-lock(4,3); update(4,3) to (4,5); retain x-lock
+x-lock(5,2); unlock(5,2)
+```
+
+对于第二次UPDATE, InnoDB执行“半一致”的读取，返回它读取的每一行的最新提交版本到MySQL，以便MySQL可以确定行是否匹配UPDATE的WHERE条件:
+
+```
+x-lock(1,2); update(1,2) to (1,4); retain x-lock
+x-lock(2,3); unlock(2,3)
+x-lock(3,2); update(3,2) to (3,4); retain x-lock
+x-lock(4,3); unlock(4,3)
+x-lock(5,2); update(5,2) to (5,4); retain x-lock
+```
+
+**READ UNCOMMITED**
+
+SELECT语句以非锁定的方式执行，但可能会使用行更早的版本。因此，使用这个隔离级别，这样的读取是不一致的。这也被称为脏读。
+
+**SERIALIZABLE**
+
+##### 14.7.2.4 locking reads #####
+
+如果查询数据，然后在同一个事务中插入或更新相关数据，常规的SELECT语句不能提供足够的保护。其他事务可以更新或删除您刚才查询的相同行。InnoDB支持两种类型的锁读取，提供额外的安全性:
+
+- `SELECT ... LOCK IN SHARE MODE` 
+
+  对读取的任何行设置共享模式锁。其他会话可以读取这些行，但在事务提交之前不能修改它们。如果这些行中的任何一行被另一个尚未提交的事务更改，则查询将等待该事务结束，然后使用最新的值。
+
+- `SELECT ... FOR UPDATE`
+
+  对于搜索遇到的索引记录，锁定行和任何关联的索引项，就像对这些行发出UPDATE语句一样。
+
+#### 14.7.4 幻行 ####
+
