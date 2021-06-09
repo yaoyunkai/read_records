@@ -3223,3 +3223,9 @@ SELECT语句以非锁定的方式执行，但可能会使用行更早的版本�
 
 ### 14.8 InnoDB 配置 ###
 
+## 24. INFORMATION_SCHEMA ##
+
+## 25. MySQL Performance Schema ##
+
+## 26. MySQL sys Schema ##
+
