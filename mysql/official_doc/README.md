@@ -3405,7 +3405,38 @@ lock in share mode适用于两张表存在业务关系时的一致性要求，fo
 
 ## 24. INFORMATION_SCHEMA ##
 
-## 25. MySQL Performance Schema ##
+INFORMATION_SCHEMA提供对数据库元数据、关于MySQL服务器的信息(如数据库或表的名称、列的数据类型或访问权限)的访问。有时用于此信息的其他术语是数据字典和系统目录。
 
-## 26. MySQL sys Schema ##
+### 24.1 Introduction ###
 
+**Usage Notes**
+
+INFORMATION_SCHEMA数据库包含几个只读表。它们实际上是视图，而不是基表，因此没有与它们相关联的文件，并且不能对它们设置触发器。另外，也没有该名称的数据库目录。
+
+```mysql
+select * from information_schema.tables where TABLE_SCHEMA like 'demo_%';
+```
+
+提供了 SHOW的简写版本。
+
+### 24.3 常用的表 ###
+
+**character sets**
+
+`SHOW CHARACTER SET`
+
+**SCHEMATA**
+
+`SHOW DATABASES`
+
+**TABLES**
+
+存储数据库中的表信息（包括视图），包括表属于哪个数据库，表的类型、存储引擎、创建时间等信息。
+
+**COLUMNS**
+
+存储表中的列信息，包括表有多少列、每个列的类型等。
+
+**STATISTICS**
+
+表索引的信息。`SHOW INDEX FROM schemaname.tablename;` 命令从这个表获取结果。
