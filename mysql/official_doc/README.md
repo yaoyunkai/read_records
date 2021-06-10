@@ -3383,6 +3383,14 @@ SELECT语句以非锁定的方式执行，但可能会使用行更早的版本�
 
   对于搜索遇到的索引记录，锁定行和任何关联的索引项，就像对这些行发出UPDATE语句一样。
 
+`SELECT ... LOCK IN SHARE MODE`走的是IS锁(意向共享锁)，即在符合条件的rows上都加了共享锁，这样的话，其他session可以读取这些记录，也可以继续添加IS锁，但是无法修改这些记录直到你这个加锁的session执行完成(否则直接锁等待超时)。
+
+`SELECT ... FOR UPDATE` 走的是IX锁(意向排它锁)，即在符合条件的rows上都加了排它锁，其他session也就无法在这些记录上添加任何的S锁或X锁。如果不存在一致性非锁定读的话，那么其他session是无法读取和修改这些记录的，但是innodb有非锁定读(快照读并不需要加锁)，for update之后并不会阻塞其他session的快照读取操作，除了select ...lock in share mode和select ... for update这种显示加锁的查询操作。
+
+`SELECT ... LOCK IN SHARE MODE`的应用场景适合于两张表存在关系时的写操作，拿mysql官方文档的例子来说，一个表是child表，一个是parent表，假设child表的某一列child_id映射到parent表的c_child_id列，那么从业务角度讲，此时我直接insert一条child_id=100记录到child表是存在风险的，因为刚insert的时候可能在parent表里删除了这条c_child_id=100的记录，那么业务数据就存在不一致的风险。正确的方法是再插入时执行`select * from parent where c_child_id=100 lock in share mode`,锁定了parent表的这条记录，然后执行`insert into child(child_id) values (100)`就ok了。
+
+lock in share mode适用于两张表存在业务关系时的一致性要求，for  update适用于操作同一张表时的一致性要求。
+
 #### 14.7.4 幻行 ####
 
 ### 14.8 InnoDB 配置 ###
