@@ -2654,7 +2654,165 @@ USING(join_column_list)子句命名两个表中必须存在的列列表。如果
 a LEFT JOIN b USING (c1, c2, c3);
 ```
 
-#### 12.2.10 Subquries ####
+#### 13.2.6 JOIN 语句 ####
+
+<img src=".assets/1035967-20170907174926054-907920122.jpg" alt="img" style="zoom: 67%;" />
+
+```mysql
+CREATE TABLE t_blog
+(
+    id     INT PRIMARY KEY AUTO_INCREMENT,
+    title  VARCHAR(50),
+    typeId INT
+);
+
+CREATE TABLE t_type
+(
+    id   INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(20)
+);
+```
+
+**笛卡尔积：CROSS JOIN**
+
+要理解各种JOIN首先要理解笛卡尔积。笛卡尔积就是将A表的每一条记录与B表的每一条记录强行拼在一起。所以，如果A表有n条记录，B表有m条记录，笛卡尔积产生的结果就会产生n*m条记录。
+
+```mysql
+SELECT * FROM t_blog CROSS JOIN t_type;
+SELECT * FROM t_blog INNER JOIN t_type;
+SELECT * FROM t_blog,t_type;
+SELECT * FROM t_blog NATURE JOIN t_type;
+select * from t_blog NATURA join t_type;
+
++--+------+------+--+----------+
+|id|title |typeId|id|name      |
++--+------+------+--+----------+
+|1 |aaa   |1     |1 |c++       |
+|1 |aaa   |1     |2 |C         |
+|1 |aaa   |1     |3 |Java      |
+|1 |aaa   |1     |4 |C#        |
+|1 |aaa   |1     |5 |Javascript|
+|2 |bbb   |2     |1 |c++       |
+|2 |bbb   |2     |2 |C         |
+|2 |bbb   |2     |3 |Java      |
+|2 |bbb   |2     |4 |C#        |
+
+|9 |iiii  |NULL  |4 |C#        |
+|9 |iiii  |NULL  |5 |Javascript|
+|10|jjjj  |NULL  |1 |c++       |
+|10|jjjj  |NULL  |2 |C         |
+|10|jjjj  |NULL  |3 |Java      |
+|10|jjjj  |NULL  |4 |C#        |
+|10|jjjj  |NULL  |5 |Javascript|
++--+------+------+--+----------+
+```
+
+**内连接：INNER JOIN**
+
+内连接INNER JOIN是最常用的连接操作。从数学的角度讲就是求两个表的交集，从笛卡尔积的角度讲就是从笛卡尔积中挑出ON子句条件成立的记录。有`INNER JOIN`，`WHERE`（等值连接），`STRAIGHT_JOIN`,`JOIN`(省略INNER)四种写法。
+
+```mysql
+SELECT * FROM t_blog INNER JOIN t_type ON t_blog.typeId=t_type.id;
+SELECT * FROM t_blog,t_type WHERE t_blog.typeId=t_type.id;
+SELECT * FROM t_blog STRAIGHT_JOIN t_type ON t_blog.typeId=t_type.id;
+SELECT * FROM t_blog JOIN t_type ON t_blog.typeId=t_type.id;
+```
+
+**左连接：LEFT JOIN**
+
+左连接LEFT JOIN的含义就是求两个表的交集外加左表剩下的数据。依旧从笛卡尔积的角度讲，就是先从笛卡尔积中挑出ON子句条件成立的记录，然后加上左表中剩余的记录。
+
+```mysql
+SELECT * FROM t_blog LEFT JOIN t_type ON t_blog.typeId=t_type.id;
+
++--+------+------+----+----+
+|id|title |typeId|id  |name|
++--+------+------+----+----+
+|1 |aaa   |1     |1   |c++ |
+|2 |bbb   |2     |2   |C   |
+|7 |gggg  |2     |2   |C   |
+|3 |ccc   |3     |3   |Java|
+|6 |ffff  |3     |3   |Java|
+|4 |dddd  |4     |4   |C#  |
+|5 |eeee  |4     |4   |C#  |
+|8 |hhhhhh|NULL  |NULL|NULL|
+|9 |iiii  |NULL  |NULL|NULL|
+|10|jjjj  |NULL  |NULL|NULL|
++--+------+------+----+----+
+```
+
+**右连接：RIGHT JOIN**
+
+同理右连接RIGHT JOIN就是求两个表的交集外加右表剩下的数据。再次从笛卡尔积的角度描述，右连接就是从笛卡尔积中挑出ON子句条件成立的记录，然后加上右表中剩余的记录。
+
+```mysql
+SELECT * FROM t_blog RIGHT JOIN t_type ON t_blog.typeId=t_type.id;
+
++----+-----+------+--+----------+
+|id  |title|typeId|id|name      |
++----+-----+------+--+----------+
+|1   |aaa  |1     |1 |c++       |
+|2   |bbb  |2     |2 |C         |
+|3   |ccc  |3     |3 |Java      |
+|4   |dddd |4     |4 |C#        |
+|5   |eeee |4     |4 |C#        |
+|6   |ffff |3     |3 |Java      |
+|7   |gggg |2     |2 |C         |
+|NULL|NULL |NULL  |5 |Javascript|
++----+-----+------+--+----------+
+```
+
+**外连接：OUTER JOIN**
+
+外连接就是求两个集合的并集。从笛卡尔积的角度讲就是从笛卡尔积中挑出ON子句条件成立的记录，然后加上左表中剩余的记录，最后加上右表中剩余的记录。另外MySQL不支持OUTER JOIN，但是我们可以对左连接和右连接的结果做UNION操作来实现。
+
+```mysql
+SELECT * FROM t_blog LEFT JOIN t_type ON t_blog.typeId=t_type.id
+UNION
+SELECT * FROM t_blog RIGHT JOIN t_type ON t_blog.typeId=t_type.id;
+```
+
+**USING 子句**
+
+MySQL中连接SQL语句中，ON子句的语法格式为：`table1.column_name = table2.column_name`。当模式设计对联接表的列采用了相同的命名样式时，就可以使用 USING 语法来简化 ON 语法，格式为：`USING(column_name)`。
+所以，USING的功能相当于ON，区别在于USING指定一个属性名用于连接两个表，而ON指定一个条件。另外，SELECT *时，USING会去除USING指定的列，而ON不会。实例如下。
+
+```mysql
+select `id` as `blog_id`, title, `typeId` as `id`  from t_blog left join t_type using(`id`);
+```
+
+**自然连接：NATURE JOIN**
+
+自然连接就是USING子句的简化版，它找出两个表中相同的列作为连接条件进行连接。
+
+##### 13.2.6.2 JOIN 原理 #####
+
+两种表连接算法：
+
+**Nested Loop Join（NLJ）算法**
+
+嵌套循环算法。循环外层是驱动表，循坏内层是被驱动表。驱动表会驱动被驱动表进行连接操作。首先驱动表找到第一条记录，然后从头扫描被驱动表，逐一查找与驱动表第一条记录匹配的记录然后连接起来形成结果表中的一条记。被驱动表查找完后，再从驱动表中取出第二个记录，然后从头扫描被驱动表，逐一查找与驱动表第二条记录匹配的记录，连接起来形成结果表中的一条记录。重复上述操作，直到驱动表的全部记录都处理完毕为止。
+
+```c
+    foreach row1 from t1
+        foreach row2 from t2
+            if row2 match row1 //row2与row1匹配，满足连接条件
+                join row1 and row2 into result //连接row1和row2加入结果集
+```
+
+**Block Nested Loop Join(BNLJ)算法**
+
+再介绍一种高级算法：BNLJ，块嵌套循环算法，可以看作对NLJ的优化。大致思想就是建立一个缓存区，一次从驱动表中取多条记录，然后扫描被驱动表，被驱动表的每一条记录都尝试与缓冲区中的多条记录匹配，如果匹配则连接并加入结果集。缓冲区越大，驱动表一次取出的记录就越多。这个算法的优化思路就是减少内循环的次数从而提高表连接效率。
+
+**影响性能的因素：**
+
+**1.内循环的次数：**现在考虑这么一个场景，当t1有100条记录，t2有10000条记录。那么，t1驱动t2与t2驱动t1，他们之间在效率上孰优孰劣？如果是单纯的分析指令执行次数，他们都是100*10000,但是考虑到加载表的次数呢。首先分析t1驱动t2，t1表加载1次，t2表需要加载100次。然后分析t2驱动t1，t2表首先加载1次，但是t1表要加载10000次。所以，t1驱动t2的效率要优于t2驱动t1的效率。**由此得出，小表驱动大表能够减少内循环的次数从而提高连接效率。**
+
+**2.快速匹配：**扫描被驱动表寻找合适的记录可以看做一个查询操作，如何提高查询的效率呢？建索引啊！**由此还可得出，在被驱动表建立索引能够提高连接效率**
+
+**3.排序：**假设t1表驱动t2表进行连接操作，连接条件是t1.id=t2.id，而且要求查询结果对id排序。现在有两种选择，方式一[...ORDER BY t1.id]，方式二[...ORDER BY t2.id]。如果我们使用方式一的话，可以先对t1进行排序然后执行表连接算法，如果我们使用方式二的话，只能在执行表连接算法后，对结果集进行排序（Using temporary），效率自然低下。**由此最后可得出，优先选择驱动表的属性进行排序能够提高连接效率。**
+
+#### 13.2.10 Subquries ####
 
 ### 13.3 事务和锁 ###
 
@@ -3043,6 +3201,12 @@ ZIP_PAGE_SIZE: 0
 `InnoDB`创建或重建 B 树索引时执行批量加载。这种创建索引的方法称为排序索引构建。该 [`innodb_fill_factor`](https://dev.mysql.com/doc/refman/5.7/en/innodb-parameters.html#sysvar_innodb_fill_factor)变量定义了在排序索引构建期间填充的每个 B 树页面上的空间百分比，剩余空间保留用于将来的索引增长。
 
 #### 14.6.3 表空间 ####
+
+##### 14.6.3.1 系统表空间 #####
+
+system表空间是InnoDB数据字典、doublewrite缓冲区、change缓冲区和undo日志的存储区域。如果表是在系统表空间中创建的，而不是在每个表的文件或一般表空间中创建的话，它还可以包含表和索引数据。
+
+系统表空间可以有一个或多个数据文件。默认情况下，在数据目录中创建一个名为ibdata1的系统表空间数据文件。系统表空间数据文件的大小和数量由`innodb_data_file_path`启动选项定义。
 
 ### 14.7 InnoDB lock and transcation ###
 
