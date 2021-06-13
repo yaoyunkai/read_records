@@ -149,7 +149,7 @@ loop:
     
     if ( buf_get_modified_ratio_pct > 70% )
         do buffer pool flush 100% innodb_io_capacity dirty page;
-    else:
+    else
    		do buffer pool flush 10% innodb_io_capacity dirty page;
     goto loop;
 
