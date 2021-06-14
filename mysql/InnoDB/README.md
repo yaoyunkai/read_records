@@ -854,3 +854,28 @@ select * from table where a=xxx order by b;
 
 ### 5.8 全文检索 ###
 
+#### 5.8.2 倒排索引 inverted index ####
+
+在辅助表中存储了单词与单词自身在一个或多个文档中所在位置之间的映射，这通常利用关联数组实现：
+
+- inverted file index {text, doc_ids}
+- full inverted index {text, (doc_id, pos)...}
+
+#### 5.8.3 InnoDB全文检索 ####
+
+FTS Index Cache
+
+Auxiliary Table
+
+参数 `innodb_ft_cache_size` 用来控制 FTS index Cache 的大小。
+
+```mysql
+create fulltext index idx_fts on fts_a(body);
+set global inodb_ft_aux_table='test/fts_a';
+select * from information_schema.INNODB_FT_INDEX_TABLE;
+```
+
+#### 5.8.4 全文检索 ####
+
+## 6. 锁 ##
+
