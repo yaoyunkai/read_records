@@ -879,3 +879,103 @@ select * from information_schema.INNODB_FT_INDEX_TABLE;
 
 ## 6. 锁 ##
 
+### 6.2 lock & latch ###
+
+latch一般称为轻量级的锁，可以分为 mutex 互斥锁 和 rwlock 读写锁。
+
+可以通过 `show engine innodb mutex;` 查看。
+
+lock对象是事务。
+
+可以通过 information_schema 的表 INNODB_TRX INNODB_LOCKS INNODB_LOCK_WAITS 来观察锁的信息。
+
+### 6.3 InnoDB中的锁 ###
+
+#### 6.3.1 锁的类型 ####
+
+- S 共享锁
+- X 排他锁
+
+如果需要对页上的记录r进行上X锁，那么分别需要对数据库A, 表，页上意向锁IX，最后对记录r上X锁。
+
+意向锁即为表锁，目的是为了在一个事务中揭示下一行将被请求的锁类型：
+
+- IS
+- IX
+
+INNODB_TRX 的结构说明：
+
+| 字段名                | 说明                     |
+| --------------------- | ------------------------ |
+| trx_id                | innodb internal trans id |
+| trx_state             | current trans state      |
+| trx_started           | trans start time         |
+| trx_requested_lock_id | 等待事务的锁ID           |
+| trx_wait_started      | 事务等待开始的时间       |
+| trx_weight            | 事务的权重               |
+| trx_mysql_thread_id   | mysql thread id          |
+| trx_query             | SQL                      |
+
+INNODB_LOCKS的结构：
+
+| column      | desc                   |
+| ----------- | ---------------------- |
+| lock_id     | lock id                |
+| lock_trx_id | trans id               |
+| lock_mode   | lock type              |
+| lock_type   | 锁的类型，表锁还是行锁 |
+| lock_table  | 要加锁的表             |
+| lock_index  | 锁住的索引             |
+| lock_space  | 锁对象的space id       |
+| lock_page   | 事务锁定页的数量       |
+| lock_rec    | 事务锁定行的数量       |
+| lock_data   | 事务锁定记录的主键值   |
+
+INNODB_LOCK_WAITS的结构：
+
+| column             | desc                 |
+| ------------------ | -------------------- |
+| requesting_trx_id  | 申请锁资源的trans id |
+| requesting_lock_id | 申请的锁的id         |
+| blocking_trx_id    | 阻塞的事务trans id   |
+| blocking_lock_id   | 阻塞的锁的id         |
+
+#### 6.3.2 一致性非锁定读 ####
+
+![img](.assets/754297-20160201105651929-2126046627.jpg)
+
+
+
+如果读取的行正在执行更新操作，那么innodb会去读取一个快照数据。快照数据是指该行的之前版本的数据，通过undo段来完成。
+
+不同的事务隔离级别下，读取的快照版本也不一致。
+
+READ COMMITTED 总是读取最新的一份快照
+
+REPEATABLE READ 总是读取事务开始时的行数据版本
+
+#### 6.3.3 一致性锁定读 ####
+
+select ... for update: X
+
+select ... lock in share mode: S
+
+#### 6.3.4 自增长与锁 ####
+
+插入的类型：
+
+| 插入类型           | 说明                                 |
+| ------------------ | ------------------------------------ |
+| insert-like        | 所有的插入语句                       |
+| simple inserts     | 能在插入前就确定插入行数的语句       |
+| bulk inserts       | 在插入前不能确定插入行数的语句       |
+| mixed-mode inserts | 有一部分是自增长的，有一部分是确定的 |
+
+自增列插入有个参数： `innodb_auotinc_lock_mode`
+
+| innodb_auotinc_lock_mode | desc                                                         |
+| ------------------------ | ------------------------------------------------------------ |
+| 0                        | 通过表锁 AUTO-INC Locking                                    |
+| 1                        | 对于simple inserst,使用互斥量mutex对内存中的计数器进行累加操作<br />对于bulk inserts,使用AUTO-INC Locking 表锁 |
+| 2                        | 对于所有insert-like使用互斥量                                |
+
