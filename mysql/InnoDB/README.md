@@ -670,3 +670,187 @@ Slots中记录按照键顺序存放，这样可以利用二叉查找迅速找到
 
 为了保证页能够完整地写入磁盘（如可能发生的写入过程中磁盘损坏、机器宕机等原因），InnoDB存储引擎的页中设置了File Trailer部分。File Trailer只有一个FIL_PAGE_END_LSN部分，占用8个字节。前4个字节代表该页的checksum值，最后4个字节和File Header中的FIL_PAGE_LSN相同。通过这两个值来和File Header中的FIL_PAGE_SPACE_OR_CHKSUM和FIL_PAGE_LSN值进行比较，看是否一致（checksum的比较需要通过InnoDB的checksum函数来进行比较，不是简单的等值比较），以此来保证页的完整性（not corrupted）。
 
+### 4.5 Named File Formats ###
+
+参数 `innodb_file_format` 用来指定文件格式。
+
+### 4.6 约束 ###
+
+#### 4.6.1 数据完整性 ####
+
+可以通过 `Primary Key` `Unique Key` 和 触发器来保证数据的完整性。
+
+域完整性保证数据每列的值满足特定的条件：
+
+- Foreign Key
+- Use Trigger
+- DEFAULT
+- NOT NULL
+- Primary Key
+
+#### 4.6.2 约束的创建和查找 ####
+
+两种创建方式：
+
+- 表建立时就进行约束定义
+- 利用 ALTER TABLE 命令来进行创建约束
+
+通过表 `information_schema.TABLE_CONSTRAINTS` 来查看约束关系。
+
+外键可以通过 `information_schema.REFERENTIAL_CONSTRAINTS` 查看。
+
+#### 4.6.7 外键约束 ####
+
+外键定义时的 ON DELETE 和 ON UPDATE 表示在对父表进行 DELETE 和 UPDATE 操作时，对子表所做的操作，可定义的子表操作有：
+
+- CASCADE
+- SET NULL
+- NO ACTION
+- RESTRICT
+
+关闭外键约束检查：
+
+```mysql
+SET foreign_key_checks=0;
+```
+
+### 4.7 视图 ###
+
+查看所有物理表：
+
+```mysql
+select * from information_schema.TABLES where table_type='BASE TABLE' and table_schema=database()\G
+```
+
+## 5. 索引和算法 ##
+
+### 5.1 InnoDB 索引 ###
+
+- B+ 树
+- 全文索引
+- 哈希索引
+
+B+树索引并不能找到一个给定键值的具体行，只能查找到数据行所在的页。然后数据库通过页读入到内存，再在内存中进行查找。
+
+#### 5.4.1 聚集索引 ####
+
+聚集索引的存储并不是物理上连续的，而是逻辑上连续的。
+
+- 页通过双向链表链接，页按照主键的顺序排序
+- 每个页中的记录也是通过双向链表进行维护的，物理存储上可以同样不按照主键存储
+
+#### 5.4.2 辅助索引 ####
+
+对于辅助索引来说，叶子节点并不包含行记录的全部数据。叶子节点除了包含键值以外，每个叶子节点中的索引行中还包含了一个书签(相应行数据的聚集索引键)
+
+```mysql
+show index from t\G
+```
+
+当通过辅助索引来寻找数据时，InnoDB存储引擎会遍历辅助索引并通过叶级别的指针获得指向主键索引的主键，然后再通过主键索引来找到一个完整的行记录。
+
+#### 5.4.3 B+树索引的分裂 ####
+
+#### 5.4.4 B+树索引的管理 ####
+
+```mysql
+alter table table_name
+| ADD {INDEX|KEY} [index_name]
+[index_type] (index_col_name, ...) [index_option] ...
+```
+
+使用 `show index from` 查看表上的索引：
+
+- table
+- non_unique
+- key_name
+- seq_in_index: 索引中该列的位置
+- column_name: 索引列的名字
+- collation：列以什么方式存储在索引中的
+- Cardinality: 索引中唯一值的数目的估计值。可以通过 `ANALYZE TABLE` 更新
+- sub_part: 是否是列的部分被索引
+- packed: 关键字如何被压缩
+- null: 是否索引的列含有NULL值
+- index_type: 索引的类型
+- comment: 注释
+
+### 5.5 Cardinality ###
+
+一般来说，在访问表中很少一部分时使用B+树索引才有意义。(高选择性)
+
+Cardinality值 表示索引中不重复记录数量的预估值。
+
+在实际应用中， `Cardinality/n_rows_in_table` 应该尽可能地接近1。
+
+在 innoDB存储引擎内部对更新Cardinality信息的策略：
+
+- 表中 1/16 的数据已经发生过变化
+- stat_modified_counter > 2 000 000 000
+
+### 5.6 B+树索引的使用 ###
+
+OLTP 和 OLAP, 面向事务和面向分析
+
+#### 5.6.2 联合索引 ####
+
+```mysql
+create table t (a int, b int, primary key (a), key idx_a_b (a, b)) engine = innodb;
+```
+
+对于查询：
+
+```mysql
+select * from table where a=xx and b=xxx;
+select * from table where a=xxx;
+```
+
+这两个是可以命中索引的。
+
+但是对于：
+
+```mysql
+select * from table where b=xxx;
+```
+
+无法命中这个联合索引。
+
+联合索引的第二个好处是已经对第二个键值进行了排序处理。
+
+```mysql
+select * from table where a=xxx order by b;
+```
+
+#### 5.6.3 覆盖索引 covering index ####
+
+- 解释一： 就是select的数据列只用从索引中就能够取得，不必从数据表中读取，换句话说查询列要被所使用的索引覆盖。
+- 解释二： 索引是高效找到行的一个方法，当能通过检索索引就可以读取想要的数据，那就不需要再到数据表中读取行了。如果一个索引包含了（或覆盖了）满足查询语句中字段与条件的数据就叫 做覆盖索引。
+- 解释三：是非聚集组合索引的一种形式，它包括在查询里的Select、Join和Where子句用到的所有列（即建立索引的字段正好是覆盖查询语句[select子句]与查询条件[Where子句]中所涉及的字段，也即，索引包含了查询正在查找的所有数据）。
+
+不是所有类型的索引都可以成为覆盖索引。覆盖索引必须要存储索引的列，而哈希索引、空间索引和全文索引等都不存储索引列的值，所以MySQL只能使用B-Tree索引做覆盖索引。
+
+#### 5.6.4 优化器选择不使用索引的情况 ####
+
+由于选择了所有的列，而辅助索引没有所有的列，所以直接通过聚集索引来查找数据。
+
+可以使用 `FORCE INDEX` 来强制使用某个索引
+
+#### 5.6.5 索引提示 ####
+
+`USE INDEX`
+
+#### 5.6.6 Multi-Range Read ####
+
+可适用于 range ref eq_ref
+
+系统参数: `optimizer_switch`
+
+#### 5.6.7 index condition pushdown ####
+
+可适用于: range ref eq_ref ref_or_null
+
+### 5.7 哈希算法 ###
+
+#### 5.7.3 自适应哈希索引 ####
+
+### 5.8 全文检索 ###
+
