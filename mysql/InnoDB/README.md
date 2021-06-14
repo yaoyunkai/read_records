@@ -498,11 +498,17 @@ a2 00 00 01 15 01 10                     // roll pointer
 解释一下长度偏移列表：06 0c 13 14 16 20 23
 
 第一列长度6     (0x00+6=0x06)
+
 第二列长度6    (0x06+6= 0x0c)
+
 第三列长度7    (0x0c+7=  0x13)
+
 第四列长度1    (0x13+1=   0x14)
+
 第五列长度2    (0x14+2=  0x16)
+
 第六列长度10  (0x16+10= 0x20)
+
 第七列长度3   (0x20+3=  0x23)
 
 第三条记录：
@@ -521,4 +527,146 @@ a2 00 00 01 15 01 2e
 为什么从14变成了94 ???
 
 NULL 标志的影响，最高位的标志位设为1
+
+#### 4.3.3 行溢出数据 ####
+
+varchar最大长度是65535字节，指的是一个表中所有列的总和不能超过这个长度。一个utf8的字节数从1-3个字节。
+
+当发生行溢出时，数据放在页类型为 Uncompress BLOB 页中。
+
+下面列出一个demo:
+
+```mysql
+create table t ( a varchar(65532) ) engine = innodb charset = latin1 row_format = redundant;
+insert into t select repeat('a', 65532);
+```
+
+然后列出数据：
+
+```
+0000c070  08 03 00 00 73 75 70 72  65 6d 75 6d 00 43 27 00  |....supremum.C'.|
+0000c080  13 00 0c 00 06 00 00 10  08 00 74 00 00 00 0c 06  |..........t.....|
+0000c090  07 00 00 00 01 6e 42 bb  00 00 01 31 01 10 61 61  |.....nB....1..aa|
+0000c0a0  61 61 61 61 61 61 61 61  61 61 61 61 61 61 61 61  |aaaaaaaaaaaaaaaa|
+...
+0000c380  61 61 61 61 61 61 61 61  61 61 61 61 61 61 61 61  |aaaaaaaaaaaaaaaa|
+0000c390  61 61 61 61 61 61 61 61  61 61 61 61 61 61 00 00  |aaaaaaaaaaaaaa..|
+0000c3a0  03 bb 00 00 00 04 00 00  00 26 00 00 00 00 00 00  |.........&......|
+0000c3b0  fc fc 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+```
+
+```c
+00 43 27 00 13 00 0c 00 06  // 06 00 0c 00 13 00 27 00 00 43 ???
+00 00 10 08 00 74
+00 00 00 0c 06 07
+00 00 00 01 6e 42
+bb 00 00 01 31 01 10
+61 61 ... 61 
+```
+
+实际溢出不溢出还是要根据实际数据的长度来决定：保证一个页能放入两条记录那么就不会溢出。
+
+#### 4.3.4 Compressed & Dynamic ####
+
+Antelope: Compact & Redundant
+
+Barracuda: Compressed & Dynamic
+
+新的记录格式对于行溢出，只在数据页中存放20个字节的指针，实际的数据都存放在Off Page中。
+
+Compressed 会将行数据以zlib的算法进行压缩。
+
+#### 4.3.5 CHAR ####
+
+`char(N)` 其中N指的是字符的长度而不是实际的长度，如utf8就会有1-3个字节表示unicode，那么当N=10时，实际的长度就可能是10-30byte之间。
+
+### 4.4 InnoDB数据页结构 ###
+
+InnoDB数据页由以下部分组成：
+
+- file header : 38byte
+- page header: 56 byte
+- Infimum & Supremum Records
+- User Records
+- Free Space
+- Page Directory
+- File Trailer: 8byte
+
+![img](.assets/919737-20180408162411775-1834436531.jpg)
+
+#### 4.4.1 File Header ####
+
+| 名称                             | 大小 (byte) | description                                           |
+| -------------------------------- | ----------- | ----------------------------------------------------- |
+| FIL_PAGE_SPACE_OR_CHECKSUM       | 4           | 该页的checksum                                        |
+| FIL_PAGE_OFFSET                  | 4           | 表空间中页的偏移量，表示该页在所有页中的位置。        |
+| FIL_PAGE_PREV                    | 4           | 上一个页                                              |
+| FIL_PAGE_NEXT                    | 4           | 下一个页                                              |
+| FIL_PAGE_LSN                     | 8           | 该页最后被修改的日志序列位置LSN                       |
+| FIL_PAGE_TYPE                    | 2           | InnoDB Engine Page Type                               |
+| FIL_PAGE_FILE_FLUSH_LSN          | 8           | 该值仅在一个页中定义，代表文件至少被更新到了该LSN值。 |
+| FIL_PAGE_ARCH_LOG_NO_OR_SPACE_ID | 4           | 该值表示页属于哪个表空间                              |
+
+  InnoDB Engine Page Type：
+
+| Name                    | Hex    | Description             |
+| ----------------------- | ------ | ----------------------- |
+| FIL_PAGE_INDEX          | 0x45BF | B+树叶节点              |
+| FIL_PAGE_UNDO_LOG       | 0x0002 | Undo Log 页             |
+| FIL_PAGE_INODE          | 0x0003 | 索引节点                |
+| FIL_PAGE_IBUF_FREE_LIST | 0x0004 | Insert Buffer Free List |
+| FIL_PAGE_TYPE_ALLOCATED | 0x0000 | 最新分配                |
+| FIL_PAGE_IBUF_BITMAP    | 0x0005 | Insert Buffer 位图      |
+| FIL_PAGE_TYPE_SYS       | 0x0006 | system page             |
+| FIL_PAGE_TYPE_TRX_SYS   | 0x0007 | system transaction data |
+| FIL_PAGE_TYPE_FSP_HDR   | 0x0008 | file space header       |
+| FIL_PAGE_TYPE_XDES      | 0x0009 | 扩展描述页              |
+| FIL_PAGE_TYPE_BLOB      | 0x000A | Blob页                  |
+
+#### 4.4.2 Page header ####
+
+| name              | size (bytes) | desc                                                         |
+| ----------------- | ------------ | ------------------------------------------------------------ |
+| PAGE_N_DIR_SLOTS  | 2            | 在Page Directory(页目录) 中的 slot                           |
+| PAGE_HEAP_TOP     | 2            | 堆中第一个记录的指针                                         |
+| PAGE_N_HEAP       | 2            | 堆中的记录数，第15位表示行记录格式                           |
+| PAGE_FREE         | 2            | 指向可重用空间的指针                                         |
+| PAGE_GARBAGE      | 2            | 已删除记录的字节数。                                         |
+| PAGE_LAST_INSERT  | 2            | 最后插入记录的位置                                           |
+| PAGE_DIRECTION    | 2            | 最后插入的方向：<br />PAGE_LEFT 0x01<br />PAGE_RIGHT 0x02<br />PAGE_SAME_REC 0x03<br />PAGE_SAME_PAGE 0x04<br />PAGE_NO_DIRECTION 0x05 |
+| PAGE_N_DIRECTION  | 2            | 一个方向连续插入记录的数量                                   |
+| PAGE_N_RECS       | 2            | 该页中记录的数量                                             |
+| PAGE_MAX_TRX_ID   | 8            | 修改当前页的最大事务ID                                       |
+| PAGE_LEVEL        | 2            | 当前页在索引树中的位置                                       |
+| PAGE_INDEX_ID     | 8            | 索引ID, 表示当前页属于哪个索引                               |
+| PAGE_BTR_SEG_LEAF | 10           |                                                              |
+| PAGE_BTR_SEG_TOP  | 10           |                                                              |
+
+#### 4.4.3 Infimum & Supremun ####
+
+Infimum 记录是比该页中任何主键值都要小的值。
+
+Supremum 比任何可能大的值还要大的值。
+
+在创建页时创建，并且在任何情况下不会被删除。
+
+![img](.assets/990532-20170116160256067-537269791.png)
+
+#### 4.4.4 User Record & Free Space ####
+
+free space 是个链表，在一条记录被删除后，该空间会被加入到空闲链表中。
+
+#### 4.4.5 Page Directory ####
+
+Page Directory（页目录）中存放了记录的相对位置（注意，这里存放的是页相对位置，而不是偏移量），有些时候这些记录指针称为Slots（槽）或者目录槽（Directory Slots）。与其他数据库系统不同的是，InnoDB并不是每个记录拥有一个槽，InnoDB存储引擎的槽是一个稀疏目录（sparse directory），即一个槽中可能属于（belong to）多个记录，最少属于4条记录，最多属于8条记录。
+
+Slots中记录按照键顺序存放，这样可以利用二叉查找迅速找到记录的指针。假设我们有（'i'，'d'，'c'，'b'，'e'，'g'，'l'，'h'，'f'，'j'，'k'，'a'），同时假设一个槽中包含4条记录，则Slots中的记录可能是（'a'，'e'，'i'）。
+
+由于InnoDB存储引擎中Slots是稀疏目录，二叉查找的结果只是一个粗略的结果，所以InnoDB必须通过recorder header中的next_record来继续查找相关记录。同时，slots很好地解释了recorder header中的n_owned值的含义，即还有多少记录需要查找，因为这些记录并不包括在slots中。
+
+需要牢记的是，B+树索引本身并不能找到具体的一条记录，B+树索引能找到只是该记录所在的页。数据库把页载入内存，然后通过Page Directory再进行二叉查找。只不过二叉查找的时间复杂度很低，同时内存中的查找很快，因此通常我们忽略了这部分查找所用的时间。
+
+#### 4.4.6 File Trailer ####
+
+为了保证页能够完整地写入磁盘（如可能发生的写入过程中磁盘损坏、机器宕机等原因），InnoDB存储引擎的页中设置了File Trailer部分。File Trailer只有一个FIL_PAGE_END_LSN部分，占用8个字节。前4个字节代表该页的checksum值，最后4个字节和File Header中的FIL_PAGE_LSN相同。通过这两个值来和File Header中的FIL_PAGE_SPACE_OR_CHKSUM和FIL_PAGE_LSN值进行比较，看是否一致（checksum的比较需要通过InnoDB的checksum函数来进行比较，不是简单的等值比较），以此来保证页的完整性（not corrupted）。
 
