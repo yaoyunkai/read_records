@@ -3440,3 +3440,4 @@ select * from information_schema.tables where TABLE_SCHEMA like 'demo_%';
 **STATISTICS**
 
 表索引的信息。`SHOW INDEX FROM schemaname.tablename;` 命令从这个表获取结果。
+

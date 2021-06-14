@@ -979,3 +979,43 @@ select ... lock in share mode: S
 | 1                        | 对于simple inserst,使用互斥量mutex对内存中的计数器进行累加操作<br />对于bulk inserts,使用AUTO-INC Locking 表锁 |
 | 2                        | 对于所有insert-like使用互斥量                                |
 
+#### 6.3.5 外键和锁 ####
+
+### 6.4 锁的算法 ###
+
+#### 6.4.1 行锁的3种算法 ####
+
+- record lock
+- gap lock
+- next-key lock
+
+这里解释一下next-key lock, 例如一个索引有10,11,13和20四个值，那么索引被next-key lock的区间：
+
+`(-∞, 10] (10, 11] (11, 13] (13, 20] (20, +∞]`
+
+设计的目的是为了解决幻行。
+
+如果查询的索引含有唯一属性时，innodb会将next-key lock 进行优化，降级为record-lock
+
+此外 用户可以通过 InnoDB存储引擎的Next-Key Locking 机制在应用层面实现唯一性检查，需要借助事务隔离级别吗？应该时需要 可重复读 的事务隔离级别
+
+```mysql
+select * from table1 where col1=xxx lock in share mode;
+if not found any row:
+	insert into table1 values (...);
+```
+
+### 6.5 锁问题 ###
+
+#### 6.5.1 脏读 ####
+
+在不同的事务下，当前事务可以读到另外事务未提交的数据。
+
+#### 6.5.2 不可重复读 ####
+
+在一个事务内多次读取 同一个数据集合。在这个事务还没有结束时，另外一个事务也访问该同一数据集合，并进行了DML。因此第一个事务由于第二个事务的修改动作，导致了多个读取到的数据不一致的情况。
+
+#### 6.5.3 丢失更新 ####
+
+## 7. 事务 ##
+
