@@ -1049,3 +1049,75 @@ Force Log at Commit: 当事务提交时,必须先将该事务的所有日志写�
 **log block**
 
 重做日志都是以512字节进行存储的。
+
+log block 分为三个部分 header body tailer组成：
+
+| 名称                      | 字节 | 说明                                            |
+| ------------------------- | ---- | ----------------------------------------------- |
+| LOG_BLOCK_HDR_NO          | 4    | 用来表示在log buffer 中的位置                   |
+| LOG_BLOCK_HDR_DATA_LEN    | 2    | 表示log block 所占用的大小                      |
+| LOG_BLOCK_FIRST_REC_GROUP | 2    | 表示log block 中第一个日志所在的偏移量          |
+| LOG_BLOCK_CHECKPOINT_NO   | 4    | 表示该log block 最后被写入时的检查点第4字节的值 |
+
+log block tailer 只有个值 LOG_BLOCK_TRL_NO 该值和 header中的LOG_BLOCK_HDR_NO 相同。
+
+**log group**
+
+log buffer 根据一定的规则将内存中的log block 刷新到磁盘中：
+
+- 事务提交时
+- 当log buffer 中有一半的内存空间已经被使用
+- log checkpoint 时
+
+对于log block 的写入会追加到 redo log file 的最后部分。
+
+对于log group中的第一个redo log file ，前2kb的部分的信息如下：
+
+| 名称            | 大小(bytes) |
+| --------------- | ----------- |
+| log file header | 512         |
+| checkpoint1     | 512         |
+| [blank]         | 512         |
+| checkpoint2     | 512         |
+
+**重做日志格式**
+
+innodb engine 的管理是基于页的，所以其重做日志格式也是基于页的。
+
+虽然不同的引擎格式不一样，但是其header部分的信息是一致的：
+
+| 定义          | 说明           |
+| ------------- | -------------- |
+| redo_log_type | 重做日志的类型 |
+| space         | 表空间ID       |
+| page_no       | 页的偏移量     |
+| redo log body |                |
+
+**LSN**
+
+Log Sequence Number ：日志序列号
+
+#### 7.2.2 undo ####
+
+undo 存放在数据库内部的一个特殊段中，这个段称为 undo segment , 位于共享表空间中。
+
+undo是逻辑日志，因此只能将数据库逻辑地恢复到原来的样子。当innoDB 存储引擎回滚时，它实际上做的是与先前相反的工作。
+
+undo的另一个作用是MVCC, 当用户读取一行记录时，若该记录已经被其他事务占用，当前事务可用通过undo读取之前的行版本信息，以此实现非锁定读取。
+
+undo log 也会产生redo log。
+
+**undo存储管理**
+
+innodb_undo_directory
+
+innodb_undo_logs
+
+innodb_undo_tablespaces
+
+#### 7.2.3 purge ####
+
+#### 7.2.4 group commit ####
+
+为了提高磁盘fsync的效率，当前数据库提供了 group commit 的功能，即一次fsync可以刷新确保多个事务日志被谢日文件。
+
