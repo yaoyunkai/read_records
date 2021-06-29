@@ -1,6 +1,6 @@
 # Use Celery #
 
-![Logo](.assets/celery_512.png)
+<img src=".assets/celery_512.png" alt="Logo" style="zoom:33%;" />
 
 > rabbitmq 架构
 
