@@ -369,5 +369,260 @@ app.conf.update(
 
 ### Application ###
 
+celery必须在使用前实例化，这个实例称为应用程序(或简称app)。
+
+该应用程序是线程安全的，因此具有不同配置、组件和任务的多个Celery应用程序可以在同一个进程空间中共存。
+
+#### Main Name ####
+
+其中只有一个是重要的，那就是主模块名。让我们看看为什么会这样。
+
+在Celery中发送任务消息时，该消息不会包含任何源代码，而只包含要执行的任务的名称。这类似于主机名在互联网上的工作方式:每个工作者维护一个任务名到其实际功能的映射，称为任务注册表。
+
+```python
+In [2]: from celery import Celery
+
+In [3]: app = Celery()
+
+In [4]: app
+Out[4]: <Celery __main__ at 0x7f7a77ddc1f0>
+
+In [5]: @app.task
+   ...: def add(x, y):
+   ...:     return x + y
+   ...: 
+
+In [6]: add
+Out[6]: <@task: __main__.add of __main__ at 0x7f7a77ddc1f0>
+```
+
+当你定义一个任务时，这个任务也会被添加到本地注册表中:
+
+```python
+In [9]: app.tasks
+Out[9]: 
+{'__main__.add': <@task: __main__.add of __main__ at 0x7f7a77ddc1f0>,
+ 'celery.chain': <@task: celery.chain of __main__ at 0x7f7a77ddc1f0>,
+ 'celery.backend_cleanup': <@task: celery.backend_cleanup of __main__ at 0x7f7a77ddc1f0>,
+ 'celery.starmap': <@task: celery.starmap of __main__ at 0x7f7a77ddc1f0>,
+ 'celery.chord': <@task: celery.chord of __main__ at 0x7f7a77ddc1f0>,
+ 'celery.accumulate': <@task: celery.accumulate of __main__ at 0x7f7a77ddc1f0>,
+ 'celery.chunks': <@task: celery.chunks of __main__ at 0x7f7a77ddc1f0>,
+ 'celery.chord_unlock': <@task: celery.chord_unlock of __main__ at 0x7f7a77ddc1f0>,
+ 'celery.group': <@task: celery.group of __main__ at 0x7f7a77ddc1f0>,
+ 'celery.map': <@task: celery.map of __main__ at 0x7f7a77ddc1f0>}
+
+In [10]: type(app.tasks)
+Out[10]: celery.app.registry.TaskRegistry
+
+In [11]: type(add)
+Out[11]: celery.local.PromiseProxy
+
+In [12]: app.tasks['__main__.add']
+Out[12]: <@task: __main__.add of __main__ at 0x7f7a77ddc1f0>
+
+```
+
+每当celery不能检测到函数属于哪个模块时，它就使用main module来生成任务名的开头。
+
+1. If the module that the task is defined in is run as a program.
+1. If the application is created in the Python shell (REPL).
+
+#### Configuration ####
+
+```python
+In [14]: type(app.conf)
+Out[14]: celery.app.utils.Settings
+
+```
+
+两种方式来更新app的配置：
+
+```python
+>>> app.conf.enable_utc = True
+
+>>> app.conf.update(
+...     enable_utc=True,
+...     timezone='Europe/London',
+...)
+```
+
+配置对象由多个字典组成，这些字典按顺序被查询:
+
+1. changes made at run-time
+2. The configuration module (if any)
+3. The default configuration ([`celery.app.defaults`](https://docs.celeryproject.org/en/latest/reference/celery.app.defaults.html#module-celery.app.defaults)).
+
+你甚至可以使用app.add_defaults()方法添加新的默认源。
+
+**config_from_object**
+
+The [`app.config_from_object()`](https://docs.celeryproject.org/en/latest/reference/celery.html#celery.Celery.config_from_object) method loads configuration from a configuration object.
+
+这可以是一个配置模块，或者任何具有配置属性的对象。
+
+请注意，在调用config_from_object()时，之前设置的任何配置都将被重置。如果您想要设置额外的配置，您应该在这之后这样做。
+
+list the examples below:
+
+```python
+# 1. The app.config_from_object() method can take the fully qualified name of a Python module, or even the name of a Python attribute, for example: "celeryconfig", "myproj.config.celery", or "myproj.config:CeleryConfig":
+from celery import Celery
+app = Celery()
+app.config_from_object('celeryconfig')
+
+# 2. pass an already imported module object
+import celeryconfig
+from celery import Celery
+app = Celery()
+app.config_from_object(celeryconfig)
+
+# 3. Using a configuration class/object
+from celery import Celery
+app = Celery()
+class Config:
+    enable_utc = True
+    timezone = 'Europe/London'
+app.config_from_object(Config)
+
+# 4. from env variables
+import os
+from celery import Celery
+os.environ.setdefault('CELERY_CONFIG_MODULE', 'celeryconfig')
+app = Celery()
+app.config_from_envvar('CELERY_CONFIG_MODULE')
+```
+
+**Censored configuration**
+
+如果您希望打印配置，作为调试信息或类似信息，您可能还希望过滤掉密码和API密钥等敏感信息。
+
+以字符的形式输出：`app.conf.humanize(with_defaults=False, censored=True)`
+
+以字典的形式输出：`app.conf.table(with_defaults=False, censored=True)`
+
+#### Laziness ####
+
+应用程序实例是惰性的，这意味着它在实际需要时才会被执行。
+
+Creating a [`Celery`](https://docs.celeryproject.org/en/latest/reference/celery.html#celery.Celery) instance will only do the following:
+
+- Create a logical clock instance, used for events.
+- Create the task registry.
+- Set itself as the current app (but not if the `set_as_current` argument was disabled)
+- Call the [`app.on_init()`](https://docs.celeryproject.org/en/latest/reference/celery.html#celery.Celery.on_init) callback (does nothing by default).
+
+The [`app.task()`](https://docs.celeryproject.org/en/latest/reference/celery.html#celery.Celery.task) decorators don’t create the tasks at the point when the task is defined, instead it’ll defer the creation of the task to happen either when the task is used, or after the application has been *finalized*,
+
+```python
+In [1]: from celery import Celery
+
+In [2]: app = Celery()
+
+In [3]: @app.task
+   ...: def add(x, y):
+   ...:     return x + y
+   ...: 
+
+In [4]: type(add)
+Out[4]: celery.local.PromiseProxy
+
+In [5]: add.__evaluated__()
+Out[5]: True
+
+```
+
+*Finalization* of the app happens either explicitly by calling [`app.finalize()`](https://docs.celeryproject.org/en/latest/reference/celery.html#celery.Celery.finalize)  or implicitly by accessing the `app.tasks` attribute.
+
+Finalizing the object will:
+
+- Copy tasks that must be shared between apps
+- Evaluate all pending task decorators.
+- Make sure all tasks are bound to the current app.
+
+#### Breaking the chain ####
+
+虽然它可能依赖于当前正在设置的应用程序，但最佳实践是始终将应用程序实例传递给任何需要它的东西。
+
+我称之为“应用程序链”，因为它根据被传递的应用程序创建了一个实例链。
+
+```python
+# The following example is considered bad practice:
+from celery import current_app
+
+class Scheduler:
+
+    def run(self):
+        app = current_app
+        
+# Instead it should take the app as an argument:
+class Scheduler:
+
+    def __init__(self, app):
+        self.app = app
+```
+
+Internally Celery uses the [`celery.app.app_or_default()`](https://docs.celeryproject.org/en/latest/reference/celery.app.html#celery.app.app_or_default) function so that everything also works in the module-based compatibility API
+
+```python
+from celery.app import app_or_default
+
+class Scheduler:
+    def __init__(self, app=None):
+        self.app = app_or_default(app)
+```
+
+#### Abstract Tasks ####
+
+All tasks created using the [`task()`](https://docs.celeryproject.org/en/latest/reference/celery.html#celery.Celery.task) decorator will inherit from the application’s base [`Task`](https://docs.celeryproject.org/en/latest/reference/celery.app.task.html#celery.app.task.Task) class.
+
+You can specify a different base class using the `base` argument:
+
+```python
+@app.task(base=OtherTask):
+def add(x, y):
+    return x + y
+```
+
+To create a custom task class you should inherit from the neutral base class: `celery.Task`
+
+```python
+from celery import Task
+
+class DebugTask(Task):
+
+    def __call__(self, *args, **kwargs):
+        print('TASK STARTING: {0.name}[{0.request.id}]'.format(self))
+        return self.run(*args, **kwargs)
+```
+
+It’s even possible to change the default base class for an application by changing its [`app.Task()`](https://docs.celeryproject.org/en/latest/reference/celery.app.task.html#celery.app.task.Task) attribute:
+
+```python
+>>> from celery import Celery, Task
+
+>>> app = Celery()
+
+>>> class MyBaseTask(Task):
+...    queue = 'hipri'
+
+>>> app.Task = MyBaseTask
+>>> app.Task
+<unbound MyBaseTask>
+
+>>> @app.task
+... def add(x, y):
+...     return x + y
+
+>>> add
+<@task: __main__.add>
+
+>>> add.__class__.mro()
+[<class add of <Celery __main__:0x1012b4410>>,
+ <unbound MyBaseTask>,
+ <unbound Task>,
+ <type 'object'>]
+```
+
 ### Tasks ###
 
