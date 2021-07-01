@@ -626,3 +626,488 @@ It’s even possible to change the default base class for an application by chan
 
 ### Tasks ###
 
+Tasks are the building blocks of Celery applications.
+
+任务是一个可以从任何可调用对象中创建的类。它执行双重角色，因为它既定义了任务被调用时发生的事情(发送消息)，又定义了工作器接收到该消息时发生的事情。
+
+直到任务消息被worker确认后，任务消息才会从队列中删除。
+
+理想情况下，任务函数应该是幂等的:这意味着即使使用相同的参数多次调用该函数也不会造成意外的影响。由于worker不能检测任务是否幂等，默认行为是在执行之前提前确认消息，这样已经启动的任务调用就不会再次执行。
+
+If your task is idempotent you can set the [`acks_late`](https://docs.celeryproject.org/en/latest/userguide/tasks.html#Task.acks_late) option to have the worker acknowledge the message *after* the task returns instead. 
+
+See also the FAQ entry [Should I use retry or acks_late?](https://docs.celeryproject.org/en/latest/faq.html#faq-acks-late-vs-retry).
+
+Note that the worker will acknowledge the message if the child process executing the task is terminated (either by the task calling [`sys.exit()`](https://docs.python.org/dev/library/sys.html#sys.exit), or by signal) even when [`acks_late`](https://docs.celeryproject.org/en/latest/userguide/tasks.html#Task.acks_late) is enabled.
+
+If you really want a task to be redelivered in these scenarios you should consider enabling the [`task_reject_on_worker_lost`](https://docs.celeryproject.org/en/latest/userguide/configuration.html#std-setting-task_reject_on_worker_lost) setting.
+
+#### Basics ####
+
+You can easily create a task from any callable by using the [`task()`](https://docs.celeryproject.org/en/latest/reference/celery.html#celery.Celery.task) decorator:
+
+```python
+from .models import User
+
+@app.task
+def create_user(username, password):
+    User.objects.create(username=username, password=password)
+```
+
+There are also many [options](https://docs.celeryproject.org/en/latest/userguide/tasks.html#task-options) that can be set for the task, these can be specified as arguments to the decorator:
+
+```python
+@app.task(serializer='json')
+def create_user(username, password):
+    User.objects.create(username=username, password=password)
+```
+
+#### Bound tasks ####
+
+A task being bound means the first argument to the task will always be the task instance (`self`), just like Python bound methods:
+
+```python
+logger = get_task_logger(__name__)
+
+@app.task(bind=True)
+def add(self, x, y):
+    logger.info(self.request.id)
+```
+
+#### Task inheritance ####
+
+The `base` argument to the task decorator specifies the base class of the task:
+
+```python
+import celery
+
+class MyTask(celery.Task):
+
+    def on_failure(self, exc, task_id, args, kwargs, einfo):
+        print('{0!r} failed: {1!r}'.format(task_id, exc))
+
+@app.task(base=MyTask)
+def add(x, y):
+    raise KeyError()
+```
+
+#### Names ####
+
+Every task must have a unique name.
+
+```python
+>>> @app.task(name='sum-of-two-numbers')
+>>> def add(x, y):
+...     return x + y
+
+>>> add.name
+'sum-of-two-numbers'
+```
+
+##### Automatic naming and relative imports #####
+
+相对导入和自动名称生成不能很好地结合在一起，因此如果您使用相对导入，您应该明确设置名称。
+
+使用默认的自动命名，每个任务都会有一个生成的名称，如moduleA.tasks.taskA、moduleA.tasks.taskB、moduleB.tasks.test等。你可能想摆脱其的任务，所有任务名称。如上所述，您可以明确地为所有任务命名，或者您可以通过覆盖 [`app.gen_task_name()`](https://docs.celeryproject.org/en/latest/reference/celery.html#celery.Celery.gen_task_name). 继续这个例子，celery.py 可能包含：
+
+```python
+from celery import Celery
+
+class MyCelery(Celery):
+
+    def gen_task_name(self, name, module):
+        if module.endswith('.tasks'):
+            module = module[:-6]
+        return super().gen_task_name(name, module)
+
+app = MyCelery('main')
+```
+
+#### Task Request ####
+
+[`app.Task.request`](https://docs.celeryproject.org/en/latest/reference/celery.app.task.html#celery.app.task.Task.request) contains information and state related to the currently executing task.
+
+- **id**: unique id of the executing task
+- **group**: The unique id of the task’s [group](https://docs.celeryproject.org/en/latest/userguide/canvas.html#canvas-group), if this task is a member.
+- **chord**: The unique id of the chord this task belongs to (if the task is part of the header).
+- **correlation_id**: Custom ID used for things like de-duplication
+- **args**
+- **kwargs**
+- **origin**: Name of host that sent this task.
+- **retries**: How many times the current task has been retried. An integer starting at 0.
+- **is_eager**: The original ETA of the task (if any). This is in UTC time (depending on the [`enable_utc`](https://docs.celeryproject.org/en/latest/userguide/configuration.html#std-setting-enable_utc) setting).
+- **expires**: The original expiry time of the task (if any). This is in UTC time (depending on the [`enable_utc`](https://docs.celeryproject.org/en/latest/userguide/configuration.html#std-setting-enable_utc) setting).
+- **hostname**: Node name of the worker instance executing the task.
+- **dilevery_info**: Additional message delivery information. This is a mapping containing the exchange and routing key used to deliver this task.Availability of keys in this dict depends on the message broker used.
+- **reply-to**: Name of queue to send replies back to (used with RPC result backend for example).
+- **called_directly**: This flag is set to true if the task wasn’t executed by the worker.
+- **timelimit**: A tuple of the current `(soft, hard)` time limits active for this task (if any).
+- **callbacks**: 
+- **errback**
+- **utc**
+- **headers**
+- **root_id**
+- **parent_id**
+- **chain**
+
+An example task accessing information in the context is:
+
+```python
+@app.task(bind=True)
+def dump_context(self, x, y):
+    print('Executing task id {0.id}, args: {0.args!r} kwargs: {0.kwargs!r}'.format(
+            self.request))
+```
+
+#### Logging ####
+
+The worker will automatically set up logging for you, or you can configure logging manually.
+
+The best practice is to create a common logger for all of your tasks at the top of your module:
+
+```python
+from celery.utils.log import get_task_logger
+
+logger = get_task_logger(__name__)
+
+@app.task
+def add(x, y):
+    logger.info('Adding {0} + {1}'.format(x, y))
+    return x + y
+```
+
+#### Argument checking ####
+
+celery会在你调用任务时验证传递的参数，就像Python在调用普通函数时所做的那样:
+
+```python
+>>> @app.task
+... def add(x, y):
+...     return x + y
+
+# Calling the task with two arguments works:
+>>> add.delay(8, 8)
+<AsyncResult: f59d71ca-1549-43e0-be41-4e8821a83c0c>
+
+# Calling the task with only one argument fails:
+>>> add.delay(8)
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  File "celery/app/task.py", line 376, in delay
+    return self.apply_async(args, kwargs)
+  File "celery/app/task.py", line 485, in apply_async
+    check_arguments(*(args or ()), **(kwargs or {}))
+TypeError: add() takes exactly 2 arguments (1 given)
+```
+
+You can disable the argument checking for any task by setting its [`typing`](https://docs.celeryproject.org/en/latest/reference/celery.app.task.html#celery.app.task.Task.typing) attribute to `False`:
+
+```python
+>>> @app.task(typing=False)
+... def add(x, y):
+...     return x + y
+
+# Works locally, but the worker receiving the task will raise an error.
+>>> add.delay(8)
+<AsyncResult: f59d71ca-1549-43e0-be41-4e8821a83c0c>
+```
+
+#### Retrying ####
+
+[`app.Task.retry()`](https://docs.celeryproject.org/en/latest/reference/celery.app.task.html#celery.app.task.Task.retry) can be used to re-execute the task, for example in the event of recoverable errors.
+
+当您调用retry时，它将使用相同的task-id发送一条新消息，并且它会确保将消息传递到与发起任务相同的队列中。
+
+```python
+@app.task(bind=True)
+def send_twitter_status(self, oauth, tweet):
+    try:
+        twitter = Twitter(oauth)
+        twitter.update_status(tweet)
+    except (Twitter.FailWhaleError, Twitter.LoginError) as exc:
+        raise self.retry(exc=exc)
+```
+
+**using a custom retry delay**
+
+```python
+@app.task(bind=True, default_retry_delay=30 * 60)  # retry in 30 minutes.
+def add(self, x, y):
+    try:
+        something_raising()
+    except Exception as exc:
+        # overrides the default delay to retry after 1 minute
+        raise self.retry(exc=exc, countdown=60)
+```
+
+**automatic retry for known exceptions**
+
+Fortunately, you can tell Celery to automatically retry a task using autoretry_for argument in the [`task()`](https://docs.celeryproject.org/en/latest/reference/celery.html#celery.Celery.task) decorator:
+
+```python
+from twitter.exceptions import FailWhaleError
+
+@app.task(autoretry_for=(FailWhaleError,))
+def refresh_timeline(user):
+    return twitter.refresh_timeline(user)
+```
+
+#### List of Options ####
+
+General:
+
+- name: The name the task is registered as.
+- request: 如果任务正在执行，则该任务将包含有关当前请求的信息。使用线程本地存储。
+- max_retries
+- throws
+- default_retry_delay
+- rate_limit
+- time_limit: 这个任务的严格时限是几秒。如果没有设置，则使用worker默认值。
+- soft_time_limit
+- ignore_result: Don’t store task state. Note that this means you can’t use [`AsyncResult`](https://docs.celeryproject.org/en/latest/reference/celery.result.html#celery.result.AsyncResult) to check if the task is ready, or get its return value.
+- store_errors_even_if_ignored
+- serializer
+- compression
+- backend: The result store backend to use for this task. An instance of one of the backend classes in celery.backends. Defaults to app.backend, defined by the [`result_backend`](https://docs.celeryproject.org/en/latest/userguide/configuration.html#std-setting-result_backend) setting.
+- acks_late: 如果设置为True，此任务的消息将在任务执行后确认，而不是在执行之前(默认行为)。
+- track_started
+
+#### States ####
+
+**PENDING**: 任务正在等待执行或未知。任何不知道的任务id都表示处于挂起状态。
+
+**STARTED**
+
+**SUCCESS**
+
+**FAILURE**
+
+**RETRY**
+
+**REVOKED**
+
+#### Semipredicates ####
+
+worker将任务包装在跟踪函数中，跟踪函数记录任务的最终状态。可以使用许多异常来通知此函数，以更改其处理任务返回的方式。
+
+##### Ignore #####
+
+该任务可能会引发Ignore以迫使工作者忽略该任务。这意味着不会为任务记录任何状态，但是消息仍然被确认(从队列中删除)。
+
+如果您希望实现自定义类似撤销的功能，或手动存储任务的结果，则可以使用此功能。
+
+```python
+from celery.exceptions import Ignore
+
+@app.task(bind=True)
+def some_task(self):
+    if redis.ismember('tasks.revoked', self.request.id):
+        raise Ignore()
+
+from celery import states
+from celery.exceptions import Ignore
+
+@app.task(bind=True)
+def get_tweets(self, user):
+    timeline = twitter.get_timeline(user)
+    if not self.request.called_directly:
+        self.update_state(state=states.SUCCESS, meta=timeline)
+    raise Ignore()
+```
+
+##### Reject #####
+
+The task may raise [`Reject`](https://docs.celeryproject.org/en/latest/reference/celery.exceptions.html#celery.exceptions.Reject) to reject the task message using AMQPs `basic_reject` method. This won’t have any effect unless [`Task.acks_late`](https://docs.celeryproject.org/en/latest/userguide/tasks.html#Task.acks_late) is enabled.
+
+```python
+import errno
+from celery.exceptions import Reject
+
+@app.task(bind=True, acks_late=True)
+def render_scene(self, path):
+    file = get_file(path)
+    try:
+        renderer.render_scene(file)
+
+    # if the file is too big to fit in memory
+    # we reject it so that it's redelivered to the dead letter exchange
+    # and we can manually inspect the situation.
+    except MemoryError as exc:
+        raise Reject(exc, requeue=False)
+    except OSError as exc:
+        if exc.errno == errno.ENOMEM:
+            raise Reject(exc, requeue=False)
+
+    # For any other error we retry after 10 seconds.
+    except Exception as exc:
+        raise self.retry(exc, countdown=10)
+```
+
+#### Custom task classes ####
+
+All tasks inherit from the [`app.Task`](https://docs.celeryproject.org/en/latest/reference/celery.app.task.html#celery.app.task.Task) class. The [`run()`](https://docs.celeryproject.org/en/latest/reference/celery.app.task.html#celery.app.task.Task.run) method becomes the task body.
+
+```python
+@app.task
+def add(x, y):
+    return x + y
+
+class _AddTask(app.Task):
+
+    def run(self, x, y):
+        return x + y
+add = app.tasks[_AddTask.name]
+```
+
+**Instantiation**
+
+任务不是为每个请求实例化，而是作为全局实例在任务注册表中注册。
+
+这意味着每个进程只调用`__init__`构造函数一次，并且任务类在语义上更接近Actor。
+
+```python
+from celery import Task
+
+class NaiveAuthenticateServer(Task):
+
+    def __init__(self):
+        self.users = {'george': 'password'}
+
+    def run(self, username, password):
+        try:
+            return self.users[username] == password
+        except KeyError:
+            return False
+```
+
+This can also be useful to cache resources, For example, a base Task class that caches a database connection:
+
+```python
+from celery import Task
+
+class DatabaseTask(Task):
+    _db = None
+
+    @property
+    def db(self):
+        if self._db is None:
+            self._db = Database.connect()
+        return self._db
+```
+
+#### handlers ####
+
+- after_return: Handler called after the task returns.
+- on_failure: This is run by the worker when the task fails.
+- on_retry: This is run by the worker when the task is to be retried.
+- on_success: Run by the worker if the task executes successfully.
+
+#### Requests and custom requests ####
+
+Upon receiving a message to run a task, the [worker](https://docs.celeryproject.org/en/latest/userguide/workers.html#guide-workers) creates a [`request`](https://docs.celeryproject.org/en/latest/reference/celery.worker.request.html#celery.worker.request.Request) to represent such demand.
+
+Custom task classes may override which request class to use by changing the attribute [`celery.app.task.Task.Request`](https://docs.celeryproject.org/en/latest/reference/celery.app.task.html#celery.app.task.Task.Request). You may either assign the custom request class itself, or its fully qualified name.
+
+```python
+import logging
+from celery import Task
+from celery.worker.request import Request
+
+logger = logging.getLogger('my.package')
+
+class MyRequest(Request):
+    'A minimal custom request to log failures and hard time limits.'
+
+    def on_timeout(self, soft, timeout):
+        super(MyRequest, self).on_timeout(soft, timeout)
+        if not soft:
+           logger.warning(
+               'A hard timeout was enforced for task %s',
+               self.task.name
+           )
+
+    def on_failure(self, exc_info, send_failed_event=True, return_ok=False):
+        super().on_failure(
+            exc_info,
+            send_failed_event=send_failed_event,
+            return_ok=return_ok
+        )
+        logger.warning(
+            'Failure detected for task %s',
+            self.task.name
+        )
+
+class MyTask(Task):
+    Request = MyRequest  # you can use a FQN 'my.package:MyRequest'
+
+@app.task(base=MyTask)
+def some_longrunning_task():
+    # use your imagination
+```
+
+#### Tips and Best Practices ####
+
+- ignore results you don't want
+
+  ```python
+  @app.task(ignore_result=True)
+  def mytask():
+      something()
+  
+  @app.task
+  def mytask(x, y):
+      return x + y
+  
+  # No result will be stored
+  result = mytask.apply_async(1, 2, ignore_result=True)
+  print result.get() # -> None
+  
+  # Result will be stored
+  result = mytask.apply_async(1, 2, ignore_result=False)
+  print result.get() # -> 3
+  ```
+
+- Avoid launching synchronous subtasks
+
+  Having a task wait for the result of another task is really inefficient, and may even cause a deadlock if the worker pool is exhausted.
+
+  ```python
+  @app.task
+  def update_page_info(url):
+      page = fetch_page.delay(url).get()
+      info = parse_page.delay(url, page).get()
+      store_page_info.delay(url, info)
+  
+  @app.task
+  def fetch_page(url):
+      return myhttplib.get(url)
+  
+  @app.task
+  def parse_page(page):
+      return myparser.parse_document(page)
+  
+  @app.task
+  def store_page_info(url, info):
+      return PageInfo.objects.create(url, info)
+  
+  # ======================================================
+  def update_page_info(url):
+      # fetch_page -> parse_page -> store_page
+      chain = fetch_page.s(url) | parse_page.s() | store_page_info.s(url)
+      chain()
+  
+  @app.task()
+  def fetch_page(url):
+      return myhttplib.get(url)
+  
+  @app.task()
+  def parse_page(page):
+      return myparser.parse_document(page)
+  
+  @app.task(ignore_result=True)
+  def store_page_info(info, url):
+      PageInfo.objects.create(url=url, info=info)
+  ```
+
+### Calling tasks ###
+
