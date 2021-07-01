@@ -1111,3 +1111,76 @@ def some_longrunning_task():
 
 ### Calling tasks ###
 
+#### Basics ####
+
+API定义了一组标准的执行选项，以及三个方法:
+
+- `apply_async(args[, kwargs[, …]])` 
+
+  sends a task message
+
+- `delay(*args, **kwargs)`
+
+  Shortcut to send a task message, but doesn’t support execution options.
+
+- `calling(__call__)`
+
+  Applying an object supporting the calling API (e.g., `add(2, 2)`) means that the task will not be executed by a worker, but in the current process instead (a message won’t be sent).
+
+#### Linking (callbacks / errbacks) ####
+
+celery支持将任务连接在一起，以便一个任务接一个任务。回调任务将以父任务的结果作为部分参数应用:
+
+```python
+add.apply_async((2, 2), link=add.s(16))
+```
+
+Here the result of the first task (4) will be sent to a new task that adds 16 to the previous result, forming the expression ![(2 + 2) + 16 = 20](.assets/5121aa6410cb52f2ef7c903f90d70d8f3e7c365e.png)
+
+如果任务引发异常(errback)，还可以导致应用回调。worker实际上不会将errback作为任务调用，而是直接调用errback函数，以便原始请求、异常和回溯对象可以传递给它。
+
+```python
+@app.task
+def error_handler(request, exc, traceback):
+    print('Task {0} raised exception: {1!r}\n{2!r}'.format(
+          request.id, exc, traceback))
+```
+
+it can be added to the task using the `link_error` execution option:
+
+```python
+add.apply_async((2, 2), link_error=error_handler.s())
+```
+
+In addition, both the `link` and `link_error` options can be expressed as a list:
+
+```ptyhon
+add.apply_async((2, 2), link=[add.s(16), other_task.s()])
+```
+
+The callbacks/errbacks will then be called in order, and all callbacks will be called with the return value of the parent task as a partial argument.
+
+#### On message ####
+
+Celery supports catching all states changes by setting on_message callback.
+
+```python
+@app.task(bind=True)
+def hello(self, a, b):
+    time.sleep(1)
+    self.update_state(state="PROGRESS", meta={'progress': 50})
+    time.sleep(1)
+    self.update_state(state="PROGRESS", meta={'progress': 90})
+    time.sleep(1)
+    return 'hello world: %i' % (a+b)
+
+def on_raw_message(body):
+    print(body)
+
+a, b = 1, 1
+r = hello.apply_async(args=(a, b))
+print(r.get(on_message=on_raw_message, propagate=False))
+```
+
+#### ETA and Countdown ####
+
