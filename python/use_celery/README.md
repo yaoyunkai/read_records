@@ -1316,3 +1316,188 @@ print([res.get() for res in results])
 
 #### Results options ####
 
+### Canvas: Designing Work-flows ###
+
+#### Signatures ####
+
+create a signature for the `add` task using its name like this:
+
+```python
+In [4]: from celery import signature
+In [5]: s1 = signature('part2.tasks.add', args=(3,4), countdown=10)
+In [6]: s1
+Out[6]: part2.tasks.add(3, 4)
+```
+
+or you can create one using the task’s `signature` method:
+
+```python
+>>> add.signature((2, 2), countdown=10)
+tasks.add(2, 2)
+```
+
+There’s also a shortcut using star arguments:
+
+```python
+>>> add.s(2, 2)
+tasks.add(2, 2)
+
+>>> add.s(2, 2, debug=True)
+tasks.add(2, 2, debug=True)
+```
+
+From any signature instance you can inspect the different fields:
+
+```python
+>>> s = add.signature((2, 2), {'debug': True}, countdown=10)
+>>> s.args
+(2, 2)
+>>> s.kwargs
+{'debug': True}
+>>> s.options
+{'countdown': 10}
+```
+
+Calling the signature will execute the task inline in the current process:
+
+```python
+>>> add(2, 2)
+4
+>>> add.s(2, 2)()
+4
+```
+
+`apply_async` takes the same arguments as the [`app.Task.apply_async()`](https://docs.celeryproject.org/en/stable/reference/celery.app.task.html#celery.app.task.Task.apply_async) method:
+
+```python
+>>> add.apply_async(args, kwargs, **options)
+>>> add.signature(args, kwargs, **options).apply_async()
+
+>>> add.apply_async((2, 2), countdown=1)
+>>> add.signature((2, 2), countdown=1).apply_async()
+```
+
+You can’t define options with [`s()`](https://docs.celeryproject.org/en/stable/reference/celery.app.task.html#celery.app.task.Task.s), but a chaining `set` call takes care of that:
+
+```python
+>>> add.s(2, 2).set(countdown=1)
+proj.tasks.add(2, 2)
+```
+
+##### Partials #####
+
+With a signature, you can execute the task in a worker:
+
+```python
+>>> add.s(2, 2).delay()
+>>> add.s(2, 2).apply_async(countdown=1)
+```
+
+Or you can call it directly in the current process:
+
+```python
+>>> add.s(2, 2)()
+4
+```
+
+Specifying additional args, kwargs, or options to `apply_async`/`delay` creates partials:
+
+```python
+>>> partial = add.s(2)          # incomplete signature
+>>> partial.delay(4)            # 4 + 2
+>>> partial.apply_async((4,))  # same
+
+>>> s = add.s(2, 2)
+>>> s.delay(debug=True)                    # -> add(2, 2, debug=True)
+>>> s.apply_async(kwargs={'debug': True})  # same
+
+>>> s = add.signature((2, 2), countdown=10)
+>>> s.apply_async(countdown=1)  # countdown is now 1
+```
+
+##### Immutability #####
+
+有时你想指定一个不带附加参数的回调函数，在这种情况下你可以设置签名为不可变:
+
+```python
+add.apply_async((2, 2), link=reset_buffers.signature(immutable=True))
+add.apply_async((2, 2), link=reset_buffers.si())
+```
+
+当签名是不可变时，只能设置执行选项，所以不可能使用部分args/kwargs调用签名。
+
+##### Callbacks #####
+
+Callbacks can be added to any task using the `link` argument to `apply_async`:
+
+```python
+In [14]: add.apply_async((33,3), link=mul.s(4))
+Out[14]: <AsyncResult: 94b71aae-a7a0-4b66-b932-22c8b49fb2aa>
+```
+
+回调函数只有在任务成功退出时才会被应用，并且会应用父任务的返回值作为参数。如前所述，您添加到签名中的任何参数都将被添加到签名本身指定的参数之前!
+
+#### The Primitives ####
+
+- **group** The group primitive is a signature that takes a list of tasks that should be applied in parallel.
+- **chain** 链原语让我们将签名链接在一起，以便一个接一个地调用，本质上形成了一个回调链。
+- **chord** A chord is just like a group but with a callback. 
+
+这些原语本身也是签名对象，因此它们可以以任意数量的方式组合起来组成复杂的工作流。
+
+```python
+# simple chain
+"""
+[2021-07-02 22:59:58,572: INFO/MainProcess] Task part2.tasks.add[cb6b04f9-3192-4cbc-ae04-64481909603b] received
+[2021-07-02 22:59:58,574: INFO/MainProcess] Task part2.tasks.add[334059c0-d4fa-439a-90af-b44085d4de7a] received
+[2021-07-02 22:59:58,574: INFO/ForkPoolWorker-4] Task part2.tasks.add[cb6b04f9-3192-4cbc-ae04-64481909603b] succeeded in 0.0014613340026699007s: 4
+[2021-07-02 22:59:58,576: INFO/MainProcess] Task part2.tasks.add[9c41cf2f-9b78-49e0-bb96-d73b16187234] received
+[2021-07-02 22:59:58,576: INFO/ForkPoolWorker-4] Task part2.tasks.add[334059c0-d4fa-439a-90af-b44085d4de7a] succeeded in 0.0013121500014676712s: 8
+[2021-07-02 22:59:58,578: INFO/ForkPoolWorker-4] Task part2.tasks.add[9c41cf2f-9b78-49e0-bb96-d73b16187234] succeeded in 0.0007478409970644861s: 16
+
+"""
+>>> from celery import chain
+>>> # 2 + 2 + 4 + 8
+>>> res = chain(add.s(2, 2), add.s(4), add.s(8))()
+>>> res.get()
+16
+
+
+>>> res = (add.si(2, 2) | add.si(4, 4) | add.si(8, 8))()
+>>> res.get()
+16
+>>> res.parent.get()
+8
+>>> res.parent.parent.get()
+4
+
+# simple group
+In [36]: from celery import group
+In [37]: res = group(add.s(i, i) for i in range(10))()
+In [38]: res.get(timeout=1)
+Out[38]: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18]
+
+```
+
+##### Chains #####
+
+##### Groups #####
+
+##### Graphs #####
+
+In addition you can work with the result graph as a [`DependencyGraph`](https://docs.celeryproject.org/en/stable/internals/reference/celery.utils.graph.html#celery.utils.graph.DependencyGraph):
+
+```python
+In [39]: res = chain(add.s(4, 4), mul.s(8), mul.s(10))()
+
+In [40]: res.parent.parent.graph
+Out[40]: 
+76f3d1a7-7d0e-46b1-998b-d68e7ddca48a(2)
+     b36d1ead-1e32-4c7c-a324-8a968cdfae8c(1)
+          b57cd389-10d9-4553-a3c3-7b49619417ad(0)
+b36d1ead-1e32-4c7c-a324-8a968cdfae8c(1)
+     b57cd389-10d9-4553-a3c3-7b49619417ad(0)
+b57cd389-10d9-4553-a3c3-7b49619417ad(0)
+
+```
+
