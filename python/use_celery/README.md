@@ -1184,3 +1184,135 @@ print(r.get(on_message=on_raw_message, propagate=False))
 
 #### ETA and Countdown ####
 
+ETA: estimated time of arrival
+
+ETA(预计到达时间)允许您设置一个具体的日期和时间，这是您的任务将执行的最早时间。倒数是一种以秒为单位设定ETA的快捷方式。
+
+```python
+>>> result = add.apply_async((2, 2), countdown=3)
+>>> result.get()    # this takes at least 3 seconds to return
+20
+```
+
+任务保证在指定的日期和时间之后的某个时间执行，但不一定是在那个确切的时间。逾期的原因可能包括队列中等待的许多项，或者严重的网络延迟。为了确保您的任务能够及时执行，您应该监视队列是否存在拥塞。
+
+countdown参数是一个integer。
+
+eta参数必须是一个datetime object。
+
+```python
+>>> from datetime import datetime, timedelta
+
+>>> tomorrow = datetime.utcnow() + timedelta(days=1)
+>>> add.apply_async((2, 2), eta=tomorrow)
+```
+
+#### Expiration ####
+
+expires参数定义了一个可选的过期时间，可以是任务发布后的秒数，也可以是使用datetime指定的日期和时间:
+
+```python
+>>> # Task expires after one minute from now.
+>>> add.apply_async((10, 10), expires=60)
+
+>>> # Also supports datetime
+>>> from datetime import datetime, timedelta
+>>> add.apply_async((10, 10), kwargs,
+...                 expires=datetime.now() + timedelta(days=1)
+```
+
+#### Message Sending Retry ####
+
+在连接失败的情况下，celery将自动重试发送消息，重试行为可以配置-如多久重试一次，或最大重试次数-或一并禁用。
+
+如果要禁用重试，可以将retry选项设置为False:
+
+```python
+add.apply_async((2, 2), retry=False)
+```
+
+**Retry Policy**
+
+重试策略是一种控制重试行为的映射，可以包含以下keys:
+
+- max_retries: Maximum number of retries before giving up, in this case the exception that caused the retry to fail will be raised. A value of `None` means it will retry forever.
+- interval_start：定义重试之间等待的秒数(浮点数或整数)。默认值是0(第一次重试将是瞬时的)。
+- interval_step: 在每一次连续重试时，这个数字将被添加到重试延迟(浮动或整数)。默认是0.2。
+- interval_max: 重试之间等待的最大秒数(浮点数或整数)。默认是0.2。
+
+```python
+add.apply_async((2, 2), retry=True, retry_policy={
+    'max_retries': 3,
+    'interval_start': 0,
+    'interval_step': 0.2,
+    'interval_max': 0.2,
+})
+```
+
+#### Connection Error Handling ####
+
+当发送任务而消息传输连接丢失或无法启动连接时，
+
+```python
+>>> from proj.tasks import add
+>>> add.delay(2, 2)
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  File "celery/app/task.py", line 388, in delay
+        return self.apply_async(args, kwargs)
+  File "celery/app/task.py", line 503, in apply_async
+    **options
+  File "celery/app/base.py", line 662, in send_task
+    amqp.send_task_message(P, name, message, **options)
+  File "celery/backends/rpc.py", line 275, in on_task_call
+    maybe_declare(self.binding(producer.channel), retry=True)
+  File "/opt/celery/kombu/kombu/messaging.py", line 204, in _get_channel
+    channel = self._channel = channel()
+  File "/opt/celery/py-amqp/amqp/connection.py", line 272, in connect
+    self.transport.connect()
+  File "/opt/celery/py-amqp/amqp/transport.py", line 100, in connect
+    self._connect(self.host, self.port, self.connect_timeout)
+  File "/opt/celery/py-amqp/amqp/transport.py", line 141, in _connect
+    self.sock.connect(sa)
+  kombu.exceptions.OperationalError: [Errno 61] Connection refused
+```
+
+#### Serializers ####
+
+client和worker之间传输的数据需要序列化，因此celery中的每条消息都有一个content_type头，用于描述用于编码它的序列化方法。
+
+默认的序列化器是JSON，但是您可以使用task_serializer设置来更改它，或者针对每个单独的任务，甚至每条消息。
+
+#### Compression ####
+
+#### Connections ####
+
+你可以通过创建一个发布者来手动处理这个连接:
+
+```python
+results = []
+with add.app.pool.acquire(block=True) as connection:
+    with add.get_publisher(connection) as publisher:
+        try:
+            for args in numbers:
+                res = add.apply_async((2, 2), publisher=publisher)
+                results.append(res)
+print([res.get() for res in results])
+```
+
+虽然这个特殊的例子可以更好地expressed as a group:
+
+```python
+>>> from celery import group
+
+>>> numbers = [(2, 2), (4, 4), (8, 8), (16, 16)]
+>>> res = group(add.s(i, j) for i, j in numbers).apply_async()
+
+>>> res.get()
+[4, 8, 16, 32]
+```
+
+#### Routing options ####
+
+#### Results options ####
+
