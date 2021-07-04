@@ -1481,7 +1481,23 @@ Out[38]: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18]
 
 ##### Chains #####
 
-##### Groups #####
+任务可以被链接在一起:被链接的任务在任务成功返回时被调用:
+
+```python
+>>> res = add.apply_async((2, 2), link=mul.s(16))
+>>> res.get()
+4
+```
+
+结果将跟踪所有被原始任务调用的子任务，这可以从结果实例中访问:
+
+```python
+>>> res.children
+[<AsyncResult: 8c350acf-519d-4553-8a53-4ad3a5c5aeb4>]
+
+>>> res.children[0].get()
+64
+```
 
 ##### Graphs #####
 
@@ -1499,5 +1515,54 @@ b36d1ead-1e32-4c7c-a324-8a968cdfae8c(1)
      b57cd389-10d9-4553-a3c3-7b49619417ad(0)
 b57cd389-10d9-4553-a3c3-7b49619417ad(0)
 
+```
+
+```console
+dot -Tpng graph.dot -o graph.png
+```
+
+![praph](.assets/praph.png)
+
+##### Groups #####
+
+A group can be used to execute several tasks in parallel.
+
+```python
+In [1]: from core.tasks import add
+
+In [2]: from celery import group
+
+In [3]: group(add.s(2, 2), add.s(4, 4))
+Out[3]: group((core.tasks.add(2, 2), add(4, 4)))
+
+In [4]: g = group(add.s(2, 2), add.s(4, 4))
+
+In [5]: res = g()
+
+In [6]: res.get()
+Out[6]: [4, 8]
+
+```
+
+```python
+>>> from celery import group
+>>> from tasks import add
+
+>>> job = group([
+...             add.s(2, 2),
+...             add.s(4, 4),
+...             add.s(8, 8),
+...             add.s(16, 16),
+...             add.s(32, 32),
+... ])
+
+>>> result = job.apply_async()
+
+>>> result.ready()  # have all subtasks completed?
+True
+>>> result.successful() # were all subtasks successful?
+True
+>>> result.get()
+[4, 8, 16, 32, 64]
 ```
 
