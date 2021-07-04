@@ -1566,3 +1566,126 @@ True
 [4, 8, 16, 32, 64]
 ```
 
+### Workers Guide ###
+
+#### Start ####
+
+You can start the worker in the foreground by executing the command:
+
+`celery -A proj worker -l INFO`
+
+您可以在同一台机器上启动多个worker，但请确保通过指定节点名(使用--hostname参数)来命名每个worker:
+
+```
+$ celery -A proj worker --loglevel=INFO --concurrency=10 -n worker1@%h
+$ celery -A proj worker --loglevel=INFO --concurrency=10 -n worker2@%h
+$ celery -A proj worker --loglevel=INFO --concurrency=10 -n worker3@%h
+```
+
+#### Stop ####
+
+关闭应使用TERM信号完成。
+
+当启动shutdown时，worker将在实际终止之前完成所有当前正在执行的任务。如果这些任务很重要，您应该等待它完成后再做任何激烈的事情，比如发送KILL信号。
+
+同样，由于进程不能覆盖KILL信号，worker将不能获取其子进程;请确保手动执行。这个命令通常可以达到这个效果:
+
+```
+$ pkill -9 -f 'celery worker'
+$ ps auxww | awk '/celery worker/ {print $2}' | xargs kill -9
+```
+
+#### Restart ####
+
+To restart the worker you should send the TERM signal and start a new instance. The easiest way to manage workers for development is by using celery multi:
+
+```
+$ celery multi start 1 -A proj -l INFO -c4 --pidfile=/var/run/celery/%n.pid
+$ celery multi restart 1 --pidfile=/var/run/celery/%n.pid
+```
+
+#### Process Signals ####
+
+| `TERM` | Warm shutdown, wait for tasks to complete.                   |
+| ------ | ------------------------------------------------------------ |
+| `QUIT` | Cold shutdown, terminate ASAP                                |
+| `USR1` | Dump traceback for all active threads.                       |
+| `USR2` | Remote debug, see [`celery.contrib.rdb`](https://docs.celeryproject.org/en/stable/reference/celery.contrib.rdb.html#module-celery.contrib.rdb). |
+
+### Periodic Tasks ###
+
+**celery beat** is a scheduler; It kicks off tasks at regular intervals, that are then executed by available worker nodes in the cluster.
+
+By default the entries are taken from the [`beat_schedule`](https://docs.celeryproject.org/en/stable/userguide/configuration.html#std-setting-beat_schedule) setting, but custom stores can also be used, like storing the entries in a SQL database.
+
+您必须确保每次只有一个调度程序在为一个调度程序运行，否则您将以重复的任务告终。使用集中式方法意味着调度不必同步，并且服务可以在不使用锁的情况下进行操作。
+
+#### Time Zones ####
+
+The periodic task schedules uses the UTC time zone by default, but you can change the time zone used using the [`timezone`](https://docs.celeryproject.org/en/stable/userguide/configuration.html#std-setting-timezone) setting.
+
+#### Entries ####
+
+To call a task periodically you have to add an entry to the beat schedule list.
+
+```python
+from celery import Celery
+from celery.schedules import crontab
+
+app = Celery()
+
+@app.on_after_configure.connect
+def setup_periodic_tasks(sender, **kwargs):
+    # Calls test('hello') every 10 seconds.
+    sender.add_periodic_task(10.0, test.s('hello'), name='add every 10')
+
+    # Calls test('world') every 30 seconds
+    sender.add_periodic_task(30.0, test.s('world'), expires=10)
+
+    # Executes every Monday morning at 7:30 a.m.
+    sender.add_periodic_task(
+        crontab(hour=7, minute=30, day_of_week=1),
+        test.s('Happy Mondays!'),
+    )
+
+@app.task
+def test(arg):
+    print(arg)
+
+@app.task
+def add(x, y):
+    z = x + y
+    print(z)
+    
+
+app.conf.beat_schedule = {
+    'add-every-30-seconds': {
+        'task': 'tasks.add',
+        'schedule': 30.0,
+        'args': (16, 16)
+    },
+}
+app.conf.timezone = 'UTC'
+```
+
+#### Available Fields ####
+
+- task The name of the task to execute.
+- schedule: 
+- args: 
+- kwargs:
+- options:
+- relative:
+
+#### Starting the Scheduler ####
+
+To start the **celery beat** service:
+
+`celery -A proj beat`
+
+You can also embed beat inside the worker by enabling the workers [`-B`](https://docs.celeryproject.org/en/stable/reference/cli.html#cmdoption-celery-worker-B) option, this is convenient if you’ll never run more than one worker node, but it’s not commonly used and for that reason isn’t recommended for production use:
+
+`celery -A proj worker -B`
+
+
+
