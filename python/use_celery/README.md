@@ -1683,9 +1683,105 @@ To start the **celery beat** service:
 
 `celery -A proj beat`
 
+这个命令要和正常的celery worker一起使用，因为该命令只提供了 celery beat，真正的task还是需要worker来提供。
+
 You can also embed beat inside the worker by enabling the workers [`-B`](https://docs.celeryproject.org/en/stable/reference/cli.html#cmdoption-celery-worker-B) option, this is convenient if you’ll never run more than one worker node, but it’s not commonly used and for that reason isn’t recommended for production use:
 
 `celery -A proj worker -B`
+
+#### Using custom scheduler classes ####
+
+Custom scheduler classes can be specified on the command-line (the [`--scheduler`](https://docs.celeryproject.org/en/stable/reference/cli.html#cmdoption-celery-beat-S) argument).
+
+There’s also the [django-celery-beat](https://pypi.python.org/pypi/django-celery-beat/) extension that stores the schedule in the Django database, and presents a convenient admin interface to manage periodic tasks at runtime.
+
+### Routing Tasks ###
+
+#### Basics ####
+
+The simplest way to do routing is to use the [`task_create_missing_queues`](https://docs.celeryproject.org/en/stable/userguide/configuration.html#std-setting-task_create_missing_queues) setting (on by default).
+
+Say you have two servers, x, and y that handle regular tasks, and one server z, that only handles feed related tasks. You can use this configuration:
+
+```python
+task_routes = {'feed.tasks.import_feed': {'queue': 'feeds'}}
+```
+
+启用此路由后，导入提要任务将被路由到“feeds”队列，而所有其他任务将被路由到默认队列(由于历史原因命名为“celery”)。
+
+或者，您可以使用glob模式匹配，甚至正则表达式，来匹配feed中的所有任务。任务名称空间:
+
+```python
+app.conf.task_routes = {'feed.tasks.*': {'queue': 'feeds'}}
+```
+
+If the order of matching patterns is important you should specify the router in *items* format instead:
+
+```python
+task_routes = ([
+    ('feed.tasks.*', {'queue': 'feeds'}),
+    ('web.tasks.*', {'queue': 'web'}),
+    (re.compile(r'(video|image)\.tasks\..*'), {'queue': 'media'}),
+],)
+```
+
+After installing the router, you can start server z to only process the feeds queue like this:
+
+```console
+user@z:/$ celery -A proj worker -Q feeds
+user@z:/$ celery -A proj worker -Q feeds,celery
+
+app.conf.task_default_queue = 'default'
+```
+
+一个名为“video”的队列将被创建如下设置:
+
+```python
+{'exchange': 'video',
+ 'exchange_type': 'direct',
+ 'routing_key': 'video'}
+```
+
+**Manual routing**
+
+四种交换器类型: fanout direct topic headers 四种。
+
+**fanout** 把所有发送到该交换器的消息路由到所有与该交换器绑定的队列中。
+
+**direct**: 把消息路由到那些 BindingKey 和 RoutingKey 完全匹配的队列中。
+
+**topic**：也需要BindingKey和RoutingKey的匹配规则,规则如下：
+
+- RoutingKey中的字符以 `.` 分隔开，被点号分开的称为单词。同样BindingKey中也以 `.` 分开。
+- BindingKey中可以存在 `*` `#` 特殊字符用于模糊匹配，其中 `*` 用于匹配一个单词， `#` 用于匹配**多规格单词**(从零个到多个)
+
+```python
+from kombu import Queue
+
+app.conf.task_default_queue = 'default'
+app.conf.task_queues = (
+    Queue('default',    routing_key='task.#'),
+    Queue('feed_tasks', routing_key='feed.#'),
+)
+app.conf.task_default_exchange = 'tasks'
+app.conf.task_default_exchange_type = 'topic'
+app.conf.task_default_routing_key = 'task.default'
+```
+
+You can also override this using the routing_key argument to `Task.apply_async()`, or `send_task()`:
+
+```python
+from feeds.tasks import import_feed
+import_feed.apply_async(args=['http://cnn.com/rss'],
+                        queue='feed_tasks',
+                        routing_key='feed.import')
+```
+
+#### Special Routing Options ####
+
+#### AMQP Primer ####
+
+#### Routing Tasks ####
 
 
 
