@@ -339,3 +339,98 @@ person.name = 'Matt'; // ok
 
 ### 3.4 数据类型 ###
 
+ECMAScript 有 6 种简单数据类型（也称为原始类型）： Undefined 、 Null 、 Boolean 、 Number 、String 和 Symbol 。 Symbol （符号）是 ECMAScript 6 新增的。还有一种复杂数据类型叫 Object （对象）。
+
+#### 3.4.1 typeof 操作符 ####
+
+对一个值使用 typeof 操作符会返回下列字符串之一：
+
+- undefined 值未定义
+- boolean
+- string
+- number
+- object
+- function
+- symbol 表示值为符号。
+
+#### 3.4.2 undefined 类型 ####
+
+Undefined 类型只有一个值，就是特殊值 undefined 。当使用 var 或 let 声明了变量但没有初始化时，就相当于给变量赋予了 undefined 值：
+
+```js
+let msg1;
+console.log(msg1 == undefined);
+```
+
+包含 undefined 值的变量跟未定义变量是有区别的。请看下面的例子：
+
+```js
+let message; // 这个变量被声明了，只是值为 undefined
+// 确保没有声明过这个变量
+// let age
+console.log(message); // "undefined"
+console.log(age); // 报错
+```
+
+在对未初始化的变量调用 typeof 时，返回的结果是 "undefined" ，但对未声明的变量调用它时，返回的结果还是 "undefined" ，
+
+#### 3.4.3 Null类型 ####
+
+Null 类型同样只有一个值，即特殊值 null 。逻辑上讲， null 值表示一个空对象指针，这也是给typeof 传一个 null 会返回 "object" 的原因：
+
+```js
+let car = null;
+console.log(typeof car); // "object"
+```
+
+#### 3.4.4 Boolean类型 ####
+
+Boolean （布尔值）类型是 ECMAScript 中使用最频繁的类型之一，有两个字面值： true 和 false 。这两个布尔值不同于数值，因此 true 不等于 1， false 不等于 0。
+
+虽然布尔值只有两个，但所有其他 ECMAScript 类型的值都有相应布尔值的等价形式。要将一个其他类型的值转换为布尔值，可以调用特定的 Boolean() 转型函数：
+
+```js
+let message = "Hello world!";
+let messageAsBoolean = Boolean(message);
+```
+
+| 数据类型  | 转换为true的值 | 转换为false的值 |
+| --------- | -------------- | --------------- |
+| Boolean   | true           | false           |
+| String    | 非空字符串     | ""              |
+| Number    | 非零数值       | 0 NaN           |
+| Object    | 任意对象       | null            |
+| Undefined | N/A            | undefined       |
+
+理解以上转换非常重要，因为像 if 等流控制语句会自动执行其他类型值到布尔值的转换。
+
+#### 3.4.5 Number类型 ####
+
+ Number 类型使用 IEEE 754格式表示整数和浮点值
+
+**2. 值的范围**
+
+ECMAScript 可以表示的最小数值保存在 Number.MIN_VALUE 中。
+
+可以表示的最大数值保存在Number.MAX_VALUE 中。
+
+任何无法表示的负数以 -Infinity （负无穷大）表示，任何无法表示的正数以 Infinity （正无穷大）表示。
+
+要确定一个值是不是有限大（即介于 JavaScript 能表示的最小值和最大值之间），可以使用 isFinite() 函数，
+
+**3. NaN**
+
+有一个特殊的数值叫 NaN ，意思是“不是数值”（Not a Number），用于表示本来要返回数值的操作失败了（而不是抛出错误）。比如，用 0 除任意数值在其他语言中通常都会导致错误，从而中止代码执行。
+
+```js
+console.log(0/0); // NaN
+console.log(-0/+0); // NaN
+
+console.log(5/0); // Infinity
+console.log(5/-0); // -Infinity
+```
+
+首先，任何涉及 NaN 的操作始终返回 NaN （如 NaN/10 ），在连续多步计算时这可能是个问题。其次， NaN 不等于包括 NaN 在内的任何值。
+
+为此，ECMAScript 提供了 isNaN() 函数。该函数接收一个参数，可以是任意数据类型，然后判断这个参数是否“不是数值”。
+
