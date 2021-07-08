@@ -434,3 +434,318 @@ console.log(5/-0); // -Infinity
 
 为此，ECMAScript 提供了 isNaN() 函数。该函数接收一个参数，可以是任意数据类型，然后判断这个参数是否“不是数值”。
 
+```js
+console.log(isNaN(NaN)); // true
+console.log(isNaN(10)); // false，10 是数值
+console.log(isNaN("10")); // false，可以转换为数值 10
+console.log(isNaN("blue")); // true，不可以转换为数值
+console.log(isNaN(true)); // false，可以转换为数值 1
+```
+
+**4. 数值转换**
+
+有 3 个函数可以将非数值转换为数值： Number() 、 parseInt() 和 parseFloat() 。 Number() 是转型函数，可用于任何数据类型。后两个函数主要用于将字符串转换为数值。
+
+`Number()` 函数的转换规则：
+
+- 布尔值， true 转换为 1， false 转换为 0。
+- 数值，直接返回
+- null ，返回 0。
+- undefined ，返回 NaN 。
+- 字符串：
+  - 如果字符串包含数值字符，包括数值字符前面带加、减号的情况，则转换为一个十进制数值。
+  - 如果字符串包含有效的浮点值格式如 "1.1" ，则会转换为相应的浮点值（同样，忽略前面的零）。
+  - 如果字符串包含有效的十六进制格式如 "0xf" ，则会转换为与该十六进制值对应的十进制整数值。
+  - 如果是空字符串（不包含字符），则返回 0。
+  - 如果字符串包含除上述情况之外的其他字符，则返回 NaN 。
+- 对象，调用 valueOf() 方法，并按照上述规则转换返回的值。
+
+#### 3.4.6 String类型 ####
+
+String （字符串）数据类型表示零或多个 16 位 Unicode 字符序列。字符串可以使用双引号（"）、单引号（'）或反引号（`）标示。
+
+**3. 转换为字符串**
+
+有两种方式把一个值转换为字符串。首先是使用几乎所有值都有的 toString() 方法。这个方法唯一的用途就是返回当前值的字符串等价物。
+
+**4. 模板字面量**
+
+反引号。
+
+**5. 字符串插值**
+
+模板字面量最常用的一个特性是支持字符串插值，也就是可以在一个连续定义中插入一个或多个值。技术上讲，模板字面量不是字符串，而是一种特殊的 JavaScript 句法表达式，只不过求值后得到的是字符串。模板字面量在定义时立即求值并转换为字符串实例，任何插入的变量也会从它们最接近的作用域中取值。
+
+字符串插值通过在 `${}` 中使用一个 JavaScript 表达式实现。
+
+```js
+let value = 5;
+let exponent = 'second';
+let interpolatedString = `${value} to the ${exponent} power is ${value * value}`;
+console.log(interpolatedString);
+```
+
+**6. 模板字面量标签函数**
+
+模板字面量也支持定义标签函数（tag function），而通过标签函数可以自定义插值行为。标签函数会接收被插值记号分隔后的模板和对每个表达式求值的结果。
+
+标签函数本身是一个常规函数，通过前缀到模板字面量来应用自定义行为，如下例所示。标签函数接收到的参数依次是原始字符串数组和对每个表达式求值的结果。这个函数的返回值是对模板字面量求值得到的字符串。
+
+```js
+function simpleTag(strings, aValExpression, bValExpression, sumExpression) {
+    console.log(strings);
+    console.log(aValExpression);
+    console.log(bValExpression);
+    console.log(sumExpression);
+
+    return "foobar";
+}
+let untaggedResult = `${ a } + ${ b } = ${ a + b }`;
+let taggedResult = simpleTag`${ a } + ${ b } = ${ a + b }`;
+
+function simpleTag1(strings, ...expressions) {
+    console.log(strings);
+    for (const expression of expressions) {
+        console.log(expression);
+    }
+    return 'foobar';
+}
+```
+
+#### 3.4.7 Symbol类型 ####
+
+符号是原始值，且符号实例是唯一、不可变的。符号的用途是确保对象属性使用唯一标识符，不会发生属性冲突的危险。
+
+**1. 符号的基本用法**
+
+符号需要使用 Symbol() 函数初始化。因为符号本身是原始类型，所以 typeof 操作符对符号返回symbol 。
+
+```js
+let sym = Symbol();
+console.log(typeof sym);
+```
+
+调用 Symbol() 函数时，也可以传入一个字符串参数作为对符号的描述（description），将来可以通过这个字符串来调试代码。但是，这个字符串参数与符号定义或标识完全无关：
+
+```js
+let genericSymbol = Symbol();
+let otherGenericSymbol = Symbol();
+
+let fooSymbol = Symbol('foo');
+let otherFooSymbol = Symbol('foo');
+console.log(genericSymbol == otherGenericSymbol);
+console.log(fooSymbol == otherFooSymbol);
+```
+
+ Symbol() 函数不能与 new 关键字一起作为构造函数使用。这样做是为了避免创建符号包装对象。
+
+```js
+let myBool = new Boolean();
+console.log(typeof myBool);
+
+let myStr = new String();
+console.log(typeof myStr);
+
+let myNum = new Number();
+console.log(typeof myNum);
+
+// let mySymbol = new Symbol(); // Uncaught TypeError: Symbol is not a constructor
+
+// 如果你确实想使用符号包装对象，可以借用 Object() 函数：
+let mySymbol = Symbol();
+let myWrappedSymbol = Object(mySymbol);
+console.log(typeof myWrappedSymbol); // "object"
+
+```
+
+**2. 使用全局符号注册表**
+
+`Symbol.for()` 对每个字符串键都执行幂等操作。第一次使用某个字符串调用时，它会检查全局运行时注册表，发现不存在对应的符号，于是就会生成一个新符号实例并添加到注册表中。后续使用相同字符串的调用同样会检查注册表，发现存在与该字符串对应的符号，然后就会返回该符号实例。
+
+```js
+let fooGlobalSymbol = Symbol.for('foo'); // 创建新符号
+let otherFooGlobalSymbol = Symbol.for('foo'); // 重用已有符号
+console.log(fooGlobalSymbol === otherFooGlobalSymbol); // true
+```
+
+即使采用相同的符号描述，在全局注册表中定义的符号跟使用 Symbol() 定义的符号也并不等同：
+
+```js
+let localSym = Symbol('foo')
+let globalSym = Symbol.for('foo')
+localSym === globalSym // false
+
+Symbol.keyFor(globalSym) // foo
+```
+
+**3. 使用符号作为属性**
+
+凡是可以使用字符串或数值作为属性的地方，都可以使用符号。这就包括了对象字面量属性和`Object.defineProperty()` / `Object.defineProperties()` 定义的属性。对象字面量只能在计算属性语法中使用符号作为属性。
+
+```js
+let s1 = Symbol('foo'),
+    s2 = Symbol('bar'),
+    s3 = Symbol('baz'),
+    s4 = Symbol('qux');
+
+let o = {
+    [s1]: 'foo val'
+}
+console.log(o);
+
+Object.defineProperty(o, s2, {value: 'bar val'});
+console.log(o);
+
+Object.defineProperties(o, {
+    [s3]: {value: 'baz val'},
+    [s4]: {value: 'qux val'}
+});
+console.log(o);
+```
+
+类似于 `Object.getOwnPropertyNames()` 返回对象实例的常规属性数组， `Object.getOwnPropertySymbols()`返回对象实例的符号属性数组。这两个方法的返回值彼此互斥。 `Object.getOwnPropertyDescriptors()` 会返回同时包含常规和符号属性描述符的对象。 `Reflect.ownKeys()` 会返回两种类型的键。
+
+```js
+let s1 = Symbol('foo');
+let s2 = Symbol('bar');
+
+let o = {
+[s1]: 'foo val',
+[s2]: 'bar val',
+baz: 'baz val',
+qux: 'qux val'
+};
+console.log(o);
+
+console.log(Object.getOwnPropertySymbols(o));
+console.log(Object.getOwnPropertyNames(o));
+console.log(Object.getOwnPropertyDescriptors(o));
+console.log(Reflect.ownKeys(o));
+```
+
+因为符号属性是对内存中符号的一个引用，所以直接创建并用作属性的符号不会丢失。但是，如果没有显式地保存对这些属性的引用，那么必须遍历对象的所有符号属性才能找到相应的属性键：
+
+```js
+let o = {
+[Symbol('foo')]: 'foo val',
+[Symbol('bar')]: 'bar val'
+}
+console.log(o);
+
+let barSymbol = Object.getOwnPropertySymbols(o).find((symbol) => symbol.toString().match(/bar/));
+console.log(barSymbol);
+```
+
+**4. 常用内置符号**
+
+#### 3.4.8 Object类型 ####
+
+ECMAScript 中的对象其实就是一组数据和功能的集合。对象通过 new 操作符后跟对象类型的名称来创建。开发者可以通过创建 Object 类型的实例来创建自己的对象，然后再给对象添加属性和方法：
+
+```js
+let o = new Object()
+```
+
+这个语法类似 Java，但 ECMAScript 只要求在给构造函数提供参数时使用括号。如果没有参数，如上面的例子所示，那么完全可以省略括号（不推荐）：
+
+```js
+let o = new Object; // 合法，但不推荐
+```
+
+ECMAScript中的 Object 也是派生其他对象的基类。 Object 类型的所有属性和方法在派生的对象上同样存在。
+
+每个 Object 实例都有如下属性和方法:
+
+- constructor
+- hasOwnProperty(propertyName) 用于判断当前对象实例（不是原型）上是否存在给定的属性。
+- isPrototypeOf(object) ：用于判断当前对象是否为另一个对象的原型。
+- propertyIsEnumerable(propertyName) ：用于判断给定的属性是否可以使用（本章稍后讨论的） for-in 语句枚举。
+- toLocaleString() ：返回对象的字符串表示，该字符串反映对象所在的本地化执行环境
+- toString() ：返回对象的字符串表示。
+- valueOf() ：返回对象对应的字符串、数值或布尔值表示。
+
+### 3.5 操作符 ###
+
+#### 3.5.2 位操作符 ####
+
+接下来要介绍的操作符用于数值的底层操作，也就是操作内存中表示数据的比特（位）。ECMAScript中的所有数值都以 IEEE 754 64 位格式存储，但位操作并不直接应用到 64 位表示，而是先把值转换为32 位整数，再进行位操作，之后再把结果转换为 64 位。
+
+**1. 按位非**
+
+```js
+let num1 = 25; // 二进制 00000000000000000000000000011001
+let num2 = ~num1; // 二进制 11111111111111111111111111100110
+console.log(num2); // -26
+```
+
+**2. 按位与**
+
+```js
+let result = 25 & 3;
+console.log(result); // 1
+```
+
+**3. 按位或**
+
+```js
+let result = 25 | 3;
+console.log(result); // 27
+```
+
+**4. 按位异或**
+
+```js
+let result = 25 ^ 3;
+console.log(result); // 26
+```
+
+左移：`<<`
+
+有符号右移： `>>`
+
+无符号右移: `>>>`
+
+#### 3.5.3 布尔操作符 ####
+
+#### 3.5.7 关系操作符 ####
+
+关系操作符执行比较两个值的操作，包括小于（ < ）、大于（ > ）、小于等于（ <= ）和大于等于（ >= ），用法跟数学课上学的一样。这几个操作符都返回布尔值。
+
+与 ECMAScript中的其他操作符一样，在将它们应用到不同数据类型时也会发生类型转换和其他行为。
+
+- 如果操作数都是数值，则执行数值比较。
+- 如果操作数都是字符串，则逐个比较字符串中对应字符的编码。
+- 如果有任一操作数是数值，则将另一个操作数转换为数值，执行数值比较。
+- 如果有任一操作数是对象，则调用其 valueOf() 方法，取得结果后再根据前面的规则执行比较
+- 如果没有 valueOf() 操作符，则调用 toString() 方法，取得结果后再根据前面的规则执行比较。
+- 如果有任一操作数是布尔值，则将其转换为数值再执行比较。
+
+#### 3.5.8 相等操作符 ####
+
+提供了两组操作符。第一组是等于和不等于，它们在比较之前执行转换。第二组是全等和不全等，它们在比较之前不执行转换。
+
+**1. 等于和不等于**
+
+ECMAScript 中的等于操作符用两个等于号（ == ）表示，如果操作数相等，则会返回 true 。不等于操作符用叹号和等于号（ != ）表示，如果两个操作数不相等，则会返回 true 。这两个操作符都会先进行类型转换（通常称为强制类型转换）再确定操作数是否相等。
+
+- 如果任一操作数是布尔值，则将其转换为数值再比较是否相等。 false 转换为 0， true 转换为 1。
+-  如果一个操作数是字符串，另一个操作数是数值，则尝试将字符串转换为数值，再比较是否相等。
+- 如果一个操作数是对象，另一个操作数不是，则调用对象的 valueOf() 方法取得其原始值，再根据前面的规则进行比较。
+
+在进行比较时，这两个操作符会遵循如下规则。
+
+- null 和 undefined 相等。
+- null 和 undefined 不能转换为其他类型的值再进行比较。
+- 如果有任一操作数是 NaN ，则相等操作符返回 false ，不相等操作符返回 true 。
+- 如果两个操作数都是对象，则比较它们是不是同一个对象。如果两个操作数都指向同一个对象，则相等操作符返回 true 。
+
+**2. 全等和不全等**
+
+全等和不全等操作符与相等和不相等操作符类似，只不过它们在比较相等时不转换操作数。全等操作符由 3 个等于号（ === ）表示，只有两个操作数在不转换的前提下相等才返回 true 
+
+不全等操作符用一个叹号和两个等于号（ !== ）表示，只有两个操作数在不转换的前提下不相等才返回 true 。
+
+### 3.6 语句 ###
+
+## 4. 变量 作用域和内存 ##
+
