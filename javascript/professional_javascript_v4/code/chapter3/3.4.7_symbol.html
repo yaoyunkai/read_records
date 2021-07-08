@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+<script>
+    // let sym = Symbol();
+    // console.log(typeof sym);
+    //
+    // let genericSymbol = Symbol();
+    // let otherGenericSymbol = Symbol();
+    //
+    // let fooSymbol = Symbol('foo');
+    // let otherFooSymbol = Symbol('foo');
+    // console.log(genericSymbol == otherGenericSymbol);
+    // console.log(fooSymbol == otherFooSymbol);
+
+    // let myBool = new Boolean();
+    // console.log(typeof myBool);
+    //
+    // let myStr = new String();
+    // console.log(typeof myStr);
+    //
+    // let myNum = new Number();
+    // console.log(typeof myNum);
+    //
+    // // let mySymbol = new Symbol(); // Uncaught TypeError: Symbol is not a constructor
+    //
+    // // 如果你确实想使用符号包装对象，可以借用 Object() 函数：
+    // let mySymbol = Symbol();
+    // let myWrappedSymbol = Object(mySymbol);
+    // console.log(typeof myWrappedSymbol); // "object"
+
+    // let fooSym = Symbol.for("foo");
+    // console.log(typeof fooSym);
+
+    // let fooGlobalSymbol = Symbol.for('foo'); // 创建新符号
+    // let otherFooGlobalSymbol = Symbol.for('foo'); // 重用已有符号
+    // console.log(fooGlobalSymbol === otherFooGlobalSymbol); // true
+
+    // let s1 = Symbol('foo'),
+    //     s2 = Symbol('bar'),
+    //     s3 = Symbol('baz'),
+    //     s4 = Symbol('qux');
+    //
+    // let o = {
+    //     [s1]: 'foo val'
+    // }
+    // console.log(o);
+    //
+    // Object.defineProperty(o, s2, {value: 'bar val'});
+    // console.log(o);
+    //
+    // Object.defineProperties(o, {
+    //     [s3]: {value: 'baz val'},
+    //     [s4]: {value: 'qux val'}
+    // });
+    // console.log(o);
+
+    // let s1 = Symbol('foo');
+    // let s2 = Symbol('bar');
+    //
+    // let o = {
+    //     [s1]: 'foo val',
+    //     [s2]: 'bar val',
+    //     baz: 'baz val',
+    //     qux: 'qux val'
+    // };
+    // console.log(o);
+    //
+    // console.log(Object.getOwnPropertySymbols(o));
+    // console.log(Object.getOwnPropertyNames(o));
+    // console.log(Object.getOwnPropertyDescriptors(o));
+    // console.log(Reflect.ownKeys(o));
+
+    let o = {
+        [Symbol('foo')]: 'foo val',
+        [Symbol('bar')]: 'bar val'
+    }
+    console.log(o);
+
+    let barSymbol = Object.getOwnPropertySymbols(o).find((symbol) => symbol.toString().match(/bar/));
+    console.log(barSymbol);
+
+</script>
+
+
+</body>
+</html>
