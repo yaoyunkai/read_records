@@ -749,3 +749,140 @@ ECMAScript 中的等于操作符用两个等于号（ == ）表示，如果操�
 
 ## 4. 变量 作用域和内存 ##
 
+### 4.1 原始值和引用值 ###
+
+在把一个值赋给变量时，JavaScript 引擎必须确定这个值是原始值还是引用值。上一章讨论了 6 种原始值： Undefined 、 Null 、 Boolean 、 Number 、 String 和 Symbol 。保存原始值的变量是按值（by value）访问的，因为我们操作的就是存储在变量中的实际值。
+
+#### 4.1.1 动态属性 ####
+
+原始类型的初始化可以只使用原始字面量形式。如果使用的是 new 关键字，则 JavaScript 会创建一个 Object 类型的实例，但其行为类似原始值。
+
+```js
+let name1 = "Tom";
+let name2 = new String("Bob");
+name1.age = 27;
+name2.age = 26;
+
+console.log(name1.age); // undefined
+console.log(name2.age); // 26
+console.log(typeof name1); // string
+console.log(typeof name2); // object
+```
+
+#### 4.1.2 复制值 ####
+
+#### 4.1.3 传递参数 ####
+
+按值传递的方式
+
+#### 4.1.4 确定类型 ####
+
+ typeof 操作符最适合用来判断一个变量是否为原始类型。它是判断一个变量是否为字符串、数值、布尔值或 undefined 的最好方式。
+
+```js
+let s = "Nicholas";
+let b = true;
+let i = 22;
+let u;
+let n = null;
+let o = new Object();
+
+console.log(typeof s); // string
+console.log(typeof i); // number
+console.log(typeof b); // boolean
+console.log(typeof u); // undefined
+console.log(typeof n); // object
+console.log(typeof o); // object
+```
+
+### 4.2 执行上下文与作用域 ###
+
+每个上下文都有一个关联的变量对象（variable object），而这个上下文中定义的所有变量和函数都存在于这个对象上。虽然无法通过代码访问变量对象，但后台处理数据会用到它。
+
+全局上下文是最外层的上下文。根据 ECMAScript实现的宿主环境，表示全局上下文的对象可能不一样。在浏览器中，全局上下文就是我们常说的 window 对象。
+
+因此所有通过 var 定义的全局变量和函数都会成为 window 对象的属性和方法。
+
+上下文中的代码在执行的时候，会创建变量对象的一个作用域链（scope chain）。这个作用域链决定了各级上下文中的代码在访问变量和函数时的顺序。代码正在执行的上下文的变量对象始终位于作用域链的最前端。如果上下文是函数，则其活动对象（activation object）用作变量对象。
+
+```js
+var color = "blue";
+
+function changeColor() {
+    if (color === 'blue') {
+        color = 'red';  // 相当于一个全局变量
+    } else {
+        color = 'blue';
+    }
+}
+
+changeColor();
+console.log(color);  // red
+```
+
+```js
+var color = 'blue';
+
+function changeColor() {
+    let anotherColor = 'red';
+    function swapColors() {
+        let tmpColor = anotherColor;
+        anotherColor = color;  // 全局 但是应该会被 let 抑制
+        color = tmpColor;  // 全局
+        demo = '123'
+    }
+    swapColors();
+}
+changeColor();
+console.log(color);
+// console.log(anotherColor);
+console.log(demo);
+```
+
+ `swapColors()`局部上下文的作用域链中有 3 个对象： swapColors() 的变量对象、 changeColor() 的变量对象和全局变量对象。
+
+#### 4.2.1 作用域链增强 ####
+
+#### 4.2.2 变量声明 ####
+
+**1. 使用var的函数作用域声明**
+
+**2. 使用let的块级作用域声明**
+
+### 4.3 垃圾回收 ###
+
+## 5 基本引用类型 ##
+
+### 5.2 RegExp ###
+
+`let expression = /pattern/flags;`
+
+- g ：全局模式，表示查找字符串的全部内容，而不是找到第一个匹配的内容就结束。
+- i ：不区分大小写，表示在查找匹配时忽略 pattern 和字符串的大小写。
+- m ：多行模式，表示查找到一行文本末尾时会继续查找。
+- y ：粘附模式，表示只查找从 lastIndex 开始及之后的字符串。
+- u ：Unicode 模式，启用 Unicode 匹配。
+- s ： dotAll 模式，表示元字符 . 匹配任何字符（包括 \n 或 \r ）。
+
+#### 5.2.1 RegExp 实例属性 ####
+
+```js
+let pattern1 = /[bc]at/i;
+console.log(pattern1.global); // false
+console.log(pattern1.ignoreCase); // true
+console.log(pattern1.multiline); // false
+console.log(pattern1.lastIndex); // 0
+console.log(pattern1.source); // "\[bc\]at"
+console.log(pattern1.flags); // "i"
+```
+
+### 5.4 单例内置对象 ###
+
+#### 5.4.1 Global ####
+
+在全局作用域中定义的变量和函数都会变成 Global 对象的属性 。
+
+虽然 ECMA-262 没有规定直接访问 Global 对象的方式，但浏览器将 window 对象实现为 Global对象的代理。因此，所有全局作用域中声明的变量和函数都变成了 window 的属性。
+
+#### 5.4.2 Math ####
+
