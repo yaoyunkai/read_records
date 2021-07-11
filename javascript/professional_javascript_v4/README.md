@@ -886,3 +886,54 @@ console.log(pattern1.flags); // "i"
 
 #### 5.4.2 Math ####
 
+## 6 集合引用类型 ##
+
+### 6.1 Object ###
+
+显式地创建 Object 的实例有两种方式。
+
+```js
+let person = new Object();
+person.name = "Nicholas";
+person.age = 29;
+
+let person = {
+	name: "Nicholas",
+	age: 29
+};
+```
+
+### 6.2 Array ###
+
+### 6.3 typed array ###
+
+## 7 迭代器和生成器 ##
+
+## 8 面向对象 ##
+
+### 8.1 理解对象 ###
+
+```js
+let person = new Object();
+person.name = "Nicholas";
+person.age = 29;
+person.job = "Software Engineer";
+
+// console.log(this) // 表示全局的window对象
+
+person.sayName = function () {
+    console.log(this.name);
+};
+
+let person1 = {
+    name: "Nicholas",
+    age: 29,
+    job: "Software Engineer",
+    sayName() {
+        console.log(this.name);
+    }
+};
+```
+
+#### 8.1.1 属性的类型 ####
+
