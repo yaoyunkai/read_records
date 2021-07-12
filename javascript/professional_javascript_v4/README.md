@@ -937,3 +937,247 @@ let person1 = {
 
 #### 8.1.1 属性的类型 ####
 
+属性分两种：数据属性和访问器属性。
+
+**1. 数据属性**
+
+数据属性包含一个保存数据值的位置。值会从这个位置读取，也会写入到这个位置。数据属性有 4个特性描述它们的行为。
+
+- `[[Configurable]]` 表示属性是否可以通过 delete 删除并重新定义，是否可以修改它的特性，以及是否可以把它改为访问器属性。默认情况下，所有直接定义在对象上的属性的这个特性都是 true 
+- `[[Enumerable]]` 表示属性是否可以通过 for-in 循环返回。默认情况下，所有直接定义在对象上的属性的这个特性都是 true
+- `[[Writable]]` 表示属性的值是否可以被修改。默认情况下，所有直接定义在对象上的属性的这个特性都是 true
+- `[[Value]]` 包含属性实际的值。这就是前面提到的那个读取和写入属性值的位置。这个特性的默认值为 undefined
+
+```js
+let person = {};
+
+Object.defineProperty(person, "name", {
+    writable: false,
+    value: 'Tom',
+});
+```
+
+在调用 Object.defineProperty() 时， configurable 、 enumerable 和 writable 的值如果不指定，则都默认为 false 。
+
+**2. 访问器属性**
+
+访问器属性不包含数据值。相反，它们包含一个获取（getter）函数和一个设置（setter）函数，不过这两个函数不是必需的。
+
+- `[[Configurable]]` 
+- `[[Enumerable]]` 
+- `[[Get]]` 获取函数，在读取属性时调用。默认值为 undefined 。
+- `[[Set]]` 设置函数，在写入属性时调用。默认值为 undefined 。
+
+```js
+let book = {
+    year_: 2017,
+    edition: 1,
+};
+
+Object.defineProperty(book, 'year', {
+    get() {
+        return this.year_;
+    },
+    set(value) {
+        if (value > 2017) {
+            this.year_ = value;
+            this.edition += (value - 2017);
+        }
+    }
+})；
+```
+
+#### 8.1.2 定义多个属性 ####
+
+#### 8.1.3 读取属性的特性 ####
+
+使用 `Object.getOwnPropertyDescriptor()` 方法可以取得指定属性的属性描述符。这个方法接收两个参数：属性所在的对象和要取得其描述符的属性名。
+
+ECMAScript 2017 新增了 Object.getOwnPropertyDescriptors() 静态方法。这个方法实际上会在每个自有属性上调用 Object.getOwnPropertyDescriptor() 并在一个新对象中返回它们。
+
+#### 8.1.4 合并对象 ####
+
+```js
+// Object.assign()
+
+let dest, src, result;
+
+dest = {};
+src = {id: 'src'};
+result = Object.assign(dest, src);
+
+// Object.assign 修改目标对象
+// 也会返回修改后的目标对象
+console.log(dest === result); // true
+console.log(dest !== src); // true
+console.log(result); // { id: src }
+console.log(dest); // { id: src }
+```
+
+Object.assign() 实际上对每个源对象执行的是浅复制。如果多个源对象都有相同的属性，则使用最后一个复制的值。此外，从源对象访问器属性取得的值，比如获取函数，会作为一个静态值赋给目标对象。换句话说，不能在两个对象间转移获取函数和设置函数。
+
+#### 8.1.5 对象标识及相等判定 ####
+
+Object.is(obj_a, obj_b)
+
+#### 8.1.6 增强的对象语法 ####
+
+**1. 属性值简写**
+
+```js
+let name = 'Matt';
+let person = {
+    name
+}
+```
+
+**3. 简写方法名**
+
+```js
+let person = {
+    sayName: function (name) {
+        console.log(`My name is ${name}`);
+    }
+};
+
+let person1 = {
+    sayName(name) {
+        console.log(`My name is ${name}`);
+    }
+};
+
+// 简写方法名与可计算属性键相互兼容：
+const methodKey = 'sayName';
+
+let person3 = {
+    [methodKey](name) {
+        console.log(`My name is ${name}`);
+    }
+};
+```
+
+#### 8.1.7 对象解构 ####
+
+```js
+let person = {
+	name: 'Matt',
+	age: 27
+};
+let { name: personName, age: personAge } = person;
+```
+
+使用解构，可以在一个类似对象字面量的结构中，声明多个变量，同时执行多个赋值操作。如果想让变量直接使用属性的名称，那么可以使用简写语法，比如：
+
+`let { name, age } = person;`
+
+也可以在解构赋值的同时定义默认值，这适用于前面刚提到的引用的属性不存在于源对象中的情况：
+
+`let { name, job='Software engineer' } = person;`
+
+解构在内部使用函数 ToObject() （不能在运行时环境中直接访问）把源数据结构转换为对象。这意味着在对象解构的上下文中，原始值会被当成对象。这也意味着（根据 ToObject() 的定义）， null和 undefined 不能被解构，否则会抛出错误。
+
+```js
+let {'length': aLen} = 'foobar';
+console.log(aLen);
+
+let {'constructor': c} = 4;
+console.log(c === Number);
+```
+
+### 8.2 创建对象 ###
+
+#### 8.2.2 工厂模式 ####
+
+```js
+function createPerson(name, age, job) {
+    let o = {};
+    o.name = name;
+    o.age = age;
+    o.job = job;
+    o.sayName = function () {
+        console.log(this.name);
+    };
+
+    return o;
+}
+
+let person1 = createPerson("Nicholas", 29, "Software Engineer");
+let person2 = createPerson("Greg", 27, "Doctor");
+```
+
+#### 8.2.3 构造函数模式 ####
+
+```js
+function Person(name, age, job) {
+    this.name = name;
+    this.age = age;
+    this.job = job;
+    this.sayName = function () {
+        console.log(this.name);
+    }
+}
+
+let person1 = new Person("Nicholas", 29, "Software Engineer");
+let person2 = new Person("Greg", 27, "Doctor");
+```
+
+- 没有显式地创建对象。
+- 属性和方法直接赋值给了 this 。
+- 没有 return 。
+
+要创建 Person 的实例，应使用 new 操作符。以这种方式调用构造函数会执行如下操作。
+
+(1) 在内存中创建一个新对象。
+
+(2) 这个新对象内部的 [[Prototype]] 特性被赋值为构造函数的 prototype 属性。
+
+(3) 构造函数内部的 this 被赋值为这个新对象（即 this 指向新对象）。
+
+(4) 执行构造函数内部的代码（给新对象添加属性）。
+
+(5) 如果构造函数返回非空对象，则返回该对象；否则，返回刚创建的新对象。
+
+定义自定义构造函数可以确保实例被标识为特定类型.
+
+任何函数只要使用 new 操作符调用就是构造函数，而不使用 new 操作符调用的函数就是普通函数。
+
+**2. 构造函数的问题**
+
+构造函数的主要问题在于，其定义的方法会在每个实例上都创建一遍。因此对前面的例子而言， person1 和 person2 都有名为 sayName() 的方法，但这两个方法不是同一个 Function 实例。
+
+```js
+function Person(name, age, job) {
+    this.name = name;
+    this.age = age;
+    this.job = job;
+    this.sayName = sayName;
+}
+
+function sayName() {
+    console.log(this.name);
+}
+
+let person1 = new Person("Nicholas", 29, "Software Engineer");
+let person2 = new Person("Greg", 27, "Doctor");
+```
+
+#### 8.2.4 原型模式 ####
+
+每个函数都会创建一个 prototype 属性，这个属性是一个对象，包含应该由特定引用类型的实例共享的属性和方法。
+
+实际上，这个对象就是通过调用构造函数创建的对象的原型。使用原型对象的好处是，在它上面定义的属性和方法可以被对象实例共享。原来在构造函数中直接赋给对象实例的值，可以直接赋值给它们的原型，如下所示：
+
+```js
+function Person() {
+    Person.prototype.name = 'Matt';
+    Person.prototype.age = 29;
+    Person.prototype.job = 'Software Engineer';
+    Person.prototype.sayName = function () {
+        console.log(this.name);
+    }
+}
+
+let person1 = new Person();
+let person2 = new Person();
+```
+
