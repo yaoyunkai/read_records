@@ -1435,3 +1435,255 @@ Object.defineProperty(Person.prototype, "constructor", {
 
 ### 8.3 继承 ###
 
+#### 8.3.1 原型链 ####
+
+如果原型是另一个类型的实例呢？那就意味着这个原型本身有一个内部指针指向另一个原型，相应地另一个原型也有一个指针指向另一个构造函数。这样就在实例和原型之间构造了一条原型链。
+
+```js
+function SuperType() {
+    this.property = true;
+}
+
+SuperType.prototype.getSuperValue = function () {
+    return this.property;
+}
+
+function SubType() {
+    this.subproperty = false;
+}
+
+SubType.prototype = new SuperType();
+SubType.prototype.getSubValue = function () {
+    return this.subproperty;
+}
+
+let ins = new SubType();
+
+console.log(ins.getSuperValue());
+```
+
+![image-20210713215544164](.assets/image-20210713215544164.png)
+
+**2. 原型与继承关系**
+
+第一种方式是使用 instanceof 操作符，如果一个实例的原型链中出现过相应的构造函数，则 instanceof 返回 true 。
+
+```js
+console.log(ins instanceof Object); // true
+console.log(ins instanceof SuperType); // true
+console.log(ins instanceof SubType); // true
+```
+
+**4. 原型链的问题**
+
+- 还是引用类型的问题。
+- 子类型在实例化时不能给父类型的构造函数传参。
+
+#### 8.3.2 盗用构造函数 ####
+
+```js
+function SuperType() {
+    this.colors = ["red", "blue", "green"];
+}
+
+function SubType() {
+    SuperType.call(this);
+}
+
+let instance1 = new SubType();
+instance1.colors.push("black");
+console.log(instance1.colors); // "red,blue,green,black"
+
+let instance2 = new SubType();
+console.log(instance2.colors); // "red,blue,green"
+```
+
+示例中加粗的代码展示了盗用构造函数的调用。通过使用 call() （或 apply() ）方法， SuperType构造函数在为 SubType 的实例创建的新对象的上下文中执行了。这相当于新的 SubType 对象上运行了SuperType() 函数中的所有初始化代码。结果就是每个实例都会有自己的 colors 属性。
+
+**1. 传递参数**
+
+```js
+function SuperType(name) {
+    this.name = name;
+}
+
+function SubType() {
+    // 继承 SuperType 并传参
+    SuperType.call(this, "Nicholas");
+    // 实例属性
+    this.age = 29;
+}
+
+let instance = new SubType();
+console.log(instance.name); // "Nicholas";
+console.log(instance.age); // 29
+```
+
+**2. 盗用构造函数的问题**
+
+函数不能重用
+
+#### 8.3.3 组合继承 ####
+
+基本的思路是使用原型链继承原型上的属性和方法，而通过盗用构造函数继承实例属性。
+
+```js
+function SuperType(name) {
+    this.name = name;
+    this.colors = ["red", "blue", "green"];
+}
+
+SuperType.prototype.sayName = function () {
+    console.log(this.name);
+};
+
+function SubType(name, age) {
+// 继承属性
+    SuperType.call(this, name);
+    this.age = age;
+}
+
+// 继承方法
+SubType.prototype = new SuperType();
+SubType.prototype.sayAge = function () {
+    console.log(this.age);
+};
+
+let instance1 = new SubType("Nicholas", 29);
+instance1.colors.push("black");
+console.log(instance1.colors); // "red,blue,green,black"
+instance1.sayName(); // "Nicholas";
+instance1.sayAge(); // 29
+
+let instance2 = new SubType("Greg", 27);
+console.log(instance2.colors); // "red,blue,green"
+instance2.sayName(); // "Greg";
+instance2.sayAge(); // 27
+```
+
+#### 8.3.4 原型式继承 ####
+
+#### 8.3.5 寄生式继承 ####
+
+#### 8.3.6 寄生式组合继承 ####
+
+### 8.4 类 ###
+
+#### 8.4.1 类定义 ####
+
+与函数表达式类似，类表达式在它们被求值前也不能引用。不过，与函数定义不同的是，虽然函数声明可以提升，但类定义不能：
+
+```js
+console.log(FunctionExpression); // undefined
+var FunctionExpression = function() {};
+console.log(FunctionExpression); // function() {}
+
+console.log(FunctionDeclaration); // FunctionDeclaration() {}
+function FunctionDeclaration() {}
+console.log(FunctionDeclaration); // FunctionDeclaration() {}
+
+console.log(ClassExpression); // undefined
+var ClassExpression = class {};
+console.log(ClassExpression); // class {}
+
+console.log(ClassDeclaration); // ReferenceError: ClassDeclaration is not defined
+class ClassDeclaration {}
+console.log(ClassDeclaration); // class ClassDeclaration {}
+```
+
+另一个跟函数声明不同的地方是，函数受函数作用域限制，而类受块作用域限制
+
+**类的构成**
+
+```js
+class Foo {
+
+}
+
+class Bar {
+    constructor() {
+    }
+}
+
+class Baz {
+    get myBaz() {
+
+    }
+}
+
+class Qux {
+    static myQux() {
+        
+    }
+}
+
+let Person = class PersonName {
+    identify() {
+        console.log(Person.name, PersonName.name);
+    }
+}
+let p = new Person();
+p.identify(); // PersonName PersonName
+console.log(Person.name); // PersonName
+console.log(PersonName); // ReferenceError: PersonName is not defined
+```
+
+#### 8.4.2 类构造函数 ####
+
+**1. 实例化**
+
+使用 new 调用类的构造函数会执行如下操作：
+
+(1) 在内存中创建一个新对象。
+
+(2) 这个新对象内部的 [[Prototype]] 指针被赋值为构造函数的 prototype 属性。
+
+(3) 构造函数内部的 this 被赋值为这个新对象（即 this 指向新对象）。
+
+(4) 执行构造函数内部的代码（给新对象添加属性）。
+
+(5) 如果构造函数返回非空对象，则返回该对象；否则，返回刚创建的新对象。
+
+```js
+class Vegetable {
+    constructor() {
+        this.color = 'orange';
+    }
+}
+
+class Person {
+    constructor(name) {
+        console.log(arguments.length);
+        this.name = name || null;
+    }
+}
+
+let p2 = new Person(); // 0
+console.log(p2.name); // null
+
+let p3 = new Person('Jake'); // 1
+console.log(p3.name); // Jake
+```
+
+**2. 类也是特殊的函数**
+
+在类的上下文中，类本身在使用 new 调用时就会被当成构造函数。重点在于，类中定义的 constructor 方法不会被当成构造函数，在对它使用instanceof 操作符时会返回 false 。但是，如果在创建实例时直接将类构造函数当成普通构造函数来使用，那么 instanceof 操作符的返回值会反转：
+
+```js
+class Person {}
+
+let p1 = new Person();
+
+console.log(p1.constructor === Person); // true
+console.log(p1 instanceof Person); // true
+console.log(p1 instanceof Person.constructor); // false
+
+let p2 = new Person.constructor();
+
+console.log(p2.constructor === Person); // false
+console.log(p2 instanceof Person); // false
+console.log(p2 instanceof Person.constructor); // true
+```
+
+#### 8.4.3 实例，原型和类成员 ####
+
