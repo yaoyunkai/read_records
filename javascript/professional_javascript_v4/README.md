@@ -1943,3 +1943,115 @@ class Vehicle {
 
 > Object.assign()
 
+## 9 代理与反射 ##
+
+## 10 函数 ##
+
+函数定义的两种方式：
+
+```js
+function sum1(num1, num2) {
+    return num1 + num2;
+}
+
+let sum2 = function (num1, num2) {
+    return num1 + num2;
+};
+
+let sum3 = (num1, num2) => {
+    return num1 + num2;
+};
+
+let sum4 = new Function("num1", "num2", "return num1 + num2");
+```
+
+### 10.1 箭头函数 ###
+
+```js
+console.log(ints.map(function(i) { return i + 1; })); // [2, 3, 4]
+console.log(ints.map((i) => { return i + 1 })); // [2, 3, 4]
+```
+
+此外，箭头函数也没有 prototype 属性。
+
+### 10.2 函数名 ###
+
+### 10.3 理解参数 ###
+
+事实上，在使用 function 关键字定义（非箭头）函数时，可以在函数内部访问 arguments 对象，从中取得传进来的每个参数值。
+
+### 10.5 默认参数值 ###
+
+### 10.7 函数声明与函数表达式 ###
+
+JavaScript 引擎在任何代码执行之前，会先读取函数声明，并在执行上下文中生成函数定义。而函数表达式必须等到代码执行到它那一行，才会在执行上下文中生成函数定义。
+
+以上代码可以正常运行，因为函数声明会在任何代码执行之前先被读取并添加到执行上下文。这个过程叫作函数声明提升（function declaration hoisting）。
+
+### 10.9 函数内部 ###
+
+#### 10.9.1 arguments ####
+
+虽然主要用于包含函数参数，但 arguments 对象其实还有一个 callee 属性，是一个指向 arguments 对象所在函数的指针。
+
+```js
+function factorial1(num) {
+    if (num <= 1) {
+        return 1;
+    } else {
+        return num * factorial1(num - 1);
+    }
+}
+
+function factorial(num) {
+    if (num <= 1) {
+        return 1;
+    } else {
+        return num * arguments.callee(num - 1);
+    }
+}
+```
+
+#### 10.9.2 this ####
+
+在标准函数中， this 引用的是把函数当成方法调用的上下文对象，这时候通常称其为 this 值
+
+```js
+window.color = 'red';
+let o = {
+    color: 'blue'
+};
+
+function sayColor() {
+    console.log(this.color);
+}
+
+sayColor(); // 'red'
+o.sayColor = sayColor;
+o.sayColor(); // 'blue'
+```
+
+在箭头函数中， this 引用的是定义箭头函数的上下文。
+
+#### 10.9.3 caller ####
+
+这个属性引用的是调用当前函数的函数，或者如果是在全局作用域中调用的则为 null 。比如：
+
+```
+function outer() {
+	inner();
+}
+function inner() {
+	console.log(inner.caller);
+}
+outer();
+
+function inner() {
+	console.log(arguments.callee.caller);
+}
+```
+
+#### 10.9.4 new.target ####
+
+### 10.10 函数属性与方法 ###
+
