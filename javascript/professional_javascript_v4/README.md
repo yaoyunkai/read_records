@@ -1687,3 +1687,259 @@ console.log(p2 instanceof Person.constructor); // true
 
 #### 8.4.3 实例，原型和类成员 ####
 
+类的语法可以非常方便地定义应该存在于实例上的成员、应该存在于原型上的成员，以及应该存在于类本身的成员。
+
+**1. 实例成员**
+
+每次通过 new 调用类标识符时，都会执行类构造函数。在这个函数内部，可以为新创建的实例（ this ）添加“自有”属性。
+
+```js
+class Person {
+    constructor() {
+        this.name = new String('Jack');
+        this.sayName = () => console.log(this.name);
+        this.nicknames = ['Jake', 'J-Dog']
+    }
+}
+
+let p1 = new Person(),
+    p2 = new Person();
+
+p1.sayName();
+p2.sayName();
+
+console.log(p1.name === p2.name); // false
+console.log(p1.sayName === p2.sayName); // false
+console.log(p1.nicknames === p2.nicknames); // false
+
+p1.name = p1.nicknames[0];
+p2.name = p2.nicknames[1];
+p1.sayName(); // Jake
+p2.sayName(); // J-Dog
+```
+
+**2. 原型方法与访问器**
+
+为了在实例间共享方法，类定义语法把在类块中定义的方法作为原型方法。
+
+```js
+class Person {
+    constructor() {
+        this.name = new String('Jack');
+        this.sayName = () => console.log(this.name);
+        this.nicknames = ['Jake', 'J-Dog'];
+        // 添加到 this 的所有内容都会存在于不同的实例上
+        this.locate = () => console.log('instance');
+    }
+
+    locate() {
+        console.log('prototype');
+    }
+}
+
+let p = new Person();
+
+p.locate(); // instance
+Person.prototype.locate(); // prototype
+```
+
+类方法等同于对象属性，因此可以使用字符串、符号或计算的值作为键：
+
+```js
+const symbolKey = Symbol('symbolKey');
+
+class Person {
+    constructor() {
+        this.name = new String('Jack');
+        this.sayName = () => console.log(this.name);
+        this.nicknames = ['Jake', 'J-Dog'];
+        // 添加到 this 的所有内容都会存在于不同的实例上
+        this.locate = () => console.log('instance');
+    }
+
+    locate() {
+        console.log('prototype');
+    }
+
+    stringKey() {
+        console.log('call stringKey');
+    }
+
+    [symbolKey]() {
+        console.log('call symbolKey');
+    }
+
+    ['computed' + 'Key']() {
+        console.log('invoked computedKey');
+    }
+}
+
+let p = new Person();
+
+p.stringKey();
+p[symbolKey]();
+p.computedKey();
+```
+
+**3. 静态类方法**
+
+可以在类上定义静态方法。这些方法通常用于执行不特定于实例的操作，也不要求存在类的实例。
+
+```js
+class Person {
+    constructor() {
+        this.locate = () => console.log('instance', this);
+    }
+
+    locate() {
+        console.log('prototype', this);
+    }
+
+    static locate() {
+        console.log('class', this);
+    }
+
+}
+
+let p = new Person();
+
+p.locate(); // instance, Person {}
+Person.prototype.locate(); // prototype, {constructor: ... }
+Person.locate(); // class, class Person {}
+```
+
+**4. 非函数原型和类成员**
+
+```js
+// 在类上定义数据成员
+Person.greeting = 'My name is';
+// 在原型上定义数据成员
+Person.prototype.name = 'Jake';
+```
+
+**5. 迭代器与生成器方法**
+
+```js
+class Person {
+    // 在原型上定义生成器方法
+    * createNicknameIterator() {
+        yield 'Jack';
+        yield 'Jake';
+        yield 'J-Dog';
+    }
+
+    // 在类上定义生成器方法
+    static* createJobIterator() {
+        yield 'Butcher';
+        yield 'Baker';
+        yield 'Candlestick maker';
+    }
+
+}
+
+let jobIter = Person.createJobIterator();
+console.log(jobIter.next().value); // Butcher
+console.log(jobIter.next().value); // Baker
+console.log(jobIter.next().value); // Candlestick maker
+
+let p = new Person();
+let nicknameIter = p.createNicknameIterator();
+console.log(nicknameIter.next().value); // Jack
+console.log(nicknameIter.next().value); // Jake
+console.log(nicknameIter.next().value); // J-Dog
+```
+
+#### 8.4.4 继承 ####
+
+**1. 继承基础**
+
+不仅可以继承一个类，也可以继承普通的构造函数
+
+```js
+class Vehicle {}
+class Bus extends Vehicle {}
+let b = new Bus();
+console.log(b instanceof Bus);
+console.log(b instanceof Vehicle);
+
+function Person() { }
+class Engineer extends Person { }
+let e = new Engineer();
+console.log(e instanceof Engineer); // true
+console.log(e instanceof Person); // true
+```
+
+派生类都会通过原型链访问到类和原型上定义的方法。 this 的值会反映调用相应方法的实例或者类：
+
+```js
+class Vehicle {
+    identifyPrototype(id) {
+        console.log(id, this);
+    }
+
+    static identifyClass(id) {
+        console.log(id, this);
+    }
+}
+
+class Bus extends Vehicle {
+}
+
+let v = new Vehicle();
+let b = new Bus();
+
+b.identifyPrototype('bus'); // bus, Bus {}
+v.identifyPrototype('vehicle'); // vehicle, Vehicle {}
+
+Bus.identifyClass('bus'); // bus, class Bus {}
+Vehicle.identifyClass('vehicle'); // vehicle, class Vehicle {}
+```
+
+**2. 构造函数，HomeObject 和 super()**
+
+派生类的方法可以通过 super 关键字引用它们的原型。这个关键字只能在派生类中使用，而且仅限于类构造函数、实例方法和静态方法内部。在类构造函数中使用 super 可以调用父类构造函数。
+
+```js
+class Bus extends Vehicle {
+    constructor() {
+        // 不要在调用 super()之前引用 this，否则会抛出 ReferenceError
+        super();
+        console.log(this instanceof Vehicle); // true
+        console.log(this); // Bus { hasEngine: true }
+    }
+}
+```
+
+在静态方法中可以通过 super 调用继承的类上定义的静态方法：
+
+ES6 给类构造函数和静态方法添加了内部特性 [[HomeObject]] ，这个特性是一个指针，指向定义该方法的对象。 super 始终会定义为 `[[HomeObject]]` 的原型。
+
+在使用 super 时要注意几个问题。
+
+- super 只能在派生类构造函数和静态方法中使用。
+- 调用 super() 会调用父类构造函数，并将返回的实例赋值给 this 。
+- super() 的行为如同调用构造函数，如果需要给父类构造函数传参，则需要手动传入。
+- 在类构造函数中，不能在调用 super() 之前引用 this 。
+- 如果在派生类中显式定义了构造函数，则要么必须在其中调用 super() ，要么必须在其中返回一个对象。
+
+**3. 抽象基类**
+
+有时候可能需要定义这样一个类，它可供其他类继承，但本身不会被实例化。
+
+通过 new.target 也很容易实现。 new.target 保存通过 new 关键字调用的类或函数。通过在实例化时检测 new.target 是不是抽象基类，可以阻止对抽象基类的实例化：
+
+```js
+class Vehicle {
+    constructor() {
+        console.log(new.target);
+        if (new.target === Vehicle) {
+            throw new Error('Vehicle cannot be directly instantiated');
+        }
+    }
+}
+```
+
+**5. 类混入**
+
+> Object.assign()
+
