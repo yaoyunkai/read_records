@@ -2125,4 +2125,3 @@ console.log(object.getIdentityFunc()()); // 'The Window'
 // 块级作用域
 })();
 ```
-
