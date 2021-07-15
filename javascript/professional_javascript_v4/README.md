@@ -2037,7 +2037,7 @@ o.sayColor(); // 'blue'
 
 这个属性引用的是调用当前函数的函数，或者如果是在全局作用域中调用的则为 null 。比如：
 
-```
+```js
 function outer() {
 	inner();
 }
@@ -2054,4 +2054,75 @@ function inner() {
 #### 10.9.4 new.target ####
 
 ### 10.10 函数属性与方法 ###
+
+每个函数都有两个属性： length和 prototype 。
+
+ length 属性保存函数定义的命名参数的个数
+
+prototype 属性也许是 ECMAScript 核心中最有趣的部分。 prototype 是保存引用类型所有实例方法的地方，这意味着 toString() 、 valueOf() 等方法实际上都保存在 prototype 上，进而由所有实例共享
+
+```js
+function sum(num1, num2) {
+    return num1 + num2;
+}
+
+function callSum1(num1, num2) {
+    return sum.apply(this, arguments);
+}
+
+function callSum2(num1, num2) {
+    return sum.apply(this, [num1, num2]);
+}
+```
+
+函数还有两个方法： apply() 和 call() 。这两个方法都会以指定的 this 值来调用函数，即会设置调用函数时函数体内 this 对象的值。
+
+### 10.11 函数表达式 ###
+
+这样创建的函数叫作匿名函数（anonymous funtion），因为 function 关键字后面没有标识符。（匿名函数有也时候也被称为兰姆达函数）。
+
+### 10.14 闭包 ###
+
+闭包指的是那些引用了另一个函数作用域中变量的函数，通常是在嵌套函数中实现的。
+
+```js
+function createComparisonFunction(propertyName) {
+    return function (object1, object2) {
+        let value1 = object1[propertyName];
+        let value2 = object2[propertyName];
+        if (value1 < value2) {
+            return -1;
+        } else if (value1 > value2) {
+            return 1;
+        } else {
+            return 0;
+        }
+    };
+}
+```
+
+#### 10.14.1 this对象 ####
+
+在闭包中使用 this 会让代码变复杂。如果内部函数没有使用箭头函数定义，则 this 对象会在运行时绑定到执行函数的上下文。如果在全局函数中调用，则 this 在非严格模式下等于 window ，在严格模式下等于 undefined 。如果作为某个对象的方法调用，则 this 等于这个对象。匿名函数在这种情况下不会绑定到某个对象，这就意味着 this 会指向 window ，除非在严格模式下 this 是 undefined 。
+
+```js
+window.identity = 'The Window';
+let object = {
+    identity: 'My Object',
+    getIdentityFunc() {
+        return function () {
+            return this.identity;
+        };
+    }
+};
+console.log(object.getIdentityFunc()()); // 'The Window'
+```
+
+### 10.15 立即调用的函数表达式 ###
+
+```js
+(function () {
+// 块级作用域
+})();
+```
 
