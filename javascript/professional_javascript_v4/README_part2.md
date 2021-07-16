@@ -107,3 +107,224 @@ behavior: 'smooth'
 
 #### 12.1.6 导航与打开新窗口 ####
 
+window.open() 方法可以用于导航到指定 URL，也可以用于打开新浏览器窗口。这个方法接收 4个参数：要加载的 URL、目标窗口、特性字符串和表示新窗口在浏览器历史记录中是否替代当前加载页面的布尔值。
+
+第二个参数也可以是一个特殊的窗口名，比如 `_self`  `_parent`  `_top` 或 `_blank` 。
+
+特性字符串是一个逗号分隔的设置字符串，用于指定新窗口包含的特性。
+
+```js
+window.open("http://www.wrox.com/",
+    "wroxWindow",
+    "height=400,width=400,top=10,left=10,resizable=yes");
+```
+
+window.open() 方法返回一个对新建窗口的引用。
+
+新创建窗口的 window 对象有一个属性 opener ，指向打开它的窗口。这个属性只在弹出窗口的最上层 window 对象（ top ）有定义，是指向调用 window.open() 打开它的窗口或窗格的指针。
+
+**3. 弹窗屏蔽程序**
+
+如果浏览器内置的弹窗屏蔽程序阻止了弹窗，那么 window.open() 很可能会返回 null 。
+
+在浏览器扩展或其他程序屏蔽弹窗时， window.open() 通常会抛出错误。
+
+```js
+let blocked = false;
+
+try {
+    let demo = window.open("http://www.wrox.com", '_blank');
+    if (demo == null) {
+        blocked = true
+    }
+} catch (e) {
+    blocked = true;
+}
+
+if (blocked) {
+    alert("The popup was blocked!")
+}
+```
+
+#### 12.1.7 定时器 ####
+
+setTimeout() 用于指定在一定时间后执行某些代码，而 setInterval() 用于指定每隔一段时间执行某些代码。
+
+setTimeout() 方法通常接收两个参数：要执行的代码和在执行回调函数前等待的时间（毫秒）。
+
+```js
+setTimeout(() => alert("Hello world!"), 1000);
+```
+
+如果队列是空的，则会立即执行该代码。如果队列不是空的，则代码必须等待前面的任务执行完才能执行。
+
+调用 setTimeout() 时，会返回一个表示该超时排期的数值 ID。
+
+要取消等待中的排期任务，可以调用 clearTimeout() 方法并传入超时 ID。
+
+```js
+// 设置超时任务
+let timeoutId = setTimeout(() => console.log("Hello world!"), 1000);
+// 取消超时任务
+clearTimeout(timeoutId);
+```
+
+所有超时执行的代码（函数）都会在全局作用域中的一个匿名函数中运行，因此函数中的 this 值在非严格模式下始终指向 window ，而在严格模式下是 undefined 。如果给 setTimeout() 提供了一个箭头函数，那么 this 会保留为定义它时所在的词汇作用域。
+
+setInterval() 方法也会返回一个循环定时 ID，可以用于在未来某个时间点上取消循环定时。要取消循环定时，可以调用 clearInterval() 并传入定时 ID。
+
+```js
+let num = 0, intervalId = null;
+let max = 10;
+
+let incrementNumber = function () {
+    num++;
+
+    if (num == max) {
+        clearInterval(intervalId);
+        console.log('done...')
+    }
+}
+
+intervalId = setInterval(incrementNumber, 500);
+
+let num = 0;
+let max = 10;
+let incrementNumber = function () {
+    num++;
+	// 如果还没有达到最大值，再设置一个超时任务
+    if (num < max) {
+        setTimeout(incrementNumber, 500);
+    } else {
+        alert("Done");
+    }
+}
+setTimeout(incrementNumber, 500);
+```
+
+注意在使用 setTimeout() 时，不一定要记录超时 ID，因为它会在条件满足时自动停止，否则会自动设置另一个超时任务。这个模式是设置循环任务的推荐做法。
+
+#### 12.1.8 系统对话框 ####
+
+使用 alert() 、 confirm() 和 prompt() 方法，可以让浏览器调用系统对话框向用户显示消息。
+
+### 12.2 location对象 ###
+
+location 是最有用的 BOM对象之一，提供了当前窗口中加载文档的信息，以及通常的导航功能。这个对象独特的地方在于，它既是 window 的属性，也是 document 的属性。
+
+假 设 浏 览 器 当 前 加 载 的 URL 是 `http://foouser:barpassword@www.wrox.com:80/WileyCDA/?q=javascript#contents`， location 对象的内容如下表所示。
+
+| 属性              | 值                                                     | 说明                                                         |
+| ----------------- | ------------------------------------------------------ | ------------------------------------------------------------ |
+| location.hash     | #contents                                              | URL 散列值（井号后跟零或多个字符），如果没有则为空字符串     |
+| location.host     | www.wrox.com:80                                        | 服务器名及端口号                                             |
+| location.hostname | www.wrox.com                                           | 服务器名                                                     |
+| location.href     | http://www.wrox.com:80/WileyCDA/?q=javascript#contents | 当前加载页面的完整 URL。 location 的 toString()方法返回这个值 |
+| location.pathname | /WileyCDA/                                             | URL 中的路径和（或）文件名                                   |
+| location.port     | 80                                                     | 请求的端口。如果URL中没有端口，则返回空字符串                |
+| location.protocal | http:                                                  | 页面使用的协议                                               |
+| location.search   | ?q=javascript                                          | URL 的查询字符串。这个字符串以问号开头                       |
+| location.username |                                                        |                                                              |
+| location.password |                                                        |                                                              |
+| location.origin   | http://www.wrox.com                                    | URL 的源地址。只读                                           |
+
+#### 12.2.1 查询字符串 ####
+
+#### 12.2.2 操作地址 ####
+
+可以通过修改 location 对象修改浏览器的地址。首先，最常见的是使用 assign() 方法并传入一个 URL，如下所示：
+
+```js
+location.assign("http://www.wrox.com");
+```
+
+这行代码会立即启动导航到新 URL 的操作，同时在浏览器历史记录中增加一条记录。如果给`location.href` 或 `window.location` 设置一个 URL，也会以同一个 URL 值调用 assign() 方法。
+
+```js
+window.location = "http://www.wrox.com";
+location.href = "http://www.wrox.com";
+```
+
+在这 3 种修改浏览器地址的方法中，设置 location.href 是最常见的。只要修改 location 的一个属性，就会导致页面重新加载新 URL。
+
+修改 hash 的值会在浏览器历史中增加一条新记录。
+
+如果不希望增加历史记录，可以使用 replace() 方法。这个方法接收一个 URL 参数，但重新加载后不会增加历史记录。调用 replace() 之后，用户不能回到前一页。
+
+```js
+<!DOCTYPE html>
+<html lang="">
+<head>
+    <title>You won't be able to get back here</title>
+</head>
+<body>
+<p>Enjoy this page for a second, because you won't be coming back here.</p>
+<script>
+    setTimeout(() => location.replace("http://www.wrox.com/"), 1000);
+</script>
+</body>
+</html>
+```
+
+最后一个修改地址的方法是 reload() ，它能重新加载当前显示的页面。
+
+### 12.3 navigator对象 ###
+
+客户端标识浏览器的标准。
+
+| 属性/方法           | 说明                                                       |
+| ------------------- | ---------------------------------------------------------- |
+| activeVrDisplays    | 返回数组，包含 ispresenting 属性为 true 的 VRDisplay 实例  |
+| appCodeName         | 即使在非 Mozilla浏览器中也会返回 "Mozilla"                 |
+| appVersion          | 浏览器版本。通常与实际的浏览器版本不一致                   |
+| battery             | 返回暴露 Battery Status API 的 BatteryManager 对象         |
+| buildId             | 浏览器的构建编号                                           |
+| connection          | 返回暴露 Network Information API的 NetworkInformation 对象 |
+| cookieEnabled       | 返回布尔值，表示是否启用了 cookie                          |
+| credentials         |                                                            |
+| deviceMemory        | 返回单位为 GB的设备内存容量                                |
+| doNotTrack          | 返回用户的“不跟踪”（do-not-track）设置                     |
+| geolocation         | 返回暴露 Geolocation API的 Geolocation 对象                |
+| hardwareConcurrency | 返回设备的处理器核心数量                                   |
+| javaEnabled         | 返回布尔值，表示浏览器是否启用了 Java                      |
+| language            | 返回浏览器的主语言                                         |
+| platform            | 返回浏览器运行的系统平台                                   |
+
+navigator 对象的属性通常用于确定浏览器的类型。
+
+#### 12.3.1 检测插件 ####
+
+`window.navigator.plugins`
+
+#### 12.3.2 注册处理程序 ####
+
+现代浏览器支持 navigator 上的（在 HTML5 中定义的） registerProtocolHandler() 方法。
+
+### 12.4 screen对象 ###
+
+这个对象中保存的纯粹是客户端能力信息，也就是浏览器窗口外面的客户端显示器的信息，
+
+### 12.5 history对象 ###
+
+history 对象表示当前窗口首次使用以来用户的导航历史记录。因为 history 是 window 的属性，所以每个 window 都有自己的 history 对象。出于安全考虑，这个对象不会暴露用户访问过的 URL，但可以通过它在不知道实际 URL 的情况下前进和后退。
+
+#### 12.5.1 导航 ####
+
+go() 方法可以在用户历史记录中沿任何方向导航，可以前进也可以后退。
+
+go() 有两个简写方法： `back()` 和 `forward()` 。
+
+#### 12.5.2 历史状态管理 ####
+
+用户每次点击都会触发页面刷新的时代早已过去，“后退”和“前进”按钮对用户来说就代表“帮我切换一个状态”的历史也就随之结束了。
+
+为解决这个问题，首先出现的是 hashchange 事件 / HTML5 也为history 对象增加了方便的状态管理特性。
+
+hashchange 会在页面 URL 的散列变化时被触发，开发者可以在此时执行某些操作。
+
+而状态管理API 则可以让开发者改变浏览器 URL 而不会加载新页面。
+
+## 14 DOM ##
+
+### 14.1 节点层级 ###
+
