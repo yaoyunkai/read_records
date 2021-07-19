@@ -442,3 +442,162 @@ document 对象有一个古老的能力，即向网页输出流中写入内容�
 
 #### 14.1.3 Element 类型 ####
 
+ Element 类型的节点具有以下特征：
+
+- nodeType 1
+- nodeName 元素标签名
+- nodeValue null
+- parentNode 值为 Document 或 Element 对象
+- 子节点可以是 Element 、 Text 、 Comment 、 ProcessingInstruction 、 CDATASection 、EntityReference 类型。
+
+可以通过 nodeName 或 tagName 属性来获取元素的标签名。
+
+**1. HTML元素**
+
+所有 HTML 元素都通过 HTMLElement 类型表示，包括其直接实例和间接实例。
+
+它们是所有 HTML 元素上都有的标准属性：
+
+- id 元素在文档中的唯一标识符；
+- title 包含元素的额外信息，通常以提示条形式展示；
+- lang 元素内容的语言代码
+- dir 语言的书写方向
+- className 相当于 class 属性，用于指定元素的 CSS 类
+
+**2. 取得属性**
+
+每个元素都有零个或多个属性，通常用于为元素或其内容附加更多信息
+
+与属性相关的 DOM 方法主要有 3 个： getAttribute() 、 setAttribute() 和 removeAttribute() 。
+
+属性名不区分大小写，因此 "ID" 和 "id" 被认为是同一个属性。另外，根据 HTML5 规范的要求，自定义属性名应该前缀 `data-` 以方便验证。
+
+元素的所有属性也可以通过相应 DOM 元素对象的属性来取得。还有所有公认（非自定义）的属性也会被添加为 DOM 对象的属性。
+
+在使用 getAttribute() 访问 style 属性时，返回的是 CSS字符串。而在通过 DOM对象的属性访问时， style 属性返回的是一个（ CSSStyleDeclaration ）对象。
+
+getAttribute() 主要用于取得自定义属性的值。
+
+**3. 设置属性**
+
+- `setAttribute()`
+- 直接给 DOM 对象的属性赋值也可以设置元素属性的值
+
+**4. attributes 属性**
+
+Element 类型是唯一使用 attributes 属性的 DOM 节点类型。 attributes 属性包含一个NamedNodeMap 实例
+
+元素的每个属性都表示为一个 `Attr` 节点，并保存在这个 NamedNodeMap 对象中。
+
+- getNamedItem(name) ，返回 nodeName 属性等于 name 的节点
+- removeNamedItem(name) ，删除 nodeName 属性等于 name 的节点
+- setNamedItem(node) ，向列表中添加 node 节点，以其 nodeName 为索引
+- item(pos) ，返回索引位置 pos 处的节点
+
+attributes 属性中的每个节点的 nodeName 是对应属性的名字， nodeValue 是属性的值。
+
+**5. 创建元素**
+
+```js
+let div = document.createElement("div");
+```
+
+**6. 元素后代**
+
+ childNodes属性包含元素所有的子节点，这些子节点可能是其他元素、文本节点、注释或处理指令。
+
+#### 14.1.4 Text 类型 ####
+
+Text 节点由 Text 类型表示，包含按字面解释的纯文本，也可能包含转义后的 HTML 字符，但不含 HTML 代码。
+
+ Text 类型的节点具有以下特征：
+
+- nodeType 3
+- nodeName #text
+- nodeValue 为节点中包含的文本
+- parentNode  值为 Element 对象；
+- 不支持子节点。
+
+Text 节点中包含的文本可以通过 nodeValue 属性访问，也可以通过 data 属性访问，这两个属性包含相同的值。
+
+文本节点暴露了以下操作文本的方法：
+
+- appendData(text)
+- deleteData(offset, count)
+- insertData(offset, text)
+- replaceData(offset, count, text)
+- splitText(offset)
+- substringData(offset, count)
+
+**1. 创建文本节点**
+
+```js
+let element = document.createElement("div");
+element.className = "message";
+
+let textNode = document.createTextNode("Hello world!");
+element.appendChild(textNode);
+let anotherTextNode = document.createTextNode("Yippee!");
+element.appendChild(anotherTextNode);
+document.body.appendChild(element);
+```
+
+在将一个文本节点作为另一个文本节点的同胞插入后，两个文本节点的文本之间不会包含空格。
+
+**2. 规范化文本节点**
+
+`normalize()`
+
+浏览器在解析文档时，永远不会创建同胞文本节点。同胞文本节点只会出现在 DOM脚本生成的文档树中。
+
+**3. 拆分文本节点**
+
+` splitText()` 这个方法可以在指定的偏移位置拆分 nodeValue ，将一个文本节点拆分成两个文本节点。
+
+#### 14.1.5 Comment 类型 ####
+
+ Comment 类型的节点具有以下特征：
+
+- nodeType 8
+- nodeName #comment
+- nodeValue 注释的内容
+- parentNode 值为 Document 或 Element 对象
+- 不支持子节点
+
+Comment 类型与 Text 类型继承同一个基类（ CharacterData ）
+
+#### 14.1.7 DocumentType 类型 ####
+
+DocumentType 类型的节点包含文档的文档类型（ doctype ）信息，具有以下特征：
+
+- nodeType 10
+- nodeName 值为文档类型的名称
+- nodeValue null
+- parentNode 值为 Document 对象
+- 不支持子节点
+
+#### 14.1.8 DocumentFragment 类型 ####
+
+DocumentFragment 节点具有以下特征：
+
+- nodeType 11
+- nodeName #document-fragment
+- nodeValue 值为 null
+- parentNode 值为 null
+- 子节点可以是 Element 、 ProcessingInstruction 、 Comment 、 Text 、 CDATASection 或EntityReference
+
+#### 14.1.9 Attr 类型 ####
+
+元素数据在 DOM中通过 Attr 类型表示。 Attr 类型构造函数和原型在所有浏览器中都可以直接访问。
+
+- nodeType 2
+- nodeName 属性名
+- nodeValue 属性值
+- parentNode 值为null
+- 在 HTML 中不支持子节点
+- 在 XML 中子节点可以是 Text 或 EntityReference
+
+可以使用 document.createAttribute() 方法创建新的 Attr 节点，参数为属性名。
+
+
+
