@@ -673,3 +673,5 @@ console.log('changed body class');
 
 因为回调执行之前可能同时发生多个满足观察条件的事件，所以每次执行回调都会传入一个包含按顺序入队的 MutationRecord 实例的数组。
 
+**3. disconnect()**
+
