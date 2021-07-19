@@ -328,3 +328,117 @@ hashchange 会在页面 URL 的散列变化时被触发，开发者可以在此�
 
 ### 14.1 节点层级 ###
 
+其中， document 节点表示每个文档的根节点。在这里，根节点的唯一子节点是 <html> 元素，我们称之为文档元素（ documentElement ）。
+
+#### 14.1.1 Node 类型 ####
+
+每个节点都有 nodeType 属性，表示该节点的类型。节点类型由定义在 Node 类型上的 12 个数值常量表示：
+
+- Node.ELEMENT_NODE (1)
+- Node.ATTRIBUTE_NODE (2)
+- Node.TEXT_NODE (3)
+- Node.CDATA_SECTION_NODE (4)
+- Node.ENTITY_REFERENCE_NODE (5)
+- Node.ENTITY_NODE (6)
+- Node.PROCESSING_INSTRUCTION_NODE (7)
+- Node.COMMENT_NODE (8)
+- Node.DOCUMENT_NODE (9)
+- Node.DOCUMENT_TYPE_NODE (10)
+- Node.DOCUMENT_FRAGMENT_NODE (11)
+- Node.NOTATION_NODE (12)
+
+**1. nodeName 与 nodeValue**
+
+对元素而言， nodeName 始终等于元素的标签名，而 nodeValue 则始终为 null 。
+
+**2. 节点关系**
+
+每个节点都有一个 childNodes 属性，其中包含一个 NodeList 的实例。 NodeList 是一个类数组对象，用于存储可以按位置存取的有序节点。注意， NodeList 并不是 Array 的实例，但可以使用中括号访问它的值，而且它也有 length 属性。
+
+NodeList 对象独特的地方在于，它其实是一个对 DOM结构的查询，因此 DOM 结构的变化会自动地在 NodeList中反映出来。
+
+每个节点都有一个 parentNode 属性，指向其 DOM 树中的父元素。
+
+父节点和它的第一个及最后一个子节点也有专门属性： firstChild 和 lastChild 分别指向childNodes 中的第一个和最后一个子节点。
+
+![image-20210719194851917](.assets/image-20210719194851917.png)
+
+ownerDocument 属性是一个指向代表整个文档的文档节点的指针。
+
+**3. 操纵节点**
+
+- `appendChild()` 用于在 childNodes 列表末尾添加节点。添加新节点会更新相关的关系指针，包括父节点和之前的最后一个子节点。如果把文档中已经存在的节点传给 appendChild() ，则这个节点会从之前的位置被转移到新位置。
+
+- `insertBefore()` 这个方法接收两个参数：要插入的节点和参照节点。调用这个方法后，要插入的节点会变成参照节点的前一个同胞节点，并被返回。
+
+- `replaceChild()` 方法接收两个参数：要插入的节点和要替换的节点。要替换的节点会被返回并从文档树中完全移除，要插入的节点会取而代之。
+- `removeChild()` 这个方法接收一个参数，即要移除的节点。被移除的节点会被返回.
+
+**4. 其他方法**
+
+- `cloneNode()` 返回与调用它的节点一模一样的节点, 接收一个布尔值参数，表示是否深复制。
+
+- `normalize()` 这个方法唯一的任务就是处理文档子树中的文本节点。
+
+#### 14.1.2 Document 类型 ####
+
+Document 类型是 JavaScript 中表示文档节点的类型。在浏览器中，文档对象 document 是HTMLDocument 的实例（ HTMLDocument 继承 Document ），表示整个 HTML页面。 document 是 window对象的属性，因此是一个全局对象。
+
+ Document 类型的节点有以下特征：
+
+- nodeType 9
+- nodeName "#document"
+- nodeValue null
+- parentNode null
+- ownerDocument null
+- 子节点可以是 DocumentType （最多一个）、 Element （最多一个）、 ProcessingInstruction或 Comment 类型。
+
+**1. 文档子节点**
+
+两个访问子节点的快捷方式。
+
+第一个是 documentElement 属性，始终指向 HTML 页面中的 <html> 元素。
+
+document 对象还有一个 body 属性，直接指向 <body> 元素。
+
+还可以通过doctype属性访问  `<!doctype>` 标签
+
+**2. 文档信息**
+
+- title属性： 通过这个属性可以读写页面的标题，修改后的标题也会反映在浏览器标题栏上。不过，修改 title 属性并不会改变 <title> 元素。
+- URL: 包含当前页面的完整 URL
+- domain: 页面的域名
+- referrer: 包含链接到当前页面的那个页面的 URL
+
+当页面中包含来自某个不同子域的窗格（ <frame> ）或内嵌窗格（ <iframe> ）时，设置document.domain 是有用的。
+
+浏览器对 domain 属性还有一个限制，即这个属性一旦放松就不能再收紧。比如，把document.domain 设置为 "wrox.com" 之后，就不能再将其设置回 "p2p.wrox.com"
+
+**3. 定位元素**
+
+- `getElementById()` 如果页面中存在多个具有相同 ID的元素，则 getElementById() 返回在文档中出现的第一个元素。
+- `getElementsByTagName()` 接收一个参数，即要获取元素的标签名，返回包含零个或多个元素的 NodeList, 这个方法返回一个HTMLCollection 对象。HTMLCollection 对象还有一个额外的方法 namedItem() ，可通过标签的 name 属性取得某一项的引用。对 HTMLCollection 对象而言，中括号既可以接收数值索引，也可以接收字符串索引。而在后台，数值索引会调用 item() ，字符串索引会调用 namedItem() 。
+- ` getElementsByName()` 返回具有给定 name 属性的所有元素。 getElementsByName() 方法最常用于单选按钮，因为同一字段的单选按钮必须具有相同的 name 属性才能确保把正确的值发送给服务器。
+
+**4. 特殊集合**
+
+几个特殊集合，这些集合也都是 HTMLCollection 的实例
+
+- document.anchors  包含文档中所有带 name 属性的 <a> 元素。
+- document.applets
+- document.forms
+- document.images
+- document.links
+
+**5. DOM兼容性检测**
+
+document.implementation
+
+**6. 文档写入**
+
+document 对象有一个古老的能力，即向网页输出流中写入内容。
+
+`write()` `writeln()` `open()` `close()`
+
+#### 14.1.3 Element 类型 ####
+
