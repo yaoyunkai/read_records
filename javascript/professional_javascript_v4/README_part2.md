@@ -1,3 +1,5 @@
+[toc]
+
 # Javascript_Pro_v4 #
 
 ## 11 Promise 函数 ##
@@ -599,5 +601,75 @@ DocumentFragment 节点具有以下特征：
 
 可以使用 document.createAttribute() 方法创建新的 Attr 节点，参数为属性名。
 
+### 14.2 DOM编程 ###
 
+#### 14.2.1 动态脚本 ####
+
+动态脚本就是在页面初始加载时不存在，之后又通过 DOM 包含的脚本。
+
+有两种方式通过 <script> 动态为网页添加脚本：引入外部文件和直接插入源代码。
+
+```js
+<script src="foo.js"></script>
+
+function loadScript(url) {
+    let script = document.createElement("script");
+    script.src = url;
+    document.body.appendChild(script);
+}
+```
+
+#### 14.2.2 动态样式 ####
+
+```html
+<link rel="stylesheet" type="text/css" href="styles.css">
+```
+
+这个元素很容易使用 DOM 编程创建出来：
+
+```js
+let link = document.createElement("link");
+link.rel = "stylesheet";
+link.type = "text/css";
+link.href = "styles.css";
+let head = document.getElementsByTagName("head")[0];
+head.appendChild(link);
+```
+
+#### 14.2.4 使用NodeList ####
+
+理解 NodeList 对象和相关的 NamedNodeMap 、 HTMLCollection ，是理解 DOM 编程的关键。
+
+### 14.3 MutationObserver 接口 ###
+
+添加到 DOM 规范中的 MutationObserver 接口，可以在 DOM 被修改时异步执行回调。
+
+#### 14.3.1 基本用法 ####
+
+MutationObserver 的实例要通过调用 MutationObserver 构造函数并传入一个回调函数来创建：
+
+```js
+let observer = new MutationObserver(() => console.log('DOM was mutated.'));
+```
+
+**1. observe()**
+
+要把这个 observer 与 DOM 关联起来，需要使用 observe() 方法。这个方法接收两个必需的参数：要观察其变化的 DOM 节点，以及一个 MutationObserverInit 对象。
+
+MutationObserverInit 对象用于控制观察哪些方面的变化，是一个键/值对形式配置选项的字典。
+
+```js
+observer.observe(document.body, {'attributes': true});
+
+let observer = new MutationObserver(() => console.log('DOM was mutated.'));
+observer.observe(document.body, {'attributes': true});
+document.body.className = 'foo';
+console.log('changed body class');
+```
+
+**2. 回调与MutationRecord**
+
+每个回调都会收到一个 MutationRecord 实例的数组。
+
+因为回调执行之前可能同时发生多个满足观察条件的事件，所以每次执行回调都会传入一个包含按顺序入队的 MutationRecord 实例的数组。
 
