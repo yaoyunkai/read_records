@@ -989,3 +989,64 @@ CSSRule 类型表示样式表中的一条规则。这个类型也是一个通用
 
 #### 16.2.3 元素尺寸 ####
 
+**1. 偏移尺寸**
+
+第一组属性涉及偏移尺寸（offset dimensions），包含元素在屏幕上占用的所有视觉空间。
+
+元素在页面上的视觉空间由其高度和宽度决定，包括所有内边距、滚动条和边框（但不包含外边距）。
+
+- offsetHeight 元素在垂直方向上占用的像素尺寸，包括它的高度、水平滚动条高度（如果可见）和上、下边框的高度。
+- offsetLeft ，元素左边框外侧距离包含元素左边框内侧的像素数
+- offsetTop ，元素上边框外侧距离包含元素上边框内侧的像素数
+- offsetWidth ，元素在水平方向上占用的像素尺寸，包括它的宽度、垂直滚动条宽度（如果可见）和左、右边框的宽度。
+
+![image-20210720224358302](.assets/image-20210720224358302.png)
+
+要确定一个元素在页面中的偏移量，可以把它的 offsetLeft 和 offsetTop 属性分别与 offsetParent的相同属性相加，一直加到根元素。
+
+```js
+function getElementLeft(element) {
+    let actualLeft = element.offsetLeft;
+    let current = element.offsetParent;
+    while (current !== null) {
+        actualLeft += current.offsetLeft;
+        current = current.offsetParent;
+    }
+    return actualLeft;
+}
+```
+
+**2. 客户端尺寸**
+
+元素的客户端尺寸（client dimensions）包含元素内容及其内边距所占用的空间
+
+- clientWidth
+- clientHeight
+
+clientWidth 是内容区宽度加左、右内边距宽度， clientHeight 是内容区高度加上、下内边距高度
+
+![image-20210720224823101](.assets/image-20210720224823101.png)
+
+这两个属性最常用于确定浏览器视口尺寸，即检测 document.documentElement 的 clientWidth 和 clientHeight 。
+
+**3. 滚动尺寸**
+
+滚动尺寸相关的属性有如下 4 个：
+
+- scrollHeight ，没有滚动条出现时，元素内容的总高度。
+- scrollLeft ，内容区左侧隐藏的像素数，设置这个属性可以改变元素的滚动位置。
+- scrollTop ，内容区顶部隐藏的像素数，设置这个属性可以改变元素的滚动位置。
+- scrollWidth ，没有滚动条出现时，元素内容的总宽度。
+
+![image-20210720225019664](.assets/image-20210720225019664.png)
+
+**4. 确定元素尺寸**
+
+浏览器在每个元素上都暴露了 getBoundingClientRect() 方法，返回一个 DOMRect 对象，包含6 个属性：
+
+left 、 top 、 right 、 bottom 、 height 和 width 
+
+![image-20210720225113366](.assets/image-20210720225113366.png)
+
+### 16.3 遍历 ###
+
