@@ -855,3 +855,52 @@ div.parentNode.replaceChild(p, div);
 
 **4. insertAdjacentHTML() 与 insertAdjacentText()**
 
+它们都接收两个参数：要插入标记的位置和要插入的 HTML 或文本。
+
+第一个参数必须是下列值中的一个：
+
+- "beforebegin" ，插入当前元素前面，作为前一个同胞节点
+- "afterbegin" ，插入当前元素内部，作为新的子节点或放在第一个子节点前面
+- "beforeend" ，插入当前元素内部，作为新的子节点或放在最后一个子节点后面
+- "afterend" ，插入当前元素后面，作为下一个同胞节点
+
+#### 15.3.7 scrollIntoView() ####
+
+scrollIntoView() 方法存在于所有 HTML 元素上，可以滚动浏览器窗口或容器元素以便包含元素进入视口。
+
+- alignToTop
+  - true: 窗口滚动后元素的顶部与视口顶部对齐
+  - false: 窗口滚动后元素的底部与视口底部对齐
+- scrollIntoViewOptions
+  - behavior 定义过渡动画，可取的值为 "smooth" 和 "auto" ，默认为 "auto"
+  - block 定义垂直方向的对齐，可取的值为 "start" 、 "center" 、 "end" 和 "nearest" ，默认为 "start" 。
+  - inline ：定义水平方向的对齐，可取的值为 "start" 、 "center" 、 "end" 和 "nearest" ，默认为 "nearest" 。
+
+### 15.4 专有扩展 ###
+
+#### 15.4.1 children 属性 ####
+
+children 属性是一个 HTMLCollection ，只包含元素的 Element 类型的子节点。
+
+#### 15.4.2 contains() 方法 ####
+
+contains() 方法应该在要搜索的祖先元素上调用，参数是待确定的目标节点。
+
+如果目标节点是被搜索节点的后代， contains() 返回 true ，否则返回 false 。
+
+#### 15.4.3 插入标记 ####
+
+**1. innerHTML**
+
+innerText 属性对应元素中包含的所有文本内容，无论文本在子树中哪个层级。在用于读取值时，innerText 会按照深度优先的顺序将子树中所有文本节点的值拼接起来。
+
+在用于写入值时， innerText会移除元素的所有后代并插入一个包含该值的文本节点。
+
+**2. outerHTML**
+
+outerText 与 innerText 是类似的，只不过作用范围包含调用它的节点。
+
+要读取文本值时，outerText 与 innerText 实际上会返回同样的内容。
+
+但在写入文本值时， outerText 就大不相同了。写入文本值时， outerText 不止会移除所有后代节点，而是会替换整个元素。
+
