@@ -1040,6 +1040,10 @@ clientWidth 是内容区宽度加左、右内边距宽度， clientHeight 是内
 
 ![image-20210720225019664](.assets/image-20210720225019664.png)
 
+scrollWidth 和 scrollHeight 可以用来确定给定元素内容的实际尺寸。
+
+document.documentElement.scrollHeight 就是整个页面垂直方向的总高度。
+
 **4. 确定元素尺寸**
 
 浏览器在每个元素上都暴露了 getBoundingClientRect() 方法，返回一个 DOMRect 对象，包含6 个属性：
