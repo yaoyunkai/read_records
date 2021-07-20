@@ -673,5 +673,185 @@ console.log('changed body class');
 
 因为回调执行之前可能同时发生多个满足观察条件的事件，所以每次执行回调都会传入一个包含按顺序入队的 MutationRecord 实例的数组。
 
+```js
+// [
+// {
+// addedNodes: NodeList [],
+// attributeName: "foo",
+// attributeNamespace: null,
+// nextSibling: null,
+// oldValue: null,
+// previousSibling: null
+// removedNodes: NodeList [],
+// target: body
+// type: "attributes"
+// }
+// ]
+```
+
+下表列出了 MutationRecord 实例的属性。
+
+| 属性     | 说明                                                         |
+| -------- | ------------------------------------------------------------ |
+| target   | 被修改影响的目标节点                                         |
+| type     | 字符串，表示变化的类型： "attributes" 、 "characterData" 或 "childList" |
+| oldValue |                                                              |
+
+传给回调函数的第二个参数是观察变化的 MutationObserver 的实例，演示如下：
+
+```js
+let observer = new MutationObserver((mutationRecords, mutationObserver) => console.log(mutationRecords, mutationObserver));
+observer.observe(document.body, {attributes: true});
+document.body.className = 'foo';
+```
+
 **3. disconnect()**
+
+要提前终止执行回调，可以调用 disconnect() 方法。
+
+**4. 复用MutationObserver**
+
+多次调用 observe() 方法，可以复用一个 MutationObserver 对象观察多个不同的目标节点。此时， MutationRecord 的 target 属性可以标识发生变化事件的目标节点。
+
+```js
+let observer = new MutationObserver((mutationRecords) => console.log(mutationRecords.map((x) => x.target)));
+// 向页面主体添加两个子节点
+let childA = document.createElement('div'),
+    childB = document.createElement('span');
+document.body.appendChild(childA);
+document.body.appendChild(childB);
+// 观察两个子节点
+observer.observe(childA, {attributes: true});
+observer.observe(childB, {attributes: true});
+// 修改两个子节点的属性
+childA.setAttribute('foo', 'bar');
+childB.setAttribute('foo', 'bar');
+```
+
+**5. 重用MutationObserver**
+
+调用 disconnect() 并不会结束 MutationObserver 的生命。还可以重新使用这个观察者，再将它关联到新的目标节点。
+
+#### 14.3.2 MutationObserverInit与观察范围 ####
+
+MutationObserverInit 对象用于控制对目标节点的观察范围。粗略地讲，观察者可以观察的事件包括属性变化、文本变化和子节点变化。
+
+| 属性                  | 说明                                                     |
+| --------------------- | -------------------------------------------------------- |
+| subtree               | 布尔值，表示除了目标节点，是否观察目标节点的子树（后代） |
+| attributes            | 布尔值，表示是否观察目标节点的属性变化，默认false        |
+| attributeFilter       | 字符串数组，表示要观察哪些属性的变化，默认为观察所有属性 |
+| attributeOldValue     | 布尔值，表示 MutationRecord 是否记录变化之前的属性值     |
+| characterData         | 布尔值，表示修改字符数据是否触发变化事件                 |
+| characterDataOldValue | 布尔值，表示 MutationRecord 是否记录变化之前的字符数据   |
+| childList             | 布尔值，表示修改目标节点的子节点是否触发变化事件         |
+
+在调用 observe() 时， MutationObserverInit 对象中的 attribute 、 characterData 和 childList 属性必须至少有一项为 true。
+
+## 15 DOM扩展 ##
+
+诞生了描述 DOM扩展的两个标准：Selectors API与 HTML5。
+
+### 15.1 Selectors API ###
+
+Selectors API Level 1 的核心是两个方法： querySelector() 和 querySelectorAll() 。 Document 类型和 Element 类型的实例上都会暴露这两个方法
+
+Selectors API Level 2 规范在 Element 类型上新增了更多方法，比如 matches() 、 find() 和 findAll() 。
+
+#### 15.1.1 querySelector() ####
+
+querySelector() 方法接收 CSS 选择符参数，返回匹配该模式的第一个后代元素，如果没有匹配项则返回 null 。
+
+#### 15.1.2 querySelectorAll() ####
+
+querySelectorAll() 方法跟 querySelector() 一样，也接收一个用于查询的参数，但它会返回所有匹配的节点，而不止一个。这个方法返回的是一个 NodeList 的静态实例。
+
+### 15.2 元素遍历 ###
+
+Element Traversal API 为 DOM 元素添加了 5 个属性：
+
+- childElementCount, 返回子元素数量（不包含文本节点和注释）；
+- firstElementChild ，指向第一个 Element 类型的子元素（ Element 版 firstChild ）；
+- lastElementChild ，指向最后一个 Element 类型的子元素（ Element 版 lastChild ）；
+- previousElementSibling ， 指 向 前 一 个 Element 类 型 的 同 胞 元 素 （ Element 版previousSibling ）；
+- nextElementSibling ，指向后一个 Element 类型的同胞元素（ Element 版 nextSibling ）。
+
+### 15.3 HTML5 ###
+
+HTML5 规范却包含了与标记相关的大量 JavaScript API 定义。其中有的 API 与 DOM 重合，定义了浏览器应该提供的 DOM扩展。
+
+#### 15.3.1 CSS类扩展 ####
+
+**1. getElementsByClassName()**
+
+暴露在 document 对象和所有 HTML 元素上。
+
+getElementsByClassName() 方法接收一个参数，即包含一个或多个类名的字符串，返回类名中包含相应类的元素的 NodeList 。这个方法只会返回以调用它的对象为根元素的子树中所有匹配的元素。
+
+**2. classList属性**
+
+要操作类名，可以通过 className 属性实现添加、删除和替换。但 className 是一个字符串，所以每次操作之后都需要重新设置这个值才能生效，即使只改动了部分字符串也一样。
+
+classList 是一个新的集合类型 DOMTokenList 的实例。
+
+- length 表示自己包含多少项
+- item() 可以通过 item() 或中括号取得个别的元素
+- add(value) ，向类名列表中添加指定的字符串值 value
+- contains(value) 返回布尔值，表示给定的 value 是否存在
+- remove(value) 从类名列表中删除指定的字符串值 value 
+- toggle(value) 如果类名列表中已经存在指定的 value ，则删除；如果不存在，则添加。
+
+#### 15.3.2 焦点管理 ####
+
+首先是 document.activeElement ，始终包含当前拥有焦点的 DOM元素。页面加载时，可以通过用户输入（按 Tab 键或代码中使用 focus() 方法）让某个元素自动获得焦点。
+
+其次是 document.hasFocus() 方法，该方法返回布尔值，表示文档是否拥有焦点
+
+#### 15.3.3 HTMLDocument 扩展 ####
+
+**1. readyState**
+
+readyState 是 IE4 最早添加到 document 对象上的属性，后来其他浏览器也都依葫芦画瓢地支持这个属性。
+
+ document.readyState 属性有两个可能的值：
+
+- loading 表示文档正在加载
+- complete 表示文档加载完成
+
+在这个属性得到广泛支持以前，通常要依赖 onload 事件处理程序设置一个标记，表示文档加载完了。
+
+**2. compatMode**
+
+**3. head属性**
+
+`let head = document.head;`
+
+#### 15.3.4 字符集属性 ####
+
+```js
+console.log(document.characterSet); // "UTF-16"
+document.characterSet = "UTF-8";
+```
+
+#### 15.3.5 自定义数据属性 ####
+
+#### 15.3.6 插入标记 ####
+
+**1. innerHTML属性**
+
+在读取 innerHTML 属性时，会返回元素所有后代的 HTML 字符串，包括元素、注释和文本节点。而在写入 innerHTML 时，则会根据提供的字符串值以新的 DOM 子树替代元素中原来包含的所有节点。
+
+**3. outerHTML属性**
+
+读取 outerHTML 属性时，会返回调用它的元素（及所有后代元素）的 HTML 字符串。
+
+```js
+div.outerHTML = "<p>This is a paragraph.</p>";
+// 则会得到与执行以下脚本相同的结果：
+let p = document.createElement("p");
+p.appendChild(document.createTextNode("This is a paragraph."));
+div.parentNode.replaceChild(p, div);
+```
+
+**4. insertAdjacentHTML() 与 insertAdjacentText()**
 
