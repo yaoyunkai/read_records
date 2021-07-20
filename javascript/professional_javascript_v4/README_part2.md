@@ -904,3 +904,88 @@ outerText 与 innerText 是类似的，只不过作用范围包含调用它的�
 
 但在写入文本值时， outerText 就大不相同了。写入文本值时， outerText 不止会移除所有后代节点，而是会替换整个元素。
 
+## 16 DOM2 & DOM3 ##
+
+- DOM Core：在 DOM1 核心部分的基础上，为节点增加方法和属性。
+- DOM Views：定义基于样式信息的不同视图。
+- DOM Events：定义通过事件实现 DOM 文档交互。
+- DOM Style：定义以编程方式访问和修改 CSS 样式的接口。
+- DOM Traversal and Range：新增遍历 DOM文档及选择文档内容的接口。
+- DOM HTML：在 DOM1 HTML 部分的基础上，增加属性、方法和新接口。
+- DOM Mutation Observers：定义基于 DOM变化触发回调的接口。这个模块是 DOM4 级模块，用于取代 Mutation Events。
+
+### 16.2 样式 ###
+
+HTML 中的样式有 3 种定义方式：外部样式表（通过 <link> 元素）、文档样式表（使用 <style> 元素）和元素特定样式（使用 style 属性）。DOM2 Style为这 3 种应用样式的机制都提供了 API。
+
+#### 16.2.1 存取元素样式 ####
+
+style 属性是 CSSStyleDeclaration 类型的实例，其中包含通过 HTML style 属性为元素设置的所有样式信息，但不包含通过层叠机制从文档样式和外部样式中继承来的样式。
+
+js style属性和原生的style属性之间 驼峰大小写形式。
+
+**1. DOM样式属性和方法**
+
+- cssText 包含 style 属性中的 CSS 代码
+- length ，应用给元素的 CSS 属性数量
+- parentRule ，表示 CSS 信息的 CSSRule 对象
+- getPropertyPriority(propertyName)
+- getPropertyValue(propertyName) ，返回属性 propertyName 的字符串值
+- item(index) 返回索引为 index 的 CSS 属性名
+- removeProperty(propertyName) ，从样式中删除 CSS 属性 propertyName
+- setProperty(propertyName, value, priority) ，设置 CSS 属性 propertyName 的值为value ， priority 是 "important" 或空字符串。
+
+设置 cssText 是一次性修改元素多个样式最快捷的方式，因为所有变化会同时生效。
+
+**2. 计算样式**
+
+DOM2 Style在 document.defaultView 上增加了 getComputedStyle()方法。这个方法接收两个参数：要取得计算样式的元素和伪元素字符串（如 ":after" ）。
+
+getComputedStyle() 方法返回一个 CSSStyleDeclaration对象（与 style 属性的类型一样），包含元素的计算样式。
+
+```js
+let myDiv = document.getElementById("myDiv");
+let computedStyle = document.defaultView.getComputedStyle(myDiv, null);
+
+console.log(computedStyle.backgroundColor); // "red"
+console.log(computedStyle.width); // "100px"
+console.log(computedStyle.height); // "200px"
+console.log(computedStyle.border); // "1px solid black"（在某些浏览器中）
+```
+
+在所有浏览器中计算样式都是只读的.
+
+#### 16.2.2 操作样式表 ####
+
+- link : HTMLLinkElement
+- style: HTMLStyleElement
+
+CSSStyleSheet 类型表示 CSS 样式表，包括使用 <link> 元素和通过 <style> 元素定义的样式表. CSSStyleSheet 类型继承 StyleSheet。
+
+- disabled 表示样式表是否被禁用
+- href: 如果是使用 <link> 包含的样式表，则返回样式表的 URL，否则返回 null
+- media: 样式表支持的媒体类型集合，这个集合有一个 length 属性和一个 item() 方法
+- ownerNode: 指向拥有当前样式表的节点，在 HTML 中要么是 <link> 元素要么是 <style> 元素
+- parentStyleSheet ，如果当前样式表是通过 @import 被包含在另一个样式表中，则这个属性指向导入它的样式表。
+- title: ownerNode 的 title 属性。
+- type: 字符串，表示样式表的类型。
+- cssRules ，当前样式表包含的样式规则的集合
+- ownerRule ，如果样式表是使用 @import 导入的，则指向导入规则, 否则为null
+- deleteRule(index) ，在指定位置删除 cssRules 中的规则。
+- insertRule(rule, index) ，在指定位置向 cssRules 中插入规则。
+
+document.styleSheets 表示文档中可用的样式表集合。这个集合的 length 属性保存着文档中样式表的数量，而每个样式表都可以使用中括号或 item() 方法获取。
+
+**1. CSS规则**
+
+CSSRule 类型表示样式表中的一条规则。这个类型也是一个通用基类，很多类型都继承它，但其中最常用的是表示样式信息的 CSSStyleRule
+
+- cssText: 返回整条规则的文本
+- parentRule: 如果这条规则被其他规则（如 @media ）包含，则指向包含规则，否则就是 null 。
+- parentStyleSheet ，包含当前规则的样式表
+- selectorText ，返回规则的选择符文本
+- style ，返回 CSSStyleDeclaration 对象，可以设置和获取当前规则中的样式
+- type ，数值常量，表示规则类型
+
+#### 16.2.3 元素尺寸 ####
+
