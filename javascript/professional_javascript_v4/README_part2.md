@@ -1054,3 +1054,249 @@ left 、 top 、 right 、 bottom 、 height 和 width
 
 ### 16.3 遍历 ###
 
+DOM2 Traversal and Range 模块定义了两个类型用于辅助顺序遍历 DOM 结构。
+
+- NodeIterator
+- TreeWalker
+
+#### 16.3.1 NodeIterator ####
+
+通过 document.createNodeIterator() 方法创建其实例。有如下四个参数：
+
+- root 作为遍历根节点的节点
+- whatToShow 数值代码，表示应该访问哪些节点
+- filter ， NodeFilter 对象或函数，表示是否接收或跳过特定节点
+- entityReferenceExpansion ，布尔值，表示是否扩展实体引用
+
+whatToShow 参数是一个位掩码，通过应用一个或多个过滤器来指定访问哪些节点。
+
+```js
+let whatToShow = NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT;
+// let filter = {
+//     acceptNode(node) {
+//         return node.tagName.toLowerCase() == 'p' ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
+//     }
+// }
+
+let filter = function (node) {
+    return node.tagName.toLowerCase() == "p" ?
+        NodeFilter.FILTER_ACCEPT :
+        NodeFilter.FILTER_SKIP;
+};
+
+let iterator = document.createNodeIterator(
+    document.body, NodeFilter.SHOW_ELEMENT, filter
+)
+```
+
+NodeIterator 的两个主要方法是 nextNode() 和 previousNode()
+
+```html
+<div id="div1">
+    <p><b>Hello</b> world!</p>
+    <ul>
+        <li>List item 1</li>
+        <li>List item 2</li>
+        <li>List item 3</li>
+    </ul>
+</div>
+
+<script>
+
+    let div1 = document.getElementById('div1');
+    let iter = document.createNodeIterator(div1, NodeFilter.SHOW_ELEMENT, null, false);
+    let node = iter.nextNode()
+    while (node != null) {
+        console.log(node.tagName);
+        node = iter.nextNode();
+    }
+
+</script>
+```
+
+#### 16.3.2 TreeWalker ####
+
+TreeWalker 是 NodeIterator 的高级版。除了包含同样的 nextNode() 、 previousNode() 方法，TreeWalker 还添加了如下在 DOM 结构中向不同方向遍历的方法。
+
+- parentNode() 遍历到当前节点的父节点。
+- firstChild() ，遍历到当前节点的第一个子节点。
+- lastChild() ，遍历到当前节点的最后一个子节点。
+- nextSibling() ，遍历到当前节点的下一个同胞节点。
+- previousSibling() ，遍历到当前节点的上一个同胞节点。
+
+### 16.4 范围 ###
+
+DOM2 在 Document 类型上定义了一个 createRange() 方法。
+
+`let range = document.createRange();`
+
+## 17 事件 ##
+
+JavaScript 与 HTML 的交互是通过事件实现的，事件代表文档或浏览器窗口中某个有意义的时刻。可以使用仅在事件发生时执行的监听器（也叫处理程序）订阅事件。在传统软件工程领域，这个模型叫“观察者模式”，其能够做到页面行为（在 JavaScript 中定义）与页面展示（在 HTML 和 CSS 中定义）的分离。
+
+### 17.1 事件流 ###
+
+事件流描述了页面接收事件的顺序。
+
+#### 17.1.1 事件冒泡 ####
+
+IE 事件流被称为事件冒泡，这是因为事件被定义为从最具体的元素（文档树中最深的节点）开始触发，然后向上传播至没有那么具体的元素（文档）。
+
+#### 17.1.2 事件捕获 ####
+
+Netscape Communicator 团队提出了另一种名为事件捕获的事件流。事件捕获的意思是最不具体的节点应该最先收到事件，而最具体的节点应该最后收到事件。事件捕获实际上是为了在事件到达最终目标前拦截事件。
+
+实际上，所有浏览器都是从 window 对象开始捕获事件，而 DOM2 Events规范规定的是从 document 开始。
+
+#### 17.1.3 DOM事件流 ####
+
+DOM2 Events 规范规定事件流分为 3 个阶段：事件捕获、到达目标和事件冒泡。事件捕获最先发生，为提前拦截事件提供了可能。然后，实际的目标元素接收到事件。最后一个阶段是冒泡，最迟要在这个阶段响应事件。
+
+在 DOM 事件流中，实际的目标（ <div> 元素）在捕获阶段不会接收到事件。
+
+### 17.2 事件处理程序 ###
+
+为响应事件而调用的函数被称为事件处理程序（或事件监听器）。
+
+#### 17.2.1 HTML事件处理程序 ####
+
+特定元素支持的每个事件都可以使用事件处理程序的名字以 HTML 属性的形式来指定。
+
+```html
+<div id="myDiv" onclick="console.log('HHH');">Click Me</div>
+```
+
+以这种方式指定的事件处理程序有一些特殊的地方。首先，会创建一个函数来封装属性的值。这个函数有一个特殊的局部变量 event ，其中保存的就是 event 对象。
+
+在这个函数中， this 值相当于事件的目标元素。
+
+这个动态创建的包装函数还有一个特别有意思的地方，就是其作用域链被扩展了。在这个函数中，document 和元素自身的成员都可以被当成局部变量来访问。这是通过使用 with 实现的
+
+#### 17.2.2 DOM0事件处理程序 ####
+
+每个元素（包括 window 和 document ）都有通常小写的事件处理程序属性，比如 onclick 。只要把这个属性赋值为一个函数即可：
+
+```js
+let h2 = document.getElementById('h21');
+h2.onclick = function (ev) {
+    console.log(ev);
+    console.log('clicked the h2');
+}
+```
+
+像这样使用 DOM0 方式为事件处理程序赋值时，所赋函数被视为元素的方法。因此，事件处理程序会在元素的作用域中运行，即 this 等于元素。
+
+以这种方式添加事件处理程序是注册在事件流的冒泡阶段的。
+
+通过将事件处理程序属性的值设置为 null ，可以移除通过 DOM0 方式添加的事件处理程序。
+
+#### 17.2.2 DOM2事件处理程序 ####
+
+DOM2 Events 为事件处理程序的赋值和移除定义了两个方法： addEventListener() 和 removeEventListener() 
+
+这两个方法暴露在所有 DOM 节点上，它们接收 3 个参数：事件名、事件处理函数和一个布尔值， true 表示在捕获阶段调用事件处理程序， false （默认值）表示在冒泡阶段调用事件处理程序。
+
+```js
+h2.addEventListener('click',
+    (ev) => {
+    console.log(ev);
+    console.log(this); // 作用域问题 window
+}, false);
+```
+
+通过 addEventListener() 添加的事件处理程序只能使用 removeEventListener() 并传入与添加时同样的参数来移除。这意味着使用 addEventListener() 添加的匿名函数无法移除.
+
+### 17.3 事件对象 ###
+
+在 DOM 中发生事件时，所有相关信息都会被收集并存储在一个名为 event 的对象中
+
+#### 17.3.1 DOM事件对象 ####
+
+不同的事件生成的事件对象也会包含不同的属性和方法。不过，所有事件对象都会包含下表列出的这些公共属性和方法。
+
+| 属性/方法        | 类型    | 读/写 | 说明                                                         |
+| ---------------- | ------- | ----- | ------------------------------------------------------------ |
+| bubbles          | bool    | r     | 表示事件是否冒泡                                             |
+| cancelable       | bool    | r     | 表示是否可以取消事件的默认行为                               |
+| currentTarget    | element | r     | 当前事件处理程序所在的元素                                   |
+| defaultPrevented | bool    | r     | true 表示已经调用 preventDefault() 方法（DOM3Events 中新增） |
+| detail           | int     | r     | 事件相关的其他信息                                           |
+| eventPhase       | int     | r     | 表示调用事件处理程序的阶段：1代表捕获阶段，2代表到达目标，3代表冒泡阶段 |
+| target           | element | r     | 事件目标                                                     |
+| type             | string  | r     | 被触发的事件类型                                             |
+
+在事件处理程序内部， this 对象始终等于 currentTarget 的值，而 target 只包含事件的实际目标。如果事件处理程序直接添加在了意图的目标，则 this 、 currentTarget 和 target 的值是一样的。
+
+```js
+document.body.onclick = function(event) {
+	console.log(event.currentTarget === document.body); // true
+	console.log(this === document.body); // true
+	console.log(event.target === document.getElementById("myBtn")); // true
+};
+```
+
+这种情况下点击按钮， this 和 currentTarget 都等于 document.body ，这是因为它是注册事件处理程序的元素。而 target 属性等于按钮本身，这是因为那才是 click 事件真正的目标。
+
+preventDefault() 方法用于阻止特定事件的默认动作。
+
+stopPropagation() 方法用于立即阻止事件流在 DOM 结构中传播，取消后续的事件捕获或冒泡。
+
+### 17.4 事件类型 ###
+
+- 用户界面事件（ UIEvent ）：涉及与 BOM交互的通用浏览器事件。
+- 焦点事件（ FocusEvent ）：在元素获得和失去焦点时触发。
+- 鼠标事件（ MouseEvent ）：使用鼠标在页面上执行某些操作时触发。
+- 滚轮事件（ WheelEvent ）：使用鼠标滚轮（或类似设备）时触发。
+- 输入事件（ InputEvent ）：向文档中输入文本时触发。
+- 键盘事件（ KeyboardEvent ）：使用键盘在页面上执行某些操作时触发。
+- 合成事件（ CompositionEvent ）：在使用某种 IME（Input Method Editor，输入法编辑器）输入字符时触发。
+
+#### 17.4.1 用户界面事件 ####
+
+- load: 在 window 上当页面加载完成后触发，在窗套（ <frameset> ）上当所有窗格（ <frame> ）都加载完成后触发，在 <img> 元素上当图片加载完成后触发，在 <object> 元素上当相应对象加载完成后触发。
+- unload: 在 window 上当页面完全卸载后触发，在窗套上当所有窗格都卸载完成后触发，在<object> 元素上当相应对象卸载完成后触发。
+- abort: 在 <object> 元素上当相应对象加载完成前被用户提前终止下载时触发。
+- error: 在 window 上当 JavaScript 报错时触发，在 <img> 元素上当无法加载指定图片时触发，在 <object> 元素上当无法加载相应对象时触发，在窗套上当一个或多个窗格无法完成加载时触发。
+- resize: 在 window 或窗格上当窗口或窗格被缩放时触发
+- scroll: 当用户滚动包含滚动条的元素时在元素上触发
+
+**1. load事件**
+
+第二种指定 load 事件处理程序的方式是向 <body> 元素添加 onload 属性。一般来说，任何在 window 上发生事件，都可以通过给 <body> 元素上对应的属性赋值来指定，这是因为 HTML 中没有 window 元素。
+
+#### 17.4.2 焦点事件 ####
+
+- blur ：当元素失去焦点时触发。这个事件不冒泡，所有浏览器都支持。
+- DOMFocusIn ：当元素获得焦点时触发。这个事件是 focus 的冒泡版。Opera 是唯一支持这个事件的主流浏览器。DOM3 Events废弃了 DOMFocusIn ，推荐 focusin 。
+- DOMFocusOut ：当元素失去焦点时触发。这个事件是 blur 的通用版。Opera 是唯一支持这个事件的主流浏览器。DOM3 Events废弃了 DOMFocusOut ，推荐 focusout 。
+- focus ：当元素获得焦点时触发。这个事件不冒泡，所有浏览器都支持。
+- focusin ：当元素获得焦点时触发。这个事件是 focus 的冒泡版。
+- focusout ：当元素失去焦点时触发。这个事件是 blur 的通用版。
+
+#### 17.4.3 鼠标和滚轮事件 ####
+
+鼠标事件是 Web 开发中最常用的一组事件，这是因为鼠标是用户的主要定位设备。DOM3 Events定义了 9 种鼠标事件。
+
+- click 在用户单击鼠标主键（通常是左键）或按键盘回车键时触发
+- dblclick ：在用户双击鼠标主键（通常是左键）时触发
+- mousedown ：在用户按下任意鼠标键时触发
+- mouseenter ：在用户把鼠标光标从元素外部移到元素内部时触发。这个事件不冒泡，也不会在光标经过后代元素时触发
+- mouseleave ：在用户把鼠标光标从元素内部移到元素外部时触发。这个事件不冒泡，也不会在光标经过后代元素时触发
+- mousemove ：在鼠标光标在元素上移动时反复触发
+- mouseout ：在用户把鼠标光标从一个元素移到另一个元素上时触发
+- mouseover ：在用户把鼠标光标从元素外部移到元素内部时触发
+- mouseup ：在用户释放鼠标键时触发
+
+```mermaid
+graph LR
+A[mousedown] -->B[mouseup] --> C[click] -->D[mousedown] --> E[mouseup] --> F[click] --> G[dbclick]
+```
+
+**鼠标的坐标**
+
+- 客户端坐标：clientX clientY
+- 页面坐标：pageX pageY
+- 屏幕坐标：screenX screenY
+
+**修饰键**
+
