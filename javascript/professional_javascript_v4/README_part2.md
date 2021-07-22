@@ -1424,3 +1424,126 @@ list.addEventListener('click', (event) => {
 
 任何时候，都可以使用 document.createEvent() 方法创建一个 event 对象。
 
+## 19 表单脚本 ##
+
+### 19.1 表单基础 ###
+
+Web 表单在 HTML 中以 <form> 元素表示，在 JavaScript 中则以 HTMLFormElement 类型表示。
+
+HTMLFormElement 类型继承自 HTMLElement 类型。
+
+- acceptCharset 服务器可以接收的字符集
+- action 请求的 URL，等价于 HTML 的 action 属性
+- elements: 表单中所有控件的 HTMLCollection
+- enctype: 请求的编码类型，等价于 HTML 的 enctype 属性
+- length ：表单中控件的数量
+- method ：HTTP 请求的方法类型
+- name ：表单的名字，等价于 HTML 的 name 属性
+- reset() ：把表单字段重置为各自的默认值
+- submit() ：提交表单
+- target ：用于发送请求和接收响应的窗口的名字，等价于 HTML 的 target 属性
+
+有几种方式可以取得对 <form> 元素的引用:
+
+- 使用id
+- 使用document.forms
+
+#### 19.1.1 提交表单 ####
+
+提交按钮可以使用 type 属性为 "submit" 的 <input> 或 <button> 元素来定义，图片按钮可以使用 type 属性为 "image" 的 <input> 元素来定义。
+
+```html
+<!-- 通用提交按钮 -->
+<input type="submit" value="Submit Form">
+
+<!-- 自定义提交按钮 -->
+<button type="submit">Submit Form</button>
+
+<!-- 图片按钮 -->
+<input type="image" src="graphic.gif">
+```
+
+以这种方式提交表单会在向服务器发送请求之前触发 submit 事件。
+
+这样就提供了一个验证表单数据的机会，可以根据验证结果决定是否真的要提交。阻止这个事件的默认行为可以取消提交表单。
+
+```js
+let form = document.getElementById("myForm");
+
+form.addEventListener("submit", (event) => {
+	// 阻止表单提交
+	event.preventDefault();
+});
+```
+
+解决这个问题主要有两种方式：在表单提交后禁用提交按钮，或者通过 onsubmit 事件处理程序取消之后的表单提交。
+
+#### 19.1.2 重置表单 ####
+
+用户单击重置按钮可以重置表单。重置按钮可以使用 type 属性为 "reset" 的 <input> 或 <button>元素来创建
+
+用户单击重置按钮重置表单会触发 reset 事件。这个事件为取消重置提供了机会。
+
+#### 19.1.3 表单字段 ####
+
+表单元素可以像页面中的其他元素一样使用原生 DOM 方法来访问。此外，所有表单元素都是表单elements 属性（元素集合）中包含的一个值。
+
+这个 elements 集合是一个有序列表，包含对表单中所有字段的引用，包括所有 <input> 、 <textarea> 、 <button> 、 <select> 和 <fieldset> 元素
+
+可以通过索引位置和 name 属性来访问。
+
+**1. 表单字段的公共属性**
+
+- disabled ：布尔值，表示表单字段是否禁用。
+- form ：指针，指向表单字段所属的表单。这个属性是只读的。
+- name ：字符串，这个字段的名字。
+- readOnly ：布尔值，表示这个字段是否只读。
+- tabIndex ：数值，表示这个字段在按 Tab 键时的切换顺序。
+- type ：字符串，表示字段类型，如 "checkbox" 、 "radio" 等。
+- value ：要提交给服务器的字段值。
+
+这种动态修改表单字段属性的能力为任何时候以任何方式修改表单提供了方便。
+
+**2. 表单字段的公共方法**
+
+- focus()  方法把浏览器焦点设置到表单字段，这意味着该字段会变成活动字段并可以响应键盘事件。
+- blur()
+
+### 19.2 文本框编程 ###
+
+#### 19.2.4 约束验证API ####
+
+**1. 必填字段**
+
+第一个条件是给表单字段添加 required 属性
+
+```html
+<input type="text" name="username" required>
+```
+
+**4. 输入模式**
+
+HTML5 为文本字段新增了 pattern 属性。这个属性用于指定一个正则表达式，用户输入的文本必须与之匹配。
+
+```html
+<input type="text" pattern="\d+" name="count">
+```
+
+**5. 检测有效性**
+
+使用 checkValidity() 方法可以检测表单中任意给定字段是否有效。
+
+checkValidity() 方法只会告诉我们字段是否有效，而 validity 属性会告诉我们字段为什么有效或无效。
+
+**6. 禁用验证**
+
+通过指定 novalidate 属性可以禁止对表单进行任何验证：
+
+```html
+<form method="post" action="/signup" novalidate>
+
+</form>
+```
+
+### 19.3 选择框编程 ###
+
