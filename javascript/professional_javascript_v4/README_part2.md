@@ -1300,3 +1300,127 @@ A[mousedown] -->B[mouseup] --> C[click] -->D[mousedown] --> E[mouseup] --> F[cli
 
 **修饰键**
 
+DOM 规定了 4 个属性来表示这几个修饰键的状态： shiftKey 、 ctrlKey 、 altKey 和 metaKey 。
+
+#### 17.4.4 键盘与输入事件 ####
+
+- keydown 用户按下键盘上某个键时触发，而且持续按住会重复触发.
+- keypress 用户按下键盘上某个键并产生字符时触发，而且持续按住会重复触发
+- keyup 用户释放键盘上某个键时触发
+
+输入事件：
+
+- textInput 这个事件是对 keypress 事件的扩展，用于在文本显示给用户之前更方便地截获文本输入。 
+
+**1. 键码**
+
+对于 keydown 和 keyup 事件， event 对象的 keyCode 属性中会保存一个键码，对应键盘上特定的一个键。
+
+- keyCode
+- keyChar
+- key
+- char
+
+**2. textInput事件**
+
+一个区别是 keypress 会在任何可以获得焦点的元素上触发，而 textInput 只在可编辑区域上触发。
+
+另一个区别是 textInput 只在有新字符被插入时才会触发，而 keypress 对任何可能影响文本的键都会触发（包括退格键）。
+
+因为 textInput 事件主要关注字符，所以在 event 对象上提供了一个 data 属性。
+
+#### 17.4.5 合成事件 ####
+
+合成事件是 DOM3 Events 中新增的，用于处理通常使用 IME 输入时的复杂输入序列。
+
+#### 17.4.7 HTML5事件 ####
+
+**1. contextmenu事件**
+
+以专门用于表示何时该显示上下文菜单，从而允许开发者取消默认的上下文菜单并提供自定义菜单。
+
+```html
+<div id="myDiv">
+    Right click or Ctrl+click me to get a custom context menu.
+    Click anywhere else to get the default context menu.
+</div>
+<ul id="myMenu" style="position:absolute;visibility:hidden;background-color:silver">
+    <li><a href="http://www.somewhere.com"> somewhere</a></li>
+    <li><a href="http://www.wrox.com">Wrox site</a></li>
+    <li><a href="http://www.somewhere-else.com">somewhere-else</a></li>
+</ul>
+```
+
+```js
+window.addEventListener('load', (event) => {
+    let div = document.getElementById('myDiv');
+
+    div.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        let menu = document.getElementById('myMenu');
+        menu.style.left = e.clientX + 'px';
+        menu.style.top = e.clientY + 'px';
+        menu.style.visibility = 'visible';
+    });
+
+    document.addEventListener('click', (ev) => {
+        document.getElementById('myMenu').style.visibility = 'hidden';
+    })
+
+})
+```
+
+**2. beforeunload事件**
+
+beforeunload 事件会在 window 上触发，用意是给开发者提供阻止页面被卸载的机会。这个事件会在页面即将从浏览器中卸载时触发，如果页面需要继续使用，则可以不被卸载。
+
+**3. DOMContentLoaded事件**
+
+DOMContentLoaded 事件会在 DOM 树构建完成后立即触发，而不用等待图片、JavaScript文件、CSS 文件或其他资源加载完成。
+
+DOMContentLoaded 事件通常用于添加事件处理程序或执行其他DOM操作。这个事件始终在 load事件之前触发。
+
+### 17.5 内存与性能 ###
+
+#### 17.5.1 事件委托 ####
+
+事件委托利用事件冒泡，可以只使用一个事件处理程序来管理一种类型的事件。例如， click 事件冒泡到 document 。
+
+```html
+<ul id="myLinks">
+    <li id="goSomewhere">Go somewhere</li>
+    <li id="doSomething">Do something</li>
+    <li id="sayHi">Say hi</li>
+</ul>
+```
+
+```js
+let list = document.getElementById('myLinks');
+
+list.addEventListener('click', (event) => {
+    let target = event.target;
+    switch (target.id) {
+        case 'doSomething': {
+            document.title = "I changed the document's title";
+            break;
+        }
+        case "goSomewhere": {
+            location.href = "http:// www.wrox.com";
+            break;
+        }
+        case "sayHi": {
+            console.log("hi");
+            break;
+        }
+    }
+})
+```
+
+最适合使用事件委托的事件包括： click 、 mousedown 、 mouseup 、 keydown 和 keypress 。
+
+### 17.6 模拟事件 ###
+
+#### 17.6.1 DOM 事件模拟 ####
+
+任何时候，都可以使用 document.createEvent() 方法创建一个 event 对象。
+
