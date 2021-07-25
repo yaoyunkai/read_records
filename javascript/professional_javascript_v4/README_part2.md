@@ -1624,3 +1624,30 @@ selectbox.add(newOption, undefined);
 
 ## 20 JavaScript API ##
 
+### 20.1 Atomics & SharedArrayBuffer ###
+
+#### 20.1.1 SharedArrayBuffer ####
+
+### 20.3 Encoding API ###
+
+Encoding API 主要用于实现字符串与定型数组之间的转换.
+
+TextEncoder 、 TextEncoderStream 、 TextDecoder 和 TextDecoderStream
+
+#### 20.3.1 文本编码 ####
+
+Encoding API 提供了两种将字符串转换为定型数组二进制格式的方法：批量编码和流编码。把字符串转换为定型数组时，编码器始终使用 UTF-8。
+
+```js
+const textEn = new TextEncoder();
+let v = 'foo';
+let d = textEn.encode(v)
+// Uint8Array(3) [102, 111, 111]
+```
+
+编码器实例还有一个 encodeInto() 方法，该方法接收一个字符串和目标 Unit8Array ，返回一个字典，该字典包含 read 和 written 属性。
+
+#### 20.3.2 文本解码 ####
+
+### 20.4 File API & Blob API ###
+
