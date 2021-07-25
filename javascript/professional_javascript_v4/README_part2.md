@@ -1547,3 +1547,80 @@ checkValidity() 方法只会告诉我们字段是否有效，而 validity 属性
 
 ### 19.3 选择框编程 ###
 
+选择框是使用 <select> 和 <option> 元素创建的.  HTMLSelectElement
+
+- add(newOption, relOption) ：在 relOption 之前向控件中添加新的 <option>
+- multiple ：布尔值，表示是否允许多选，等价于 HTML 的 multiple 属性
+- options ：控件中所有 <option> 元素的 HTMLCollection, Node.
+- remove(index) ：移除给定位置的选项
+- selectedIndex ：选中项基于 0 的索引值，如果没有选中项则为–1。
+- size ：选择框中可见的行数，等价于 HTML 的 size 属性
+- type: 可能是 "select-one" 或 "select-multiple"
+- value: 
+
+```html
+<select name="location" id="selLocation">
+	<option value="Sunnyvale, CA">Sunnyvale</option>
+	<option value="Los Angeles, CA">Los Angeles</option>
+	<option value="Mountain View, CA">Mountain View</option>
+	<option value="">China</option>
+	<option>Australia</option>
+</select>
+```
+
+每个 <option> 元素在 DOM 中都由一个 HTMLOptionElement 对象表示.
+
+```python
+class HTMLOptionElement(HTMLElement):
+    index = None  # 选项在 options 集合中的索引
+    label = Node  # 选项的标签，等价于 HTML 的 label 属性
+    selected = None  # 布尔值，表示是否选中了当前选项。
+    text = None  # 选项的文本
+    value = None  # 选项的值
+```
+
+#### 19.3.1 选项处理 ####
+
+对于只允许选择一项的选择框，获取选项最简单的方式是使用选择框的 selectedIndex 属性。
+
+- 操作select的selectedIndex
+- 操作option的selected
+
+与 selectedIndex 不同，设置选项的 selected 属性不会在多选时移除其他选项，从而可以动态选择任意多个选项。
+
+#### 19.3.2 添加选项 ####
+
+```js
+let newOption = document.createElement("option");
+newOption.appendChild(document.createTextNode("Option text"));
+newOption.setAttribute("value", "Option value");
+selectbox.appendChild(newOption);
+```
+
+也可以使用 Option 构造函数创建新选项.
+
+```js
+let newOption = new Option("Option text", "Option value");
+selectbox.appendChild(newOption); 
+selectbox.add(newOption, undefined);
+```
+
+#### 19.3.3 移除选项 ####
+
+- 使用DOM的removeChild
+- 使用select的remove方法
+
+### 19.4 表单序列化 ###
+
+如何确定在提交表单时要把什么发送到服务器
+
+- 字段名和值是 URL 编码的并以和号（ & ）分隔
+- 禁用字段不会发送
+- 复选框或单选按钮只在被选中时才发送
+- 类型为 "reset" 或 "button" 的按钮不会发送
+- 多选字段的每个选中项都有一个值
+- 通过点击提交按钮提交表单时，会发送该提交按钮
+- select 元素的值是被选中 <option> 元素的 value 属性
+
+## 20 JavaScript API ##
+
