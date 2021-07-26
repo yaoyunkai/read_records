@@ -1849,3 +1849,171 @@ Javascript Object Notation
 
 ## 24 网络请求与远程资源 ##
 
+Ajax: Asynchronous JavaScript+XML
+
+ XMLHttpRequest （XHR）对象
+
+### 24.1 XMLHttpRequest 对象 ###
+
+```js
+let xhr = new XMLHttpRequest();
+```
+
+#### 24.1.1 使用XHR ####
+
+使用 XHR 对象首先要调用 open() 方法，这个方法接收 3 个参数：请求类型（ "get" 、 "post" 等）、请求 URL，以及表示请求是否异步的布尔值。
+
+```js
+xhr.open("get", "example.php", false);
+```
+
+关于这行代码需要说明几点。首先，这里的 URL 是相对于代码所在页面的，当然也可以使用绝对 URL。其次，调用 open() 不会实际发送请求，只是为发送请求做好准备。
+
+要发送定义好的请求，必须像下面这样调用 send() 方法：
+
+```js
+xhr.open("get", "example.txt", false);
+xhr.send(null);
+```
+
+因为这个请求是同步的，所以 JavaScript 代码会等待服务器响应之后再继续执行。收到响应后，XHR对象的以下属性会被填充上数据。
+
+- responseText 作为响应体返回的文本
+- responseXML 如果响应的内容类型是 "text/xml" 或 "application/xml" ，那就是包含响应数据的 XML DOM 文档。
+- status: 响应的 HTTP 状态。
+- statusText: 响应的 HTTP 状态描述。
+
+如果 HTTP状态码是 304，则表示资源未修改过，是从浏览器缓存中直接拿取的。
+
+```js
+xhr.open("get", "example.txt", false);
+xhr.send(null);
+if ((xhr.status >= 200 && xhr.status < 300) || xhr.status == 304) {
+	alert(xhr.responseText);
+} else {
+	alert("Request was unsuccessful: " + xhr.status);
+}
+```
+
+虽然可以像前面的例子一样发送同步请求，但多数情况下最好使用异步请求，这样可以不阻塞JavaScript 代码继续执行。XHR 对象有一个 readyState 属性，表示当前处在请求/响应过程的哪个阶段。这个属性有如下可能的值：
+
+- 0 ： 未初始化（Uninitialized）。尚未调用 open() 方法
+- 1：已打开（Open）。已调用 open() 方法，尚未调用 send() 方法
+- 2：已发送（Sent）。已调用 send() 方法，尚未收到响应
+- 3：接收中（Receiving）。已经收到部分响应
+- 4：完成（Complete）。已经收到所有响应，可以使用了
+
+每次 readyState 从一个值变成另一个值，都会触发 readystatechange 事件。为保证跨浏览器兼容， onreadystatechange 事件处理程序应该在调用 open() 之前赋值。
+
+```js
+let xhr = new XMLHttpRequest();
+xhr.onreadystatechange = function () {
+    if (xhr.readyState == 4) {
+        if ((xhr.status >= 200 && xhr.status < 300) || xhr.status == 304) {
+            alert(xhr.responseText);
+        } else {
+            alert("Request was unsuccessful: " + xhr.status);
+        }
+    }
+};
+xhr.open("get", "https://www.baidu.com", true);
+xhr.send(null);
+```
+
+#### 24.1.5 XMLHttpRequest Level 2 ####
+
+**1. FormData 类型**
+
+**2. timeout**
+
+### 24.2 进度事件 ###
+
+Progress Events 是 W3C 的工作草案，定义了客户端服务器端通信。这些事件最初只针对 XHR，现在也推广到了其他类似的 API。
+
+- loadstart ：在接收到响应的第一个字节时触发。
+- progress ：在接收响应期间反复触发。
+- error ：在请求出错时触发。
+- abort ：在调用 abort() 终止连接时触发。
+- load ：在成功接收完响应时触发。
+- loadend ：在通信完成时，且在 error 、 abort 或 load 之后触发。
+
+每次请求都会首先触发 loadstart 事件，之后是一个或多个 progress 事件，接着是 error 、 abort或 load 中的一个，最后以 loadend 事件结束。
+
+#### 24.2.1 load事件 ####
+
+最终，增加了一个 load 事件用于替代readystatechange 事件。 load 事件在响应接收完成后立即触发，这样就不用检查 readyState 属性了。
+
+```js
+let xhr = new XMLHttpRequest();
+xhr.onload = function() {
+    if ((xhr.status >= 200 && xhr.status < 300) || xhr.status == 304) {
+    	alert(xhr.responseText);
+    } else {
+    	alert("Request was unsuccessful: " + xhr.status);
+    }
+};
+xhr.open("get", "altevents.php", true);
+xhr.send(null);
+```
+
+#### 24.2.2 progress 事件 ####
+
+ progress 事件，在浏览器接收数据期间，这个事件会反复触发。每次触发时， onprogress 事件处理程序都会收到 event 对象，其 target 属性是 XHR 对象，且包含 3 个额外属性： lengthComputable 、 position 和 totalSize 。其中， lengthComputable 是一个布尔值，表示进度信息是否可用； position 是接收到的字节数； totalSize 是响应的 Content-Length 头部定义的总字节数。
+
+### 24.3 跨源资源共享 ###
+
+跨源资源共享（CORS，Cross-Origin Resource Sharing）定义了浏览器与服务器如何实现跨源通信。CORS 背后的基本思路就是使用自定义的 HTTP 头部允许浏览器和服务器相互了解，以确实请求或响应应该成功还是失败。
+
+对于简单的请求，比如 GET 或 POST 请求，没有自定义头部，而且请求体是 text/plain 类型，这样的请求在发送时会有一个额外的头部叫 Origin 。 Origin 头部包含发送请求的页面的源（协议、域名和端口），以便服务器确定是否为其提供响应。
+
+如果服务器决定响应请求，那么应该发送 Access-Control-Allow-Origin 头部，包含相同的源；或者如果资源是公开的，那么就包含 "*" 。
+
+#### 24.3.1 预检请求 ####
+
+CORS 通过一种叫预检请求（preflighted request）的服务器验证机制，允许使用自定义头部、除 GET和 POST 之外的方法，以及不同请求体内容类型。在要发送涉及上述某种高级选项的请求时，会先向服务器发送一个“预检”请求。这个请求使用 OPTIONS 方法发送并包含以下头部。
+
+- Origin ：与简单请求相同。
+- Access-Control-Request-Method ：请求希望使用的方法。
+- Access-Control-Request-Headers ：（可选）要使用的逗号分隔的自定义头部列表。
+
+#### 24.3.2 凭据请求 ####
+
+默认情况下，跨源请求不提供凭据（cookie、HTTP 认证和客户端 SSL 证书）。可以通过将withCredentials 属性设置为 true 来表明请求会发送凭据。如果服务器允许带凭据的请求，那么可以在响应中包含如下 HTTP 头部：
+
+```http
+Access-Control-Allow-Credentials: true
+```
+
+#### 24.4 替代性跨源技术 ####
+
+#### 24.4.1 图片探测 ####
+
+#### 24.4.2 JSONP ####
+
+JSONP 是“JSON with padding”的简写，是在 Web 服务上流行的一种 JSON 变体.
+
+```js
+callback({ "name": "Nicholas" });
+```
+
+JSONP 格式包含两个部分：回调和数据。回调是在页面接收到响应之后应该调用的函数，通常回调函数的名称是通过请求来动态指定的。而数据就是作为参数传给回调函数的 JSON 数据。下面是一个典型的 JSONP 请求：
+
+`http://freegeoip.net/json/?callback=handleResponse`
+
+JSONP 调用是通过动态创建 <script> 元素并为 src 属性指定跨域 URL 实现的。此时的 <script>与 <img> 元素类似，能够不受限制地从其他域加载资源。因为 JSONP 是有效的 JavaScript，所以 JSONP响应在被加载完成之后会立即执行。
+
+```js
+function handleResponse(response) {
+	console.log(`
+		You're at IP address ${response.ip}, which is in
+		${response.city}, ${response.region_name}`);
+}
+let script = document.createElement("script");
+script.src = "http://freegeoip.net/json/?callback=handleResponse";
+document.body.insertBefore(script, document.body.firstChild);
+```
+
+首先，JSONP 是从不同的域拉取可执行代码。如果这个域并不可信，则可能在响应中加入恶意内容。此时除了完全删除 JSONP 没有其他办法。在使用不受控的 Web 服务时，一定要保证是可以信任的。
+
+第二个缺点是不好确定 JSONP 请求是否失败。虽然 HTML5 规定了 <script> 元素的 onerror 事件处理程序，但还没有被任何浏览器实现。
+
