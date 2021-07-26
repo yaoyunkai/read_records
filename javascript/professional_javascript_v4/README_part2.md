@@ -1784,3 +1784,68 @@ Performance 接口通过 JavaScript API 暴露了浏览器内部的度量指标�
 必须使用不同的计时 API 来精确且准确地度量时间的流逝: `window.performance.now()`
 
 performance.timeOrigin 属性返回计时器初始化时全局系统时钟的值
+
+## 21 错误处理与调试 ##
+
+### 21.1 浏览器错误报告 ###
+
+### 21.2 错误处理 ###
+
+```js
+try {
+	// 可能出错的代码
+} catch (error) {
+	// 出错时要做什么
+}
+```
+
+error 对象有两个属性：message & name
+
+#### 21.2.2 抛出错误 ####
+
+与 try / catch 语句对应的一个机制是 throw 操作符，用于在任何时候抛出自定义错误。 throw 操
+作符必须有一个值，但值的类型不限。下面这些代码都是有效的：
+
+```js
+throw 12345;
+throw "Hello world!";
+throw true;
+throw { name: "JavaScript" };
+throw new Error("Something bad happened.");
+```
+
+#### 21.2.3 error 事件 ####
+
+任何没有被 try / catch 语句处理的错误都会在 window 对象上触发 error 事件。
+
+在任何错误发生时，无论是否是浏览器生成的，都会触发 error 事件并执行这个事件处理程序。然后，浏览器的默认行为就会生效，像往常一样显示这条错误消息。可以返回 false 来阻止浏览器默认报告错误的行为，如下所示：
+
+```js
+window.onerror = (message, url, line) => {
+	console.log(message);
+	return false;
+};
+```
+
+### 21.3 调试技术 ###
+
+#### 21.3.3 使用JavaScript调试器 ####
+
+ECMAScript 5.1 规范定义了 debugger 关键字，用于调用可能存在的调试功能。
+
+## 23 JSON ##
+
+Javascript Object Notation
+
+### 23.1 语法 ###
+
+- 简单值：字符串、数值、布尔值和 null 可以在 JSON 中出现，就像在 JavaScript 中一样。特殊值 undefined不可以。
+- 对象：第一种复杂数据类型，对象表示有序键/值对。每个值可以是简单值，也可以是复杂类型。
+- 数组：第二种复杂数据类型，数组表示可以通过数值索引访问的值的有序列表。数组的值可以是任意类型，包括简单值、对象，甚至其他数组。
+
+#### 23.2.1 JSON对象 ####
+
+两个方法： stringify() 和 parse()
+
+## 24 网络请求与远程资源 ##
+
