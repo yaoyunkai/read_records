@@ -1651,3 +1651,136 @@ let d = textEn.encode(v)
 
 ### 20.4 File API & Blob API ###
 
+当用户在文件字段中选择一个或多个文件时，这个 files集合中会包含一组 File 对象，表示被选中的文件。
+
+每个File对象都有一些只读属性：
+
+- name: 本地系统中的文件名
+- size: 以字节计的文件大小
+- type: 包含文件 MIME 类型的字符串
+- lastModifiedDate: 表示文件最后修改时间的字符串
+
+#### 20.4.2 FileReader 类型 ####
+
+FileReader 类型表示一种异步文件读取机制。
+
+- readAsText(file, encoding) ：从文件中读取纯文本内容并保存在 result 属性中。第二个参数表示编码，是可选的。
+- readAsDataURL(file) ：读取文件并将内容的数据 URI 保存在 result 属性中
+- readAsBinaryString(file) ：读取文件并将每个字符的二进制数据保存在 result 属性中
+- readAsArrayBuffer(file) ：读取文件并将文件内容以 ArrayBuffer 形式保存在 result 属性
+
+因为这些读取方法是异步的，所以每个 FileReader 会发布几个事件，其中 3 个最有用的事件是 progress 、 error 和 load ，分别表示还有更多数据、发生了错误和读取完成。
+
+其中 progress 事件每50ms就会触发一次，该事件有：lengthComputable 、 loaded 和 total 。此外，在 progress 事件中可以读取 FileReader 的 result 属性，即使其中尚未包含全部数据。
+
+error 事件会在由于某种原因无法读取文件时触发。触发 error 事件时， FileReader 的 error属性会包含错误信息。这个属性是一个对象，只包含一个属性： code 。这个错误码的值可能是 1（未找到文件）、2（安全错误）、3（读取被中断）、4（文件不可读）或 5（编码错误）。
+
+```js
+let fileslist = document.getelementbyid("ff");
+fileslist.addeventlistener("change", (event) => {
+    let info = "",
+        output = document.getelementbyid("output"),
+        progress = document.getelementbyid("progress"),
+        files = event.target.files,
+        type = "default",
+        reader = new filereader();
+
+    if (/image/.test(files[0].type)) {
+        reader.readasdataurl(files[0]);
+        type = "image";
+    } else {
+        reader.readastext(files[0]);
+        type = "text";
+    }
+
+    reader.onerror = function () {
+        output.innerhtml = "could not read file, error code is " +
+            reader.error.code;
+    };
+
+    reader.onprogress = function (event) {
+        if (event.lengthcomputable) {
+            progress.innerhtml = `${event.loaded}/${event.total}`;
+        }
+    };
+
+    reader.onload = function () {
+        let html = "";
+
+        switch (type) {
+            case "image":
+                html = `<img src="${reader.result}">`;
+                break;
+            case "text":
+                html = reader.result;
+                break;
+        }
+        output.innerhtml = html;
+    };
+});
+```
+
+#### 20.4.3 FileReaderSync 类型 ####
+
+ FileReaderSync 类型就是 FileReader 的同步版本.
+
+#### 20.4.4 Blob与部分读取 ####
+
+File 对象提供了一个名为 slice()的方法。 slice() 方法接收两个参数：起始字节和要读取的字节数。这个方法返回一个 Blob 的实例，而 Blob 实际上是 File 的超类。
+
+Blob构造函数可以接收一个 options 参数，并在其中指定 MIME 类型。
+
+Blob 对象有一个 size 属性和一个 type 属性，还有一个 slice() 方法用于进一步切分数据。另外也可以使用 FileReader 从 Blob 中读取数据。
+
+#### 20.4.5 对象URL与Blob ####
+
+对象 URL 有时候也称作 Blob URL，是指引用存储在 File 或 Blob 中数据的 URL。
+
+要创建对象 URL，可以使用 window.URL.createObjectURL() 方法并传入 File 或 Blob 对象。
+
+这个函数返回的值是一个指向内存中地址的字符串。因为这个字符串是 URL，所以可以在 DOM 中直接使用。
+
+### 20.7 Notifications API ###
+
+Notifications API 在 Service Worker 中非常有用。渐进 Web 应用（PWA，Progressive Web Application）通过触发通知可以在页面不活跃时向用户显示消息，看起来就像原生应用。
+
+#### 20.7.1 通知权限 ####
+
+用户授权显示通知是通过浏览器内部的一个对话框完成的。
+
+```js
+Notification.requestPermission()
+.then((permission) => {
+console.log('User responded to permission request:', permission);
+});
+```
+
+#### 20.7.2 显示和隐藏通知 ####
+
+显示一个简单的通知：
+
+```js
+new Notification('Title text!');
+```
+
+### 20.8 Page Visibility API ###
+
+如果页面被最小化或隐藏在其他标签页后面，那么轮询服务器或更新动画等功能可能就没有必要了。Page Visibility API 旨在为开发者提供页面对用户是否可见的信息。
+
+- document.visibilityState
+  - 页面在后台标签页或浏览器中最小化了
+  - 页面在前台标签页中
+  - 实际页面隐藏了，但对页面的预览是可见的
+  - 页面在屏外预渲染
+- visibilitychange: 该事件会在文档从隐藏变可见（或反之）时触发
+- document.hidden 布尔值，表示页面是否隐藏。
+
+### 20.10 计时API ###
+
+Performance 接口通过 JavaScript API 暴露了浏览器内部的度量指标，允许开发者直接访问这些信息并基于这些信息实现自己想要的功能。`window.performance`
+
+#### 20.10.1 High Resolution Time API ####
+
+必须使用不同的计时 API 来精确且准确地度量时间的流逝: `window.performance.now()`
+
+performance.timeOrigin 属性返回计时器初始化时全局系统时钟的值
