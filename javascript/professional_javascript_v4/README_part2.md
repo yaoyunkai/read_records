@@ -2017,3 +2017,376 @@ document.body.insertBefore(script, document.body.firstChild);
 
 第二个缺点是不好确定 JSONP 请求是否失败。虽然 HTML5 规定了 <script> 元素的 onerror 事件处理程序，但还没有被任何浏览器实现。
 
+### 24.5 Fetch API ###
+
+Fetch API 是 WHATWG 的一个“活标准”（living standard），用规范原文说，就是“Fetch 标准定义请求、响应，以及绑定二者的流程：获取（fetch）”。
+
+Fetch API 本身是使用 JavaScript 请求资源的优秀工具，同时这个 API 也能够应用在服务线程（service worker）中，提供拦截、重定向和修改通过 fetch() 生成的请求接口。
+
+#### 24.5.1 基本用法 ####
+
+fetch() 方法是暴露在全局作用域中的，包括主页面执行线程、模块和工作线程。调用这个方法，浏览器就会向给定 URL 发送请求。
+
+**1. 分派请求**
+
+fetch() 只有一个必需的参数 input 。这个方法返回一个promise。
+
+```js
+let r = fetch('/bar');
+console.log(r); // Promise <pending>
+```
+
+请求完成、资源可用时，期约会解决为一个 Response 对象。
+
+## 25 客户端存储 ##
+
+### 25.1 cookie ###
+
+HTTP cookie 通常也叫作 cookie，最初用于在客户端存储会话信息。这个规范要求服务器在响应HTTP 请求时，通过发送 Set-Cookie HTTP 头部包含会话信息。
+
+#### 25.1.1 限制 ####
+
+cookie 是与特定域绑定的。设置 cookie 后，它会与请求一起发送到创建它的域。
+
+#### 25.1.2 cookie的构成 ####
+
+- 名称：唯一标识 cookie 的名称。cookie 名不区分大小写，因此 myCookie 和 MyCookie 是同一个名称。cookie 名必须经过 URL 编码。
+- 值：存储在 cookie 里的字符串值。这个值必须经过 URL 编码。
+- 域：cookie 有效的域。发送到这个域的所有请求都会包含对应的 cookie。
+- 路径：请求 URL 中包含这个路径才会把 cookie 发送到服务器。
+-  过期时间：表示何时删除 cookie 的时间戳
+- 安全标志：设置之后，只在使用 SSL 安全连接的情况下才会把 cookie 发送到服务器。
+
+这些参数在 Set-Cookie 头部中使用分号加空格隔开，比如：
+
+```http
+HTTP/1.1 200 OK
+Content-type: text/html
+Set-Cookie: name=value; expires=Mon, 22-Jan-07 07:10:24 GMT; domain=.wrox.com
+Other-header: other-header-value
+```
+
+#### 25.1.3 javaScript 中的cookie ####
+
+只有 BOM的 document.cookie 属性。
+
+所有名和值都是 URL 编码的，因此必须使用 decodeURIComponent() 解码。
+
+最好还是使用 encodeURIComponent() 对名称和值进行编码。
+
+### 25.2 Web Storage ###
+
+WHATWG，Web Hypertext Application Technical Working Group。
+
+Web Storage 的目的是解决通过客户端存储不需要频繁发送回服务器的数据时使用 cookie 的问题。
+
+Web Storage 的第 2 版定义了两个对象： localStorage 和 sessionStorage 。 localStorage 是永久存储机制， sessionStorage 是跨会话的存储机制。
+
+#### 25.2.1 Storage类型 ####
+
+Storage 类型用于保存名/值对数据，直至存储空间上限（由浏览器决定）。
+
+- clear() ：删除所有值
+- getItem(name) ：取得给定 name 的值。
+- key(index) ：取得给定数值位置的名称。
+- removeItem(name) ：删除给定 name 的名/值对。
+- setItem(name, value) ：设置给定 name 的值。
+
+#### 25.2.2 sessionStorage 对象 ####
+
+sessionStorage 对象只存储会话数据，这意味着数据只会存储到浏览器关闭。
+
+#### 25.2.3 localStorage 对象 ####
+
+要访问同一个 localStorage 对象，页面必须来自同一个域（子域不可以）、在相同的端口上使用相同的协议。
+
+#### 25.2.4 存储事件 ####
+
+每当 Storage 对象发生变化时，都会在文档上触发 storage 事件。使用属性或 setItem() 设置值、使用 delete 或 removeItem() 删除值，以及每次调用 clear() 时都会触发这个事件。
+
+- domain：存储变化对应的域
+- key: 被设置或删除的键
+- newValue ：键被设置的新值，若键被删除则为 null 。
+- oldValue ：键变化之前的值。
+
+```js
+window.addEventListener("storage",
+(event) => alert('Storage changed for ${event.domain}'));
+```
+
+### 25.3 IndexedDB ###
+
+Indexed Database API 简称 IndexedDB，是浏览器中存储结构化数据的一个方案。IndexedDB 用于代替目前已废弃的 Web SQL Database API。
+
+## 26 模块 ##
+
+### 26.1 理解模块模式 ###
+
+将代码拆分成独立的块，然后再把这些块连接起来可以通过模块模式来实现。这种模式背后的思想很简单：把逻辑分块，各自封装，相互独立，每个块自行决定对外暴露什么，同时自行决定引入执行哪些外部代码。不同的实现和特性让这些基本的概念变得有点复杂，但这个基本的思想是所有 JavaScript模块系统的基础。
+
+#### 26.1.1 模块标识符 ####
+
+模块标识符是所有模块系统通用的概念。模块系统本质上是键/值实体，其中每个模块都有个可用于引用它的标识符。这个标识符在模拟模块的系统中可能是字符串，在原生实现的模块系统中可能是模块文件的实际路径。
+
+#### 26.1.2 模块依赖 ####
+
+模块系统的核心是管理依赖。指定依赖的模块与周围的环境会达成一种契约。本地模块向模块系统声明一组外部模块（依赖），这些外部模块对于当前模块正常运行是必需的。模块系统检视这些依赖，进而保证这些外部模块能够被加载并在本地模块运行时初始化所有依赖。
+
+每个模块都会与某个唯一的标识符关联，该标识符可用于检索模块。这个标识符通常是 JavaScript文件的路径，但在某些模块系统中，这个标识符也可以是在模块本身内部声明的命名空间路径字符串。
+
+#### 26.1.3 模块加载 ####
+
+在浏览器中，加载模块涉及几个步骤。加载模块涉及执行其中的代码，但必须是在所有依赖都加载并执行之后。如果浏览器没有收到依赖模块的代码，则必须发送请求并等待网络返回。收到模块代码之后，浏览器必须确定刚收到的模块是否也有依赖。然后递归地评估并加载所有依赖，直到所有依赖模块都加载完成。只有整个依赖图都加载完成，才可以执行入口模块。
+
+#### 26.1.4 入口 ####
+
+相互依赖的模块必须指定一个模块作为入口（entry point），这也是代码执行的起点。
+
+#### 26.1.5 异步加载 ####
+
+因为 JavaScript 可以异步执行，所以如果能按需加载就好了。换句话说，可以让 JavaScript 通知模块系统在必要时加载新模块，并在模块加载完成后提供回调。
+
+```js
+load('moduleB').then(function(moduleB) {
+	moduleB.doStuff();
+});
+```
+
+#### 26.1.6 动态依赖 ####
+
+有些模块系统要求开发者在模块开始列出所有依赖，而有些模块系统则允许开发者在程序结构中动态添加依赖。
+
+```js
+if (loadCondition) {
+	require('./moduleA');
+}
+```
+
+#### 26.1.7 静态分析 ####
+
+#### 26.1.8 循环依赖 ####
+
+### 26.2 模块系统 ###
+
+ES6 之前的模块有时候会使用函数作用域和立即调用函数表达式（IIFE，Immediately Invoked Function Expression）将模块定义封装在匿名闭包中。
+
+```js
+(function() {
+	// 私有 Foo 模块的代码
+	console.log('bar');
+})();
+// bar
+```
+
+如果把这个模块的返回值赋给一个变量，那么实际上就为模块创建了命名空间：
+
+```js
+var Foo = (function() {
+	console.log('bar');
+})();
+'bar'
+```
+
+为了暴露公共 API，模块 IIFE 会返回一个对象，其属性就是模块命名空间中的公共成员：
+
+```js
+var Foo = (function() {
+    return {
+    bar: 'baz',
+    baz: function() {
+    	console.log(this.bar);
+	}
+};
+})();
+console.log(Foo.bar); // 'baz'
+Foo.baz(); // 'baz'
+```
+
+类似地，还有一种模式叫作“泄露模块模式”（revealing module pattern）。这种模式只返回一个对象，其属性是私有数据和成员的引用：
+
+```js
+var Foo = (function() {
+	var bar = 'baz';
+	var baz = function() {
+		console.log(bar);
+	};
+	return {
+		bar: bar,
+		baz: baz
+	};
+})();
+console.log(Foo.bar); // 'baz'
+Foo.baz(); // 'baz'
+```
+
+在模块内部也可以定义模块，这样可以实现命名空间嵌套。
+
+为了让模块正确使用外部的值，可以将它们作为参数传给 IIFE：
+
+```js
+var globalBar = 'baz';
+var Foo = (function(bar) {
+	return {
+		bar: bar,
+		baz: function() {
+			console.log(bar);
+	}
+	};
+})(globalBar);
+console.log(Foo.bar); // 'baz'
+Foo.baz(); // 'baz'
+```
+
+无论模块是否存在，配置模块扩展以执行扩展也很有用：
+
+```js
+var Foo = (function (FooModule) {
+    FooModule.baz = function () {
+        console.log(FooModule.bar);
+    }
+    return FooModule;
+})(Foo || {});
+
+// 扩展 Foo 以增加新数据
+var Foo = (function (FooModule) {
+    FooModule.bar = 'baz';
+    return FooModule;
+})(Foo || {});
+
+console.log(Foo.bar);
+Foo.baz();
+```
+
+### 26.3 使用ES6之前的模块加载器 ###
+
+#### 26.3.1 CommonJS ####
+
+CommonJS 规范概述了同步声明依赖的模块定义。这个规范主要用于在服务器端实现模块化代码组织，但也可用于定义在浏览器中使用的模块依赖。CommonJS 模块语法不能在浏览器中直接运行。
+
+CommonJS 模块定义需要使用 require() 指定依赖，而使用 exports 对象定义自己的公共 API。
+
+```js
+var moduleB = require('./moduleB');
+
+module.exports = {
+	stuff: moduleB.doStuff();
+};
+```
+
+无论一个模块在 require() 中被引用多少次，模块永远是单例。
+
+module.exports 对象非常灵活，有多种使用方式。如果只想导出一个实体，可以直接给 module.exports 赋值：
+
+```js
+module.exports = 'foo';
+```
+
+导出多个值也很常见，可以使用对象字面量赋值或每个属性赋一次值来实现：
+
+```js
+module.exports = {
+    a: 'A',
+    b: 'B'
+};
+```
+
+#### 26.3.2 异步模块定义 ####
+
+AMD 模块实现的核心是用函数包装模块定义。这样可以防止声明全局变量，并允许加载器库控制何时加载模块。
+
+包装函数也便于模块代码的移植，因为包装函数内部的所有模块代码使用的都是原生JavaScript 结构。包装模块的函数是全局 define 的参数，它是由 AMD 加载器库的实现定义的。
+
+```js
+// ID 为'moduleA'的模块定义。moduleA 依赖 moduleB，
+// moduleB 会异步加载
+define('moduleA', ['moduleB'], function (moduleB) {
+    return {
+        stuff: moduleB.doStuff()
+    };
+});
+```
+
+AMD 模块可以使用字符串标识符指定自己的依赖，而 AMD 加载器会在所有依赖模块加载完毕后立即调用模块工厂函数。
+
+AMD 也支持 require 和 exports 对象，通过它们可以在 AMD 模块工厂函数内部定义 CommonJS风格的模块。这样可以像请求模块一样请求它们，但 AMD 加载器会将它们识别为原生 AMD 结构，而不是模块定义：
+
+```js
+define('moduleA', ['require', 'exports'], function (require, exports) {
+    var moduleB = require('moduleB');
+    exports.stuff = moduleB.doStuff();
+});
+
+define('moduleA', ['require'], function (require) {
+    if (condition) {
+        var moduleB = require('moduleB');
+    }
+});
+```
+
+### 26.4 使用ES6模块 ###
+
+#### 26.4.1 模块标签以及定义 ####
+
+ECMAScript 6 模块是作为一整块 JavaScript 代码而存在的。带有 type="module" 属性的 <script>标签会告诉浏览器相关代码应该作为模块执行，而不是作为传统的脚本执行。
+
+```js
+<script type="module">
+// 模块代码
+</script>
+
+<script type="module" src="path/to/myModule.js"></script>
+```
+
+#### 26.4.2 模块加载 ####
+
+#### 26.4.3 模块行为 ####
+
+#### 26.4.4 模块导出 ####
+
+ES6 模块支持两种导出：命名导出和默认导出。
+
+控制模块的哪些部分对外部可见的是 export 关键字。
+
+export 关键字用于声明一个值为命名导出。导出语句必须在模块顶级，不能嵌套在某个块中。
+
+```js
+const foo = 'foo';
+export { foo };
+```
+
+命名导出（named export）就好像模块是被导出值的容器。行内命名导出，顾名思义，可以在同一行执行变量声明。下面展示了一个声明变量同时又导出变量的例子。外部模块可以导入这个模块，而foo 将成为这个导入模块的一个属性：
+
+```js
+export const foo = 'foo';
+export { foo as myFoo };
+```
+
+默认导出（default export）就好像模块与被导出的值是一回事。
+
+默认导出使用 default 关键字将一个值声明为默认导出，每个模块只能有一个默认导出。
+
+```js
+const foo = 'foo';
+export default foo;
+```
+
+#### 26.4.5 模块导入 ####
+
+模块可以通过使用 import 关键字使用其他模块导出的值。
+
+import 语句被提升到模块顶部。因此，与 export 关键字类似， import 语句与使用导入值的语句的相对位置并不重要。不过，还是推荐把导入语句放在模块顶部。
+
+```js
+// 允许
+import { foo } from './fooModule.js';
+console.log(foo); // 'foo'
+```
+
+模块标识符可以是相对于当前模块的相对路径，也可以是指向模块文件的绝对路径.
+
+不是必须通过导出的成员才能导入模块。如果不需要模块的特定导出，但仍想加载和执行模块以利用其副作用，可以只通过路径加载它：
+
+```js
+import './foo.js';
+```
+
