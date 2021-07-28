@@ -4,6 +4,179 @@
 
 ## 11 Promise 函数 ##
 
+### 11.1 异步编程 ###
+
+异步操作的例子可以是在定时回调中执行一次简单的数学计算：
+
+```js
+let x = 3;
+setTimeout(() => x = x + 4, 1000);
+```
+
+让我们看一下函数 `loadScript(src)`，该函数使用给定的 `src` 加载脚本：
+
+```js
+function loadScript(src) {
+  // 创建一个 <script> 标签，并将其附加到页面
+  // 这将使得具有给定 src 的脚本开始加载，并在加载完成后运行
+  let script = document.createElement('script');
+  script.src = src;
+  document.head.append(script);
+}
+```
+
+自然情况下，浏览器可能没有时间加载脚本。到目前为止，`loadScript` 函数并没有提供跟踪加载完成的方法。脚本加载并最终运行，仅此而已。但我们希望了解脚本何时加载完成，以使用其中的新函数和变量。
+
+让我们添加一个 `callback` 函数作为 `loadScript` 的第二个参数，该函数应在脚本加载完成时执行：
+
+```js
+function loadScript(src, callback) {
+    let script = document.createElement('script');
+    script.src = src;
+
+    script.onload = () => callback(script);
+
+    document.head.append(script);
+}
+
+loadScript('/my/script.js', function () {
+    // 在脚本加载完成后，回调函数才会执行
+    newFunction(); // 现在它工作了
+});
+```
+
+#### 11.1.2 以往的异步编程模式 ####
+
+在早期的 JavaScript 中，只支持定义回调函数来表明异步操作完成。串联多个异步操作是一个常见的问题，通常需要深度嵌套的回调函数（俗称“回调地狱”）来解决。
+
+```js
+function double(value) {
+    setTimeout(() => setTimeout(console.log, 0, value * 2), 1000);
+}
+double(3);
+```
+
+### 11.2 Promise ###
+
+#### 11.2.2 Promise基础 ####
+
+**Promise** 是将“生产者代码”和“消费者代码”连接在一起的一个特殊的 JavaScript 对象。用我们的类比来说：这就是就像是“订阅列表”。“生产者代码”花费它所需的任意长度时间来产出所承诺的结果，而 “promise” 将在它（译注：指的是“生产者代码”，也就是下文所说的 executor）准备好时，将结果向所有订阅了的代码开放。
+
+```js
+let promise = new Promise(function(resolve, reject) {
+  // executor（生产者代码，“歌手”）
+});
+```
+
+传递给 `new Promise` 的函数被称为 **executor**。当 `new Promise` 被创建，executor 会自动运行。它包含最终应产出结果的生产者代码。
+
+它的参数 `resolve` 和 `reject` 是由 JavaScript 自身提供的回调。我们的代码仅在 executor 的内部。
+
+当 executor 获得了结果，无论是早还是晚都没关系，它应该调用以下回调之一：
+
+- `resolve(value)` — 如果任务成功完成并带有结果 `value`。
+- `reject(error)` — 如果出现了 error，`error` 即为 error 对象。
+
+executor 会自动运行并尝试执行一项工作。尝试结束后，如果成功则调用 `resolve`，如果出现 error 则调用 `reject`。
+
+由 `new Promise` 构造器返回的 `promise` 对象具有以下内部属性：
+
+- state: 最初是 "pending"，然后在 resolve 被调用时变为 "fulfilled"，或者在 reject 被调用时变为 "rejected"。
+- result: 最初是 undefined，然后在 resolve(value) 被调用时变为 value，或者在 reject(error) 被调用时变为 error。
+
+![image-20210728222024850](.assets/image-20210728222024850.png)
+
+总而言之，executor 应该执行一项工作（通常是需要花费一些时间的事儿），然后调用 `resolve` 或 `reject` 来改变对应的 promise 对象的状态。
+
+executor 只能调用一个 `resolve` 或一个 `reject`。任何状态的更改都是最终的。
+
+#### 11.2.3 消费者：then catch finally ####
+
+Promise 对象充当的是 executor（“生产者代码”或“歌手”）和消费函数（“粉丝”）之间的连接，后者将接收结果或 error。可以通过使用 `.then`、`.catch` 和 `.finally` 方法为消费函数进行注册。
+
+**then**
+
+```js
+promise.then(
+  function(result) { /* handle a successful result */ },
+  function(error) { /* handle an error */ }
+);
+
+let promise = new Promise(function(resolve, reject) {
+  setTimeout(() => resolve("done!"), 1000);
+});
+
+// resolve 运行 .then 中的第一个函数
+promise.then(
+  result => alert(result), // 1 秒后显示 "done!"
+  error => alert(error) // 不运行
+);
+```
+
+如果我们只对成功完成的情况感兴趣，那么我们可以只为 `.then` 提供一个函数参数。
+
+**catch**
+
+如果我们只对 error 感兴趣，那么我们可以使用 null 作为第一个参数：.then(null, errorHandlingFunction)。或者我们也可以使用 .catch(errorHandlingFunction)，其实是一样的。
+
+```js
+let promise = new Promise((resolve, reject) => {
+  setTimeout(() => reject(new Error("Whoops!")), 1000);
+});
+
+// .catch(f) 与 promise.then(null, f) 一样
+promise.catch(alert); // 1 秒后显示 "Error: Whoops!"
+```
+
+**finally**
+
+finally 是执行清理（cleanup）的很好的处理程序（handler），例如无论结果如何，都停止使用不再需要的加载指示符（indicator）。
+
+```js
+new Promise((resolve, reject) => {
+  /* 做一些需要时间的事儿，然后调用 resolve/reject */
+})
+  // 在 promise 为 settled 时运行，无论成功与否
+  .finally(() => stop loading indicator)
+  // 所以，加载指示器（loading indicator）始终会在我们处理结果/错误之前停止
+  .then(result => show result, err => show error)
+```
+
+**基于promise的延时**
+
+```js
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+delay(3000).then(() => alert('runs after 3 seconds'));
+```
+
+#### 11.2.4 Promise 链 ####
+
+```js
+new Promise(function(resolve, reject) {
+
+  setTimeout(() => resolve(1), 1000); // (*)
+
+}).then(function(result) { // (**)
+
+  alert(result); // 1
+  return result * 2;
+
+}).then(function(result) { // (***)
+
+  alert(result); // 2
+  return result * 2;
+
+}).then(function(result) {
+
+  alert(result); // 4
+  return result * 2;
+
+});
+```
+
 ## 12 BOM ##
 
 ### 12.1 window对象 ###
@@ -2401,4 +2574,89 @@ console.log(foo); // 'foo'
 ```js
 import './foo.js';
 ```
+
+## 27 工作者线程 ##
+
+### 27.1 工作者线程简介 ###
+
+使用工作者线程，浏览器可以在原始页面环境之外再分配一个完全独立的二级子环境。这个子环境不能与依赖单线程交互的 API（如 DOM）互操作，但可以与父环境并行执行代码。
+
+#### 27.1.1 工作者线程与线程 ####
+
+- 工作者线程是以实际线程实现的。
+- 工作者线程并行执行。虽然页面和工作者线程都是单线程 JavaScript 环境，每个环境中的指令则可以并行执行。
+- 工作者线程可以共享某些内存。工作者线程能够使用 SharedArrayBuffer 在多个环境间共享内容。
+- 工作者线程不共享全部内存。
+- 工作者线程不一定在同一个进程里。
+- 创建工作者线程的开销更大。
+
+#### 27.1.2 工作者线程的类型 ####
+
+Web 工作者线程规范中定义了三种主要的工作者线程：专用工作者线程、共享工作者线程和服务工作者线程。
+
+**1. 专用工作者线程**
+
+专用工作者线程，顾名思义，只能被创建它的页面使用。
+
+**2. 共享工作者线程**
+
+主要区别是共享工作者线程可以被多个不同的上下文使用，包括不同的页面。任何与创建共享工作者线程的脚本同源的脚本，都可以向共享工作者线程发送消息或从中接收消息。
+
+**3. 服务工作者线程**
+
+它的主要用途是拦截、重定向和修改页面发出的请求，充当网络请求的仲裁者的角色。
+
+#### 27.1.3 WorkerGlobalScope ####
+
+在网页上， window 对象可以向运行在其中的脚本暴露各种全局变量。在工作者线程内部，没有 window的概念。这里的全局对象是 WorkerGlobalScope 的实例，通过 self 关键字暴露出来。
+
+**1. WorkerGlobalScope**
+
+self 上可用的属性是 window 对象上属性的严格子集.
+
+- navigator ：返回与工作者线程关联的 WorkerNavigator 。
+- self ：返回 WorkerGlobalScope 对象。
+- location ：返回与工作者线程关联的 WorkerLocation 。
+- performance ：返回（只包含特定属性和方法的） Performance 对象。
+- console ：返回与工作者线程关联的 Console 对象；对 API 没有限制。
+- caches ：返回与工作者线程关联的 CacheStorage 对象；对 API 没有限制。
+- indexedDB ：返回 IDBFactory 对象。
+- isSecureContext ：返回布尔值，表示工作者线程上下文是否安全。
+- origin ：返回 WorkerGlobalScope 的源。
+
+**2. WorkerGlobalScope 的子类**
+
+实际上并不是所有地方都实现了 WorkerGlobalScope 。每种类型的工作者线程都使用了自己特定的全局对象，这继承自 WorkerGlobalScope 。
+
+- 专用工作者线程使用 DedicatedWorkerGlobalScope 。
+- 共享工作者线程使用 SharedWorkerGlobalScope 。
+- 服务工作者线程使用 ServiceWorkerGlobalScope 。
+
+### 27.2 专用工作者线程 ###
+
+#### 27.2.1 专用工作者线程的基本概念 ####
+
+可以把专用工作者线程称为后台脚本（background script）。JavaScript 线程的各个方面，包括生命周期管理、代码路径和输入/输出，都由初始化线程时提供的脚本来控制。该脚本也可以再请求其他脚本，但一个线程总是从一个脚本源开始。
+
+```js
+console.log(location.href);
+const worker = new worker(location.href + 'demo.js');
+console.log(worker);
+```
+
+基于加载脚本创建的工作者线程不受文档的内容安全策略限制，因为工作者线程在与父文档不同的上下文中运行。
+
+**使用 Worker 对象**
+
+Worker() 构造函数返回的 Worker 对象是与刚创建的专用工作者线程通信的连接点。它可用于在工作者线程和父上下文间传输信息，以及捕获专用工作者线程发出的事件。
+
+Worker 对象支持下列事件处理程序属性。
+
+- onerror: 在工作者线程中发生 ErrorEvent 类型的错误事件时会调用指定给该属性的处理程序。
+- onmessage: 在工作者线程中发生 MessageEvent 类型的消息事件时会调用指定给该属性的处理程序。
+- onmessageerror: 在工作者线程中发生 MessageEvent 类型的错误事件时会调用指定给该属性的处理程序。
+- postMessage() ：用于通过异步消息事件向工作者线程发送信息。
+- terminate() ：用于立即终止工作者线程。没有为工作者线程提供清理的机会，脚本会突然停止。
+
+
 
