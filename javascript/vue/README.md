@@ -1065,3 +1065,86 @@ example2.greet() // => 'Hello Vue.js!'
 
 ## 组件基础 ##
 
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>基本实例</title>
+</head>
+<body>
+
+<div id="components-demo">
+    <button-counter></button-counter>
+</div>
+
+<script src="../vue2.6.js"></script>
+<script>
+    Vue.component('button-counter', {
+        data: function () {
+            return {
+                count: 0
+            }
+        },
+        template: '<button v-on:click="count++">You clicked me {{ count }} times.</button>'
+    })
+
+    new Vue({
+        el: '#components-demo'
+    })
+
+</script>
+
+</body>
+</html>
+```
+
+因为组件是可复用的 Vue 实例，所以它们与 `new Vue` 接收相同的选项，例如 `data`、`computed`、`watch`、`methods` 以及生命周期钩子等。仅有的例外是像 `el` 这样根实例特有的选项。
+
+### 组件的复用 ###
+
+**data 必须是一个函数**
+
+取而代之的是，一个组件的 `data` 选项必须是一个函数，因此每个实例可以维护一份被返回对象的独立的拷贝：
+
+```js
+data: function () {
+  return {
+    count: 0
+  }
+}
+```
+
+### 组件的组织 ###
+
+为了能在模板中使用，这些组件必须先注册以便 Vue 能够识别。这里有两种组件的注册类型：全局注册和局部注册。至此，我们的组件都只是通过 `Vue.component` 全局注册的：
+
+```js
+Vue.component('my-component-name', {
+  // ... options ...
+})
+```
+
+全局注册的组件可以用在其被注册之后的任何 (通过 `new Vue`) 新创建的 Vue 根实例，也包括其组件树中的所有子组件的模板中。
+
+### 通过 Prop 向子组件传递数据 ###
+
+Prop 是你可以在组件上注册的一些自定义 attribute。当一个值传递给一个 prop attribute 的时候，它就变成了那个组件实例的一个 property。
+
+```js
+Vue.component('blog-post', {
+  props: ['title'],
+  template: '<h3>{{ title }}</h3>'
+})
+```
+
+一个组件默认可以拥有任意数量的 prop，任何值都可以传递给任何 prop。在上述模板中，你会发现我们能够在组件实例中访问这个值，就像访问 `data` 中的值一样。
+
+一个 prop 被注册之后，你就可以像这样把数据作为一个自定义 attribute 传递进来：
+
+```html
+<blog-post title="My journey with Vue"></blog-post>
+<blog-post title="Blogging with Vue"></blog-post>
+<blog-post title="Why Vue is so fun"></blog-post>
+```
+
