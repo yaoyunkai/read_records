@@ -164,3 +164,33 @@ using the **semver** notation
 
 ### Semantic Versioning ###
 
+The Semantic Versioning concept is simple: all versions have 3 digits: `x.y.z`
+
+- the first digit is the major version
+- the second digit is the minor version
+- the third digit is the patch version
+
+当你发布一款新游戏时，你不能随意增加数字，但你有一些规则:
+
+- you up the major version when you make incompatible API changes
+- you up the minor version when you add functionality in a backward-compatible manner
+- you up the patch version when you make backward-compatible bug fixes
+
+规则使用这些符号:
+
+- `^` 主版本保持不变，小版本和补丁版本可以更新
+- `~` 补丁版本可以允许变化
+- `>` 您可以接受高于指定版本的任何版本
+- `>=`
+- `<=`
+- `<`
+- `=` 明确的版本
+- `-`  you accept a range of versions. 
+- `||` you combine sets. Example: `< 2.1 || > 2.6`
+
+### 卸载package ###
+
+`npm uninstall <package-name>` 卸载包但是不从package.json 删除
+
+`npm uninstall -s <package-name>` 卸载包也从package.json 中删除
+
