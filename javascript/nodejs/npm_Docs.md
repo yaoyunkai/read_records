@@ -66,7 +66,77 @@ npm config set registry https://registry.your-registry.npme.io/
 - **main**: 主字段是模块ID，它是程序的主要入口点。也就是说，如果你的包名为foo，用户安装了它，然后require("foo")，那么你的主模块的exports对象将被返回。这应该是一个相对于包文件夹根目录的模块。如果main未设置，则默认为包根目录下的index.js。
 - **bin**: 许多包都有一个或多个希望安装到PATH中的可执行文件。
 
-
-
 ### Using npm ###
+
+### ES6 Modules ###
+
+解析到 `<script type="module">` 标签后会立即下载模块文件，但执行会延迟到文档解析完成。
+
+```html
+<!-- 第二个执行 -->
+<script type="module"></script>
+
+<!-- 第三个执行 -->
+<script type="module"></script>
+
+<!-- 第一个执行 -->
+<script></script>
+```
+
+#### 模块的行为 ####
+
+- 模块代码只在加载后执行。
+- 模块只能加载一次。
+- 模块是单例。
+- 模块可以定义公共接口，其他模块可以基于这个公共接口观察和交互。
+- 模块可以请求加载其他模块。
+- 支持循环依赖。
+
+ES6 模块系统也增加了一些新行为。
+
+- ES6 模块默认在严格模式下执行。
+- ES6 模块不共享全局命名空间。
+- 模块顶级 this 的值是 undefined （常规脚本中是 window ）。
+- 模块中的 var 声明不会添加到 window 对象。
+- ES6 模块是异步加载和执行的。
+
+#### 模块导出 ####
+
+ES6 模块支持两种导出：命名导出和默认导出。
+
+```js
+const foo = 'foo';
+export {foo};
+
+export const foo = 'foo';
+export { foo as myFoo};
+
+// ES6 命名导出可以将模块作为容器，所以可以在一个模块中声明多个命名导出。
+export const foo = 'foo';
+export const bar = 'bar';
+export const baz = 'baz';
+
+
+const foo = 'foo';
+const bar = 'bar';
+const baz = 'baz';
+export { foo, bar as myBar, baz };
+```
+
+默认导出：
+
+```js
+const foo = 'foo';
+export default foo;
+// 等同于 export default foo;
+export { foo as default };
+
+// 命名导出和默认导出
+const foo = 'foo';
+const bar = 'bar';
+export { bar };
+export default foo;
+```
+
+#### 模块导入 ####
 
