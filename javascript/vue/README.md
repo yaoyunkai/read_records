@@ -1351,5 +1351,3 @@ currentTabComponent可以包括：
 - [单文件组件 (`.vue`)](https://cn.vuejs.org/v2/guide/single-file-components.html)
 - `<script type="text/x-template">`
 
-
-
