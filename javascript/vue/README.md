@@ -1148,3 +1148,208 @@ Vue.component('blog-post', {
 <blog-post title="Why Vue is so fun"></blog-post>
 ```
 
+### 单个根元素 ###
+
+最最起码，你会包含这篇博文的正文：
+
+```html
+<h3>{{ title }}</h3>
+<div v-html="content"></div>
+```
+
+然而如果你在模板中尝试这样写，Vue 会显示一个错误，并解释道 every component must have a single root element (每个组件必须只有一个根元素)。你可以将模板的内容包裹在一个父元素内，来修复这个问题，例如：
+
+```html
+<div class="blog-post">
+  <h3>{{ title }}</h3>
+  <div v-html="content"></div>
+</div>
+```
+
+接受一个单独的 `post` prop：
+
+```html
+<blog-post
+  v-for="post in posts"
+  v-bind:key="post.id"
+  v-bind:post="post"
+></blog-post>
+```
+
+```js
+Vue.component('blog-post', {
+  props: ['post'],
+  template: `
+    <div class="blog-post">
+      <h3>{{ post.title }}</h3>
+      <div v-html="post.content"></div>
+    </div>
+  `
+})
+```
+
+### 监听子组件事件 ###
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>监听子组件事件</title>
+</head>
+<body>
+
+<div id="blog-posts-events-demo">
+    <div :style="{ fontSize: postFontSize + 'em' }">
+        <blog-post
+                v-for="post in posts"
+                v-bind:key="post.id"
+                v-bind:post="post"
+                v-on:enlarge-text="postFontSize += 0.1"
+        ></blog-post>
+    </div>
+</div>
+
+<script src="../vue2.6.js"></script>
+<script>
+    Vue.component('blog-post', {
+        props: ['post'],
+        template: `
+    <div class="blog-post">
+      <h3>{{ post.title }}</h3>
+      <button v-on:click="$emit('enlarge-text')">
+        Enlarge text
+      </button>
+      <div v-html="post.content"></div>
+    </div>
+  `
+    })
+
+    new Vue({
+        el: '#blog-posts-events-demo',
+        data: {
+            posts: [
+                {'id': 1, 'title': 'hh', 'content': 'sdfasd'},
+                {'id': 2, 'title': 'hh234', 'content': '1231241234'},
+            ],
+            postFontSize: 1
+        }
+    })
+
+</script>
+
+
+</body>
+</html>
+```
+
+1. 父组件通过 `v-on` 监听子组件实例的任意事件。
+2. 子组件可以通过调用内建的 [`$emit`](https://cn.vuejs.org/v2/api/#vm-emit)方法并传入事件名称来触发一个事件
+
+有了这个 `v-on:enlarge-text="postFontSize += 0.1"` 监听器，父级组件就会接收该事件并更新 `postFontSize` 的值。
+
+**使用事件抛出一个值**
+
+可以使用 `$emit` 的第二个参数来提供这个值：
+
+```html
+<button v-on:click="$emit('enlarge-text', 0.1)">
+  Enlarge text
+</button>
+```
+
+然后当在父级组件监听这个事件的时候，我们可以通过 `$event` 访问到被抛出的这个值：
+
+```html
+<blog-post
+  ...
+  v-on:enlarge-text="postFontSize += $event"
+></blog-post>
+```
+
+**在组件上使用 v-model**
+
+```html
+<input v-model="searchText">
+```
+
+等价于
+
+```html
+<input
+  v-bind:value="searchText"
+  v-on:input="searchText = $event.target.value"
+>
+```
+
+当用在组件上时，`v-model` 则会这样：
+
+```html
+<custom-input
+  v-bind:value="searchText"
+  v-on:input="searchText = $event"
+></custom-input>
+```
+
+为了让它正常工作，这个组件内的 `<input>` 必须：
+
+- 将其 `value` attribute 绑定到一个名叫 `value` 的 prop 上
+- 在其 `input` 事件被触发时，将新的值通过自定义的 `input` 事件抛出
+
+```js
+Vue.component('custom-input', {
+  props: ['value'],
+  template: `
+    <input
+      v-bind:value="value"
+      v-on:input="$emit('input', $event.target.value)"
+    >
+  `
+})
+```
+
+### 通过插槽分发内容 ###
+
+```html
+<alert-box>
+  Something bad happened.
+</alert-box>
+```
+
+```js
+Vue.component('alert-box', {
+  template: `
+    <div class="demo-alert-box">
+      <strong>Error!</strong>
+      <slot></slot>
+    </div>
+  `
+})
+```
+
+### 动态组件 ###
+
+可以通过 Vue 的 `<component>` 元素加一个特殊的 `is` attribute 来实现：
+
+```html
+<!-- 组件会在 `currentTabComponent` 改变时改变 -->
+<component v-bind:is="currentTabComponent"></component>
+```
+
+currentTabComponent可以包括：
+
+- 已注册组件的名字
+- 一个组件的选项对象
+
+### 解析DOM模板时的注意事项 ###
+
+有些 HTML 元素，诸如 `<ul>`、`<ol>`、`<table>` 和 `<select>`，对于哪些元素可以出现在其内部是有严格限制的。而有些元素，诸如 `<li>`、`<tr>` 和 `<option>`，只能出现在其它某些特定的元素内部。
+
+需要注意的是如果我们从以下来源使用模板的话，这条限制是不存在的：
+
+- 字符串 (例如：`template: '...'`)
+- [单文件组件 (`.vue`)](https://cn.vuejs.org/v2/guide/single-file-components.html)
+- `<script type="text/x-template">`
+
+
+
