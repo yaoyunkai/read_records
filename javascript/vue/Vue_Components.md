@@ -492,3 +492,59 @@ this.$emit('myEvent')
 </base-layout>
 ```
 
+### 动态组件&异步组件 ###
+
+在一个多标签的界面中使用 `is` attribute 来切换不同的组件：
+
+```html
+<component v-bind:is="currentTabComponent"></component>
+```
+
+我们可以用一个 `<keep-alive>` 元素将其动态组件包裹起来。
+
+```html
+<keep-alive>
+  <component v-bind:is="currentTabComponent"></component>
+</keep-alive>
+```
+
+### 处理边界情况 ###
+
+#### 访问元素&组件 ####
+
+**访问根实例**
+
+在每个 `new Vue` 实例的子组件中，其根实例可以通过 `$root` property 进行访问。
+
+```js
+// 获取根组件的数据
+this.$root.foo
+
+// 写入根组件的数据
+this.$root.foo = 2
+
+// 访问根组件的计算属性
+this.$root.bar
+
+// 调用根组件的方法
+this.$root.baz()
+```
+
+**访问父组件实例**
+
+和 `$root` 类似，`$parent` property 可以用来从一个子组件访问父组件的实例。
+
+**访问子组件实例或子元素**
+
+尽管存在 prop 和事件，有的时候你仍可能需要在 JavaScript 里直接访问一个子组件。为了达到这个目的，你可以通过 `ref` 这个 attribute 为子组件赋予一个 ID 引用。
+
+```html
+<base-input ref="usernameInput"></base-input>
+```
+
+现在在你已经定义了这个 `ref` 的组件里，你可以使用：
+
+```js
+this.$refs.usernameInput
+```
+
