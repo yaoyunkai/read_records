@@ -674,3 +674,61 @@ optimization: {
 
 ## 创建 library ##
 
+```js
+const path = require('path');
+
+module.exports = {
+    entry: './src/index.js',
+    output: {
+        path: path.resolve(__dirname, 'dist'),
+        filename: 'webpack-numbers.js',
+        // library: 'webpackNumbers',
+        library: {
+            name: 'webpackNumbers',
+            type: 'umd',
+        },
+    },
+};
+```
+
+### 外部化lodash ###
+
+我们更倾向于把 `lodash` 当作 `peerDependency`。也就是说，consumer(使用者) 应该已经安装过 `lodash` 。因此，你就可以放弃控制此外部 library ，而是将控制权让给使用 library 的 consumer。
+
+```js
+   externals: {
+     lodash: {
+       commonjs: 'lodash',
+       commonjs2: 'lodash',
+       amd: 'lodash',
+       root: '_',
+     },
+   },
+```
+
+## 环境变量 ##
+
+在命令行传入环境变量：
+
+```shell
+npx webpack --env goal=local --env production --progress
+```
+
+### 依赖管理 ###
+
+> es6 modules
+
+> commonJS
+
+> amd
+
+### 脚手架 ###
+
+#### 创建脚手架 ####
+
+在编写 `webpack-cli` 脚手架之前，请先考虑下要实现的目标和要使用的群体：
+
+- 是否需要实现一个可被多种应用程序和项目使用的通用脚手架？
+- 是否需要脚手架支持特定内容，例如同时编写 webpack.config.js 和框架代码的脚手架？
+- 谁是潜在的用户，脚手架用户将会有什么样的用户体验？
+
