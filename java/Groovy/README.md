@@ -446,3 +446,59 @@ class Person {
 def p = new Person()
 ```
 
+## Closures ##
+
+本章介绍了Groovy闭包。Groovy中的闭包是一个开放的、匿名的代码块，它可以接受参数、返回值并被赋给变量。闭包可以引用在其周围作用域中声明的变量。与闭包的正式定义相反，Groovy语言中的闭包还可以包含在其周围作用域之外定义的自由变量。虽然打破了闭包的正式概念，但它提供了本章所描述的各种优点。
+
+### 语法 ###
+
+闭包定义遵循以下语法:
+
+```groovy
+{ [closureParameters -> ] statements }
+```
+
+当指定形参列表时，`->`字符是必需的，用于将实参与闭包体分隔开。语句部分由0、1或许多Groovy语句组成。
+
+#### Closures as an object ####
+
+闭包是groovy.lang.Closure类的一个实例，使得它可以像其他变量一样赋值给一个变量或字段，尽管它是一个代码块:
+
+```groovy
+def listener = { e -> println("Clicked on $e.source") }
+
+Closure<Boolean> isTextFile = {
+    File it -> it.name.endsWith('.txt')
+}
+```
+
+#### Calling a closure ####
+
+```groovy
+def code = { 123 }
+assert code() == 123
+assert code.call() == 123
+```
+
+如果闭包接受参数，原理是一样的:
+
+```groovy
+def isOdd = { int i -> i%2 != 0 }                           
+assert isOdd(3) == true                                     
+assert isOdd.call(2) == false                               
+
+def isEven = { it%2 == 0 }                                  
+assert isEven(3) == false                                   
+assert isEven.call(2) == true    
+```
+
+### Delegation strategy ###
+
+**Owner delegate & this**
+
+要理解委托的概念，我们必须首先在闭包中解释它的含义。闭包实际上定义了3个不同的东西:
+
+- this: 对应于定义闭包的外围类
+- owner: 对应于定义闭包的封闭对象，可以是类，也可以是闭包
+- delegate: 对应于第三方对象，在该对象中，只要没有定义消息的接收方，就解析方法调用或属性
+
