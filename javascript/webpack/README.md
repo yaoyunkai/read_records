@@ -237,3 +237,398 @@ document.body.appendChild(component());
 
 在重新build之后，可以看到图片出现在文字的旁边。
 
+### 加载数据 ###
+
+此外，可以加载的有用资源还有数据，如 JSON 文件，CSV、TSV 和 XML。类似于 NodeJS，JSON 支持实际上是内置的，也就是说 import Data from './data.json' 默认将正常运行。要导入 CSV、TSV 和 XML，你可以使用 csv-loader 和 xml-loader。让我们处理加载这三类文件：
+
+```
+npm install --save-dev csv-loader xml-loader
+```
+
+next show `webpack.config.js`
+
+```js
+ const path = require('path');
+
+ module.exports = {
+   entry: './src/index.js',
+   output: {
+     filename: 'bundle.js',
+     path: path.resolve(__dirname, 'dist'),
+   },
+   module: {
+     rules: [
+       {
+         test: /\.css$/i,
+         use: ['style-loader', 'css-loader'],
+       },
+       {
+         test: /\.(png|svg|jpg|jpeg|gif)$/i,
+         type: 'asset/resource',
+       },
+       {
+         test: /\.(woff|woff2|eot|ttf|otf)$/i,
+         type: 'asset/resource',
+       },
+      {
+        test: /\.(csv|tsv)$/i,
+        use: ['csv-loader'],
+      },
+      {
+        test: /\.xml$/i,
+        use: ['xml-loader'],
+      },
+     ],
+   },
+ };
+```
+
+#### 自定义JSON模块 parser ####
+
+通过使用 自定义 parser 替代特定的 webpack loader，可以将任何 toml、yaml 或 json5 文件作为 JSON 模块导入。
+
+首先安装 `toml`，`yamljs` 和 `json5` 的 packages：
+
+```console
+npm install toml yamljs json5 --save-dev
+```
+
+并在你的 webpack 中配置它们：
+
+```js
+const toml = require('toml');
+const yaml = require('yamljs');
+const json5 = require('json5');
+
+      {
+        test: /\.toml$/i,
+        type: 'json',
+        parser: {
+          parse: toml.parse,
+        },
+      },
+      {
+        test: /\.yaml$/i,
+        type: 'json',
+        parser: {
+          parse: yaml.parse,
+        },
+      },
+      {
+        test: /\.json5$/i,
+        type: 'json',
+        parser: {
+          parse: json5.parse,
+        },
+      },
+```
+
+## 管理输出 ##
+
+到目前为止，我们都是在 index.html 文件中手动引入所有资源，然而随着应用程序增长，并且一旦开始 在文件名中使用 hash 并输出 多个 bundle，如果继续手动管理 index.html 文件，就会变得困难起来。然而，通过一些插件可以使这个过程更容易管控。
+
+### prepare ###
+
+在project的src目录中加入新的js文件：
+
+```console
+  webpack-demo
+  |- package.json
+  |- webpack.config.js
+  |- /dist
+  |- /src
+    |- index.js
+   |- print.js
+  |- /node_modules
+```
+
+在 index.js 中使用新的js文件：
+
+```js
+import _ from 'lodash';
+import printMe from './print.js';
+
+ function component() {
+   const element = document.createElement('div');
+  const btn = document.createElement('button');
+
+   element.innerHTML = _.join(['Hello', 'webpack'], ' ');
+
+  btn.innerHTML = 'Click me and check the console!';
+  btn.onclick = printMe;
+
+  element.appendChild(btn);
+
+   return element;
+ }
+
+ document.body.appendChild(component());
+```
+
+还要更新 `dist/index.html` 文件，来为 webpack 分离入口做好准备：
+
+```html
+ <!DOCTYPE html>
+ <html>
+   <head>
+     <meta charset="utf-8" />
+    <title>管理输出</title>
+    <script src="./print.bundle.js"></script>
+   </head>
+   <body>
+    <script src="./index.bundle.js"></script>
+   </body>
+ </html>
+```
+
+然后更改webpack配置文件：
+
+```js
+const path = require('path');
+
+module.exports = {
+    entry: {
+        index: './src/index.js',
+        print: './src/print.js',
+    },
+    output: {
+        filename: '[name].bundle.js',
+        path: path.resolve(__dirname, 'dist'),
+    },
+};
+```
+
+最后重新build：npm run build
+
+### 设置 HtmlWebpackPlugin  ###
+
+首先安装插件，并且调整 `webpack.config.js` 文件：
+
+```
+npm install --save-dev html-webpack-plugin
+```
+
+```js
+ const path = require('path');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+
+ module.exports = {
+   entry: {
+     index: './src/index.js',
+     print: './src/print.js',
+   },
+  plugins: [
+    new HtmlWebpackPlugin({
+      title: '管理输出',
+    }),
+  ],
+   output: {
+     filename: '[name].bundle.js',
+     path: path.resolve(__dirname, 'dist'),
+   },
+ };
+```
+
+然后执行 npm run build
+
+### 清理 dist 文件夹 ###
+
+通常比较推荐的做法是，在每次构建前清理 /dist 文件夹，这样只会生成用到的文件。让我们使用 output.clean 配置项实现这个需求。
+
+### manifest ###
+
+webpack 和 webpack 插件似乎“知道”应该生成哪些文件。答案是，webpack 通过 manifest，可以追踪所有模块到输出 bundle 之间的映射。
+
+## 开发环境 ##
+
+在开始前，我们先将 mode 设置为 'development'，并将 title 设置为 'Development'。
+
+```js
+ const path = require('path');
+ const HtmlWebpackPlugin = require('html-webpack-plugin');
+
+ module.exports = {
+  mode: 'development',
+   entry: {
+     index: './src/index.js',
+     print: './src/print.js',
+   },
+   plugins: [
+     new HtmlWebpackPlugin({
+      title: 'Output Management',
+      title: 'Development',
+     }),
+   ],
+   output: {
+     filename: '[name].bundle.js',
+     path: path.resolve(__dirname, 'dist'),
+     clean: true,
+   },
+ };
+```
+
+### 使用source map ###
+
+在 webpack.config.js 中使用 devtool:
+
+```js
+module.exports = {
+   mode: 'development',
+   entry: {
+     index: './src/index.js',
+     print: './src/print.js',
+   },
+  devtool: 'inline-source-map',
+```
+
+### 选择一个开发工具 ###
+
+webpack 提供几种可选方式，帮助你在代码发生变化后自动编译代码：
+
+- webpack's Watch Mode
+- webpack-dev-server
+- webpack-dev-middleware
+
+**使用 watch mode**
+
+在package.json中添加命令: `webpack --watch`
+
+该模式不能自动刷新页面。
+
+**使用webpack-dev-server**
+
+安装： `npm install --save-dev webpack-dev-server`
+
+修改webpack.config.js:
+
+```js
+ module.exports = {
+   mode: 'development',
+   entry: {
+     index: './src/index.js',
+     print: './src/print.js',
+   },
+   devtool: 'inline-source-map',
+  devServer: {
+    contentBase: './dist',
+  },
+```
+
+以上配置告知 `webpack-dev-server`，将 `dist` 目录下的文件 serve 到 `localhost:8080` 下。
+
+`webpack-dev-server` 会从 `output.path` 中定义的目录为服务提供 bundle 文件，即，文件将可以通过 `http://[devServer.host]:[devServer.port]/[output.publicPath]/[output.filename]` 进行访问。
+
+## 代码分离 ##
+
+代码分离是 webpack 中最引人注目的特性之一。此特性能够把代码分离到不同的 bundle 中，然后可以按需加载或并行加载这些文件。代码分离可以用于获取更小的 bundle，以及控制资源加载优先级，如果使用合理，会极大影响加载时间。
+
+常用的代码分离方法有三种：
+
+- 入口起点：使用 [`entry`](https://webpack.docschina.org/configuration/entry-context) 配置手动地分离代码。
+- 防止重复：使用 [Entry dependencies](https://webpack.docschina.org/configuration/entry-context/#dependencies) 或者 [`SplitChunksPlugin`](https://webpack.docschina.org/plugins/split-chunks-plugin) 去重和分离 chunk。
+- 动态导入：通过模块的内联函数调用来分离代码。
+
+### 入口起点 entry point ###
+
+正如前面提到的，这种方式存在一些隐患：
+
+- 如果入口 chunk 之间包含一些重复的模块，那些重复模块都会被引入到各个 bundle 中。
+- 这种方法不够灵活，并且不能动态地将核心应用程序逻辑中的代码拆分出来。
+
+以上两点中，第一点对我们的示例来说无疑是个问题，因为之前我们在 `./src/index.js` 中也引入过 `lodash`，这样就在两个 bundle 中造成重复引用。在下一章节会移除重复的模块。
+
+### 防止重复 prevent duplication ###
+
+#### 入口依赖 ####
+
+配置 [`dependOn` option](https://webpack.docschina.org/configuration/entry-context/#dependencies) 选项，这样可以在多个 chunk 之间共享模块：
+
+webpack.config.js:
+
+```js
+ const path = require('path');
+
+ module.exports = {
+   mode: 'development',
+   entry: {
+    index: {
+      import: './src/index.js',
+      dependOn: 'shared',
+    },
+    another: {
+      import: './src/another-module.js',
+      dependOn: 'shared',
+    },
+    shared: 'lodash',
+   },
+   output: {
+     filename: '[name].bundle.js',
+     path: path.resolve(__dirname, 'dist'),
+   },
+ };
+```
+
+如果我们要在一个 HTML 页面上使用多个入口时，还需设置 `optimization.runtimeChunk: 'single'`，否则还会遇到[这里](https://bundlers.tooling.report/code-splitting/multi-entry/)所述的麻烦。
+
+```js
+  optimization: {
+    runtimeChunk: 'single',
+  },
+```
+
+#### SplitChunksPlugin ####
+
+[`SplitChunksPlugin`](https://webpack.docschina.org/plugins/split-chunks-plugin) 插件可以将公共的依赖模块提取到已有的入口 chunk 中，或者提取到一个新生成的 chunk。让我们使用这个插件，将之前的示例中重复的 `lodash` 模块去除：
+
+```js
+optimization: {
+    splitChunks: {
+        chunks: "all"
+    }
+},
+```
+
+### 动态导入 dynamic import ###
+
+当涉及到动态代码拆分时，webpack 提供了两个类似的技术。第一种，也是推荐选择的方式是，使用符合 ECMAScript 提案 的 import() 语法 来实现动态导入。
+
+src/index.js
+
+```js
+function getComponent() {
+    return import('lodash')
+        .then(({default: _}) => {
+            const ele = document.createElement('div');
+            ele.innerHTML = _.join(['Hello', 'webpack'], ' ');
+            return ele;
+        })
+        .catch((error) => 'An error occurred while loading the component');
+}
+
+getComponent().then((com) => {
+    document.body.appendChild(com);
+})
+```
+
+我们之所以需要 `default`，是因为 webpack 4 在导入 CommonJS 模块时，将不再解析为 `module.exports` 的值，而是为 CommonJS 模块创建一个 artificial namespace 对象，
+
+同样还可以使用async的方式来动态导入：
+
+```js
+async function getComponent() {
+    const element = document.createElement('div');
+
+    const {default: _} = await import('lodash');
+    element.innerHTML = _.join(['Hello', 'webpack'], ' ');
+    return element;
+}
+```
+
+### 预获取/预加载 prefetch / preload module ###
+
+### bundle分析  ###
+
+一旦开始分离代码，一件很有帮助的事情是，分析输出结果来检查模块在何处结束。 [官方分析工具](https://github.com/webpack/analyse) 是一个不错的开始。
+
+## 缓存 ##
+
