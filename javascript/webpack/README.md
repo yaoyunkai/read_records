@@ -632,3 +632,45 @@ async function getComponent() {
 
 ## 缓存 ##
 
+此指南的重点在于通过必要的配置，以确保 webpack 编译生成的文件能够被客户端缓存，而在文件内容变化后，能够请求到新的文件。
+
+### 输出文件的文件名 ###
+
+配置 uouput.filename:
+
+```js
+filename: '[name].[contenthash].js',
+```
+
+### 提取引导模板 extracting boilerplate ###
+
+正如我们在 [代码分离](https://webpack.docschina.org/guides/code-splitting) 中所学到的，[`SplitChunksPlugin`](https://webpack.docschina.org/plugins/split-chunks-plugin/) 可以用于将模块分离到单独的 bundle 中。webpack 还提供了一个优化功能，可使用 [`optimization.runtimeChunk`](https://webpack.docschina.org/configuration/optimization/#optimizationruntimechunk) 选项将 runtime 代码拆分为一个单独的 chunk。将其设置为 `single` 来为所有 chunk 创建一个 runtime bundle：
+
+```js
+optimization: {
+    runtimeChunk: 'single',
+},
+```
+
+将第三方库(library)（例如 `lodash` 或 `react`）提取到单独的 `vendor` chunk 文件中，是比较推荐的做法
+
+以通过使用 [SplitChunksPlugin 示例 2](https://webpack.docschina.org/plugins/split-chunks-plugin/#split-chunks-example-2) 中演示的 [`SplitChunksPlugin`](https://webpack.docschina.org/plugins/split-chunks-plugin/) 插件的 [`cacheGroups`](https://webpack.docschina.org/plugins/split-chunks-plugin/#splitchunkscachegroups) 选项来实现。
+
+### 模块标识符 module identifier ###
+
+每个 [`module.id`](https://webpack.docschina.org/api/module-variables/#moduleid-commonjs) 会默认地基于解析顺序(resolve order)进行增量。也就是说，当解析顺序发生变化，ID 也会随之改变。
+
+- `main` bundle 会随着自身的新增内容的修改，而发生变化。
+- `vendor` bundle 会随着自身的 `module.id` 的变化，而发生变化。
+- `manifest` runtime 会因为现在包含一个新模块的引用，而发生变化。
+
+第一个和最后一个都是符合预期的行为，`vendor` hash 发生变化是我们要修复的。我们将 [`optimization.moduleIds`](https://webpack.docschina.org/configuration/optimization/#optimizationmoduleids) 设置为 `'deterministic'`：
+
+```js
+optimization: {
+    moduleIds: 'deterministic',
+}
+```
+
+## 创建 library ##
+
