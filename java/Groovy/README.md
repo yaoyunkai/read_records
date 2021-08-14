@@ -365,3 +365,84 @@ assert (0..5) instanceof List
 assert (0..5).size() == 6  
 ```
 
+## 程序结构 ##
+
+### package name ###
+
+包名的作用与Java中的完全相同。它们允许我们在没有任何冲突的情况下分离代码库。Groovy类必须在类定义之前指定它们的包，否则假定使用默认包。
+
+### Imports ###
+
+为了引用任何类，您需要对其包的限定引用。Groovy遵循Java允许导入语句解析类引用的概念。
+
+#### Default imports ####
+
+默认导入是Groovy语言默认提供的导入。例如，看看下面的代码:
+
+```groovy
+new Date()
+```
+
+The below imports are added by groovy for you:
+
+```groovy
+import java.lang.*
+import java.util.*
+import java.io.*
+import java.net.*
+import groovy.lang.*
+import groovy.util.*
+import java.math.BigInteger
+import java.math.BigDecimal
+```
+
+### Scripts versus classes ###
+
+```groovy
+import org.codehaus.groovy.runtime.InvokerHelper
+class Main extends Script {
+    def run() {
+        println 'Groovy world!'
+    }
+    static void main(String[] args) {
+        InvokerHelper.runScript(Main, args)
+    }
+}
+```
+
+## Object orientation ##
+
+本章介绍了Groovy编程语言的面向对象。
+
+### Types ###
+
+Groovy支持与Java语言规范中定义的基本类型相同的类型:
+
+- integral types: `byte` (8 bit), `short` (16 bit), `int` (32 bit) and `long` (64 bit)
+- floating-point types: `float` (32 bit) and `double` (64 bit)
+- `boolean` type (exactly `true` or `false`)
+- `char` type (16 bit, usable as a numeric type, representing an UTF-16 code)
+
+#### Class ####
+
+Groovy类与Java类非常相似，并且在JVM级别上与Java类兼容。它们可能有方法、字段和属性(想想javabean的属性，但缺少样板)。类和类成员可以具有与Java中相同的修饰符(公共的、受保护的、私有的、静态的等等)，但在源代码级别上有一些细微的差异，稍后将对此进行解释。
+
+Groovy类和Java类之间的关键区别是:
+
+- 没有可见修饰符的类或方法自动成为公共的(可以使用特殊注释来实现包私有可见性)。
+- 类不需要与它们的源文件定义具有相同的基名，但在大多数情况下强烈建议这样做(还请参阅关于脚本的下一点)。
+- 一个源文件可以包含一个或多个类(但是如果一个文件包含任何不在类中的代码，它就被认为是一个脚本)。脚本只是具有一些特殊约定的类，并且将与它们的源文件具有相同的名称(所以不要在脚本中包含与脚本源文件具有相同名称的类定义)。
+
+```groovy
+class Person {
+    String name
+    Integer age;
+
+    def increaseAge(Integer years) {
+        this.age += years;
+    }
+}
+
+def p = new Person()
+```
+
