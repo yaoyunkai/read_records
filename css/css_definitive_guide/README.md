@@ -110,3 +110,190 @@ css2引入。
 
 ## 2. Selector ##
 
+### 元素选择符 ###
+
+```css
+body {display: block flow;}
+```
+
+### 群组选择符 ###
+
+```css
+body, p {color: red;}
+```
+
+通用选择符： 
+
+```css
+* {color: red;}
+```
+
+### 类选择符和ID选择符 ###
+
+应用样式而不关心所涉及的元素，最常用类选择符。
+
+```css
+.warning {
+    font-weight: bold;
+    color: red;
+}
+```
+
+使用 ID选择符，类选择符，属性选择符，伪类选择符或者伪元素选择符时，如果没有依附元素选择符，隐式蕴含通用选择符。
+
+```css
+.warning {
+    font-weight: bold;
+    color: red;
+}
+p.warning {
+    background: green;
+}
+```
+
+多个类的写法：
+
+```css
+.warning.help {
+    color: #666666;
+}
+```
+
+ID选择符:
+
+```css
+*#demo-01 {
+    color: red;
+}
+```
+
+### 属性选择符 ###
+
+**简单属性选择符**
+
+简单选择具有某个属性的写法：
+
+```css
+*[title] {
+    color: green;
+}
+/*多个属性选择, 同时拥有*/
+a[href][title] {
+    font-weight: bold;
+}
+```
+
+**精准的属性值选择**
+
+```css
+a[href="https://demo.com/1.png"] {
+    font-weight: bold;
+}
+```
+
+**部分属性值选择**
+
+| 形式             | 说明                           |
+| ---------------- | ------------------------------ |
+| `[foo!="bar"]`   | 值本身或者 值和`-`开头的属性   |
+| `[foo~="bar"]`   | 值是以空格分隔的一组值中的一个 |
+| `[foo*="bar"]`   | 匹配属性值的子串               |
+| `[foo^="bar"]`   | 匹配属性值开头的子串           |
+| `[foo$="bar"]`   | 匹配属性值结尾的子串           |
+| `[foo$="bar" i]` | 不区分大小写                   |
+
+### 后代选择符 (上下文选择符) ###
+
+```css
+h1 em {
+    color: gray;
+}
+```
+
+选择h1中的em元素，不管相隔多少代都可以。em元素在h1元素的内部。
+
+**选择子元素**
+
+```css
+h1 > em {
+    color: maroon;
+}
+```
+
+**选择紧邻同胞元素**
+
+选择同一个父元素中**紧跟**在另一个元素后面的一个元素。
+
+```css
+h1 + p {
+    margin-top: 0;
+}
+```
+
+**选择后续同胞**
+
+选择一个元素后面属于同一个父元素的另一个元素，不需要紧跟的。
+
+```css
+h1 ~ p {
+    color: red;
+}
+```
+
+### 伪类选择符 pseudo-class  ###
+
+```css
+a:link:hover {
+    color: blue;
+}
+a:visited:hover {
+    color: maroon;
+}
+```
+
+**选择根元素**
+
+`:root`
+
+**选择空元素**
+
+`:empty`
+
+**选择唯一的子代**
+
+`:only-child`
+
+**选择唯一的某种元素**
+
+`:only-of-type`
+
+**选择第一个和最后一个元素**
+
+`:first-child`
+
+`:last-child`
+
+**选择第一个或者最后一个某种元素**
+
+`:first-of-type`
+
+`:last-of-type`
+
+#### 动态伪类 ####
+
+| 伪类       | 说明                   |
+| ---------- | ---------------------- |
+| `:link`    | 未访问                 |
+| `:visited` | 已访问                 |
+| `:focus`   | 当前输入焦点的元素     |
+| `:hover`   | 鼠标指针放置其上的元素 |
+| `:active`  | 用户输入激活的元素     |
+
+### 伪元素选择符 ###
+
+**装饰首字母**
+
+`::first-letter`
+
+## 特指度和层叠 ##
+
