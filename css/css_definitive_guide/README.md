@@ -52,8 +52,88 @@
 - **初始值**：由浏览器指定
 - **适用于**：所有元素
 - **计算值** ：指定的值
-- **继承性**​： :white_check_mark:
+- **继承性**​： :heavy_check_mark:
 - **动画性**： :x:
+
+### font-weight ###
+
+- **取值**： `normal | bold | bolder | lighter | 100 | 200 | 300 | 400 | 500 | 600 | 700 | 800 | 900`
+- **初始值**：normal
+- **适用于**： 所有元素
+- **计算值**：其中一个数值，或者一个数值加一个相对值
+- **继承性**：:heavy_check_mark:
+- **动画性**：:x:
+
+### font-size ###
+
+- **取值**： `xx-small|x-small|small|medium|large|x-large|xx-large|smaller|larger|<length>|<percentage>`
+- **初始值**：medium
+- **适用于**： 所有元素
+- **计算值**：一个绝对长度
+- **继承性**：:heavy_check_mark:
+- **动画性**：:heavy_check_mark:
+
+### font-size-adjust ###
+
+- **取值**： `<number>|none|auto`
+- **初始值**：none
+- **适用于**： 所有元素
+- **继承性**：:heavy_check_mark:
+- **动画性**：:heavy_check_mark:
+
+### font-style ###
+
+- **取值**： `italic|oblique|normal`
+- **初始值**：normal
+- **适用于**： 所有元素
+- **继承性**：:heavy_check_mark:
+- **动画性**：:x:
+
+### font-stretch ###
+
+- **取值**： `nromal | ultra-condensed | extra-condensed | condensed |...`
+- **初始值**：normal
+- **适用于**： 所有元素
+- **继承性**：:heavy_check_mark:
+- **动画性**：:x:
+
+### font-kerning ###
+
+- **取值**： `auto | normal | none`
+- **初始值**：auto
+- **适用于**： 所有元素
+- **继承性**：:heavy_check_mark:
+- **动画性**：:x:
+
+### font-variant ###
+
+- **取值**： `normal | small-caps`
+- **初始值**：normal
+- **计算值**：指定的值
+- **适用于**： 所有元素
+- **继承性**：:heavy_check_mark:
+- **动画性**：:x:
+
+### font-feature-settings ###
+
+- **取值**： `normal | <feature-tag-value>#`
+- **初始值**：normal
+
+### font-synthesis ###
+
+- **取值**： `none | weight || style`
+- **初始值**：weight style
+- **适用于**： 所有元素
+- **继承性**：:heavy_check_mark:
+- **动画性**：:x:
+
+### font ###
+
+- **取值**： `[[<font-style> || [normal | small-caps] || <font-weight>]? <font-size> [/ <line-height>]? <font-family>] | caption | icon | menu | message-box | small-caption | status-bar`
+- **初始值**：各个单独的属性
+- **适用于**： 所有元素
+- **百分数**：`<font-size>` 基于父元素计算。
+- **继承性**：:heavy_check_mark:
 
 ## 1. CSS & Document ##
 
@@ -498,4 +578,55 @@ p {
 ```
 
 ### 5.2 使用 `@font-face` ###
+
+出现在CSS2中。
+
+```css
+@font-face {
+    font-family: 'SwitzeraADF';
+    src: url("https://www.demo.com");
+}
+
+@font-face {
+    font-family: 'SwitzeraADF';
+    src: url("https://www.demo.com") format("opentype");
+    src: url("https://www.demo.com/01") format("truetype");
+}
+```
+
+必须的属性：font-family 和 src
+
+### 5.3 字重 ###
+
+字重的属性： [font-weight](###font-weight###)
+
+为整个文档指定一个字体族，然后为不同的元素设定不同的字重。
+
+### 5.4 字号 ###
+
+[font-size](###font-size###)
+
+em方框与字符的边界没有关系，其实他指的是在没有行距的情况下两条基线之间的距离。
+
+font-size的作用是为字体的em方框提供一个尺寸。
+
+字号中的百分数始终根据继承自父元素的字号计算。
+
+#### 5.4.6 自动调整字号 ####
+
+影响字体是否清晰易于辨认：字号和x高度。
+
+x高度除以字号得到的结果称为高宽比值 (aspect value) 。
+
+css提供的 [font-size-adjust](###font-size-adjust###)属性用于改变字体族之间的高宽比值。
+
+### 5.5 字形 ###
+
+属性：[font-style](###font-style###)
+
+### 5.6 字体拉伸 ###
+
+some font-family 有较宽或较窄的字母型式。css提供了一个属性 [font-stretch](###font-stretch###)，用于选择这样的变体。
+
+## 6. 文本属性 ##
 
