@@ -29,6 +29,18 @@
 - `!` 必须的
 - `{M,n}`  表示至少重复M,至多重复N次
 
+## CSS 属性 ##
+
+### display ###
+
+- **取值** `[<display-outside || <display-inside>] | <display-listitem> | <display-internal> | <display-box> | <display-legacy>`
+- **定义**
+- **默认值** ：inline
+- **适用于**：所有元素
+- **计算值** ：指定的值
+- **继承性**：:x:
+- **动画性**： :x:
+
 ## 1. CSS & Document ##
 
 ### 1.2 元素 ###
@@ -46,6 +58,10 @@
 **块级元素** 生成一个填满父级元素内容区域的框，旁边不能有其他元素。
 
 **行内元素** 在一行内生成元素框，补打断所在的行。
+
+css属性：
+
+[display]: ###display###	"display"
 
 ### 1.3 应用CSS ###
 
@@ -320,5 +336,5 @@ a:visited:hover {
 
 ## 4. 值和单位 ##
 
-
+### 4.1 关键字，字符串和其他文本值 ###
 
