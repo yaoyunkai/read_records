@@ -31,6 +31,11 @@
 
 ## CSS 属性 ##
 
+### all ###
+
+- 取值：`inherit | initial | unset`
+- 初始值
+
 ### display ###
 
 - **取值** `[<display-outside || <display-inside>] | <display-listitem> | <display-internal> | <display-box> | <display-legacy>`
@@ -39,6 +44,15 @@
 - **适用于**：所有元素
 - **计算值** ：指定的值
 - **继承性**：:x:
+- **动画性**：:x:
+
+### font-family ###
+
+- **取值** `[<family-name>|<generic-family]#`
+- **初始值**：由浏览器指定
+- **适用于**：所有元素
+- **计算值** ：指定的值
+- **继承性**​： :white_check_mark:
 - **动画性**： :x:
 
 ## 1. CSS & Document ##
@@ -59,9 +73,7 @@
 
 **行内元素** 在一行内生成元素框，补打断所在的行。
 
-css属性：
-
-[display]: ###display###	"display"
+css属性：[display](###display###)
 
 ### 1.3 应用CSS ###
 
@@ -337,4 +349,153 @@ a:visited:hover {
 ## 4. 值和单位 ##
 
 ### 4.1 关键字，字符串和其他文本值 ###
+
+#### 4.1.1 关键字 ####
+
+- 全局关键字： `inherit` `initial` `unset`
+  - inherit 强制继承
+  - initial 把属性设置为预定义的初始值
+  - unset：是inherit和initial的通用替身，对继承的属性来说，unset相当于inherit，对于不继承的属性来说，unset的作用与initial一样。
+
+这三个关键字所有属性都可以使用 [all](###all###)
+
+#### 4.1.2 字符串 ####
+
+`"this is me"`
+
+### 4.3 距离 ###
+
+长度为0时不需要单位
+
+长度单位分为两种：绝对长度单位和相对长度单位
+
+#### 4.3.1 绝对长度单位 ####
+
+- 英寸 in
+- 厘米 cm
+- 毫米 mm
+- 四分之一毫米 q
+- 点 pt ：标准的印刷度量单位
+- 派卡 pc : 1pc = 10 pt
+- 像素 px ：使用屏幕上的像素，缩放页面或打印要考虑缩放。
+
+#### 4.3.2 分辨率单位 ####
+
+随着媒体查询和响应式设计的出现。
+
+- 点每英寸 dpi ：在长为1英寸的范围内显示的点数
+- 点每厘米 dpcm 
+- 点每像素单位 dppx
+
+#### 4.3.3 相对长度单位 ####
+
+指其长度相对其他东西而言的，有些相对单位的实际尺寸始终相对当前元素，不同的元素也不同。
+
+**em & ex**
+
+1em 等于元素的font-size属性值。
+
+em的值相对于父元素的字号而言。
+
+1em等于所用字体中小写字母m的宽度。
+
+ex指所用字体中小写字母x的高度。
+
+**rem单位**
+
+rem始终相对根元素计算，在HTML中，根元素是html。
+
+**ch单位**
+
+**视区相关单位**
+
+- 视区宽度单位 vw ：这个单位根据视区的宽度计算，然后除以100.
+- 视区高度单位 vh
+- 视区尺寸最小值单位 vmin ：宽度或者高度中较小的那个
+- 视区尺寸最大值单位 vmax
+
+### 4.4 计算值 ###
+
+calc()
+
+### 4.5 属性值 ###
+
+attr() 表达式。
+
+```css
+p::before {
+    content: "[" attr(id) "]";
+}
+```
+
+### 4.6 颜色 ###
+
+具名颜色。
+
+```css
+p::before {
+    content: "[" attr(id) "]";
+    color: transparent;
+    background: currentColor;
+}
+```
+
+### 4.7 角度 ###
+
+- deg 度数
+- grad 百分度
+- rad 弧度
+- turn 圈数
+
+### 4.10 自定义值 ###
+
+```css
+html {
+    --base-color: #639;
+    --highlight-color: #AEA;
+}
+
+h1 {
+    color: var(--base-color);
+}
+```
+
+## 5. font ##
+
+### 5.1 font-family ###
+
+为了覆盖所有情况，css定义了五种通用字体族：
+
+- 衬线字体：`Times` `Georgia` `New Century Schoolbook`
+- 无衬线字体： `helvetica` `Geneva` `Verdana` `Arial` `Univers`
+- 等宽字体： `Courier` `Courier New` `Consolas` `Andale Mono`
+- 草书字体
+- 奇幻字体
+
+#### 5.1.1 使用通用字体族 ####
+
+使用属性： [font-family](###font-family###)指定。
+
+如果想使用无衬线字体，但不要具体哪一个：
+
+```css
+body {
+    font-family: sans-serif;
+}
+```
+
+#### 5.1.2 指定字体族 ####
+
+如果浏览器有Georgia字体，否则使用其他无衬线字体：
+
+```css
+h1 {
+    font-family: Georgia, serif;
+}
+p {
+    font-family: Times, 'Times New Roman', 'New Century Schoolbook', Georgia, serif;
+}
+```
+
+### 5.2 使用 `@font-face` ###
 
