@@ -160,6 +160,149 @@
 - **继承性**：:heavy_check_mark:
 - **动画性**：:x:
 
+### line-height ###
+
+- **取值**： `<number> | <length> | <percentage> | normal`
+- **初始值**：normal
+- **适用于**： 所有元素
+- **百分数**：相对于元素的字号
+- **继承性**：:heavy_check_mark:
+- **动画性**：:heavy_check_mark:
+
+### vertical-align ###
+
+- **取值**： `baseline|sub|super|top|text-top|middle|bottom|text-bottom|<length>|<precentage>`
+- **初始值**：baseline
+- **适用于**： 行内元素和单元格
+- **百分数**：相对于元素的line-height值
+- **继承性**：:x:
+- **动画性**：`<length>` `<precentage>`
+
+### word-spacing ###
+
+- **取值**： `<length>|normal`
+- **初始值**：normal
+- **适用于**： 所有元素
+- **继承性**：:heavy_check_mark:
+- **动画性**：:heavy_check_mark:
+
+### letter-spacing ###
+
+- **取值**： `<length>|normal`
+- **初始值**：normal
+- **适用于**： 所有元素
+- **计算值**：长度值得到绝对长度；否则是normal
+- **继承性**：:heavy_check_mark:
+- **动画性**：:heavy_check_mark:
+
+### letter-spacing ###
+
+- **取值**： `uppercase|lowercase|capitalize|none`
+- **初始值**：none
+- **适用于**： 所有元素
+- **计算值**：指定的值
+- **继承性**：:heavy_check_mark:
+- **动画性**：:x:
+
+### text-decoration ###
+
+- **取值**： `none | [underline || overline || line-through || blink]`
+- **初始值**：none
+- **适用于**： 所有元素
+- **计算值**：指定的值
+- **继承性**：:x:
+- **动画性**：:x:
+
+### text-rendering ###
+
+- **取值**： `auto | optimizeSpeed | optimizeLegibility | geometricPrecision`
+- **初始值**：auto
+- **适用于**： 所有元素
+- **计算值**：指定的值
+- **继承性**：:heavy_check_mark:
+- **动画性**：:heavy_check_mark:
+
+### text-shadow ###
+
+- **取值**： `none | [<length> || <length> <length> <length> ?]#`
+- **初始值**：none
+- **适用于**： 所有元素
+- **计算值**：指定的值
+- **继承性**：:x:
+- **动画性**：:heavy_check_mark:
+
+### white-space ###
+
+- **取值**： `normal | nowrap | pre | pre-wrap | pre-line`
+- **初始值**：normal
+- **适用于**： 块级元素
+- **计算值**：指定的值
+- **继承性**：:x:
+- **动画性**：:x:
+
+### tab-size ###
+
+- **取值**： `<length>|<integer>`
+- **初始值**：8
+- **适用于**： 块级元素
+- **计算值**：指定的值对应的绝对长度
+- **继承性**：:heavy_check_mark:
+- **动画性**：:heavy_check_mark:
+
+### hyphens ###
+
+- **取值**： `manual | auto | none`
+- **初始值**：manual
+- **适用于**： 所有元素
+- **计算值**：指定的值
+- **继承性**：:heavy_check_mark:
+- **动画性**：:x:
+
+### word-break ###
+
+- **取值**： `manual | break-all | keep-all`
+- **初始值**：manual
+- **适用于**： 所有元素
+- **计算值**：指定的值
+- **继承性**：:heavy_check_mark:
+- **动画性**：:heavy_check_mark:
+
+### line-break ###
+
+- **取值**： `auto | loose | normal | strict`
+- **初始值**：auto
+- **适用于**： 所有元素
+- **计算值**：指定的值
+- **继承性**：:heavy_check_mark:
+- **动画性**：:heavy_check_mark:
+
+### overflow-wrap ###
+
+- **取值**： `normal | break-word`
+- **初始值**：normal
+- **适用于**： 所有元素
+- **计算值**：指定的值
+- **继承性**：:heavy_check_mark:
+- **动画性**：:heavy_check_mark:
+
+### writing-mode ###
+
+- **取值**： `horizontal-tb | vertical-rl | vertical-tr`
+- **初始值**：horizontal-tb
+- **适用于**： 所有元素(特殊)
+- **计算值**：指定的值
+- **继承性**：:heavy_check_mark:
+- **动画性**：:heavy_check_mark:
+
+### text-orientation ###
+
+- **取值**： `mixed | upright | sideways`
+- **初始值**：mixed
+- **适用于**： 所有元素(特殊)
+- **计算值**：指定的值
+- **继承性**：:heavy_check_mark:
+- **动画性**：:heavy_check_mark:
+
 ## 1. CSS & Document ##
 
 ### 1.2 元素 ###
@@ -680,4 +823,109 @@ some font-family 有较宽或较窄的字母型式。css提供了一个属性 [f
 除了块级元素的最后一行之外，还有其他行也受这个属性影响。
 
 ### 6.2 块级对齐 ###
+
+沿着块级方向的对齐方式。
+
+#### 6.2.1 行的高度 ####
+
+[line-height](###line-height###) 属性指行的基线之间的距离。
+
+定义元素中文本行基线之间的最小距离。
+
+line-height 不影响置换元素的布局，但是依然应用到置换元素上。
+
+**行的构成**
+
+文本行中的每个元素构成一个内容区 (content area), 其高度由字体的高度决定。
+
+随内容区出现的是一个行内框 (inline box) , 如果不考虑其他因素，其高度与内容区完全相等。
+
+line-height导致的行距是影响行内框高度的因素之一。
+
+元素的行距等于 font-size 的计算结果减去 line-height 的计算结果。这个值是行距的总值。
+
+确定一行内容的全部行内框之后，行框也确定了。行框恰好包围最高那个行内框的顶端和最低那个行内框的底端。
+
+![img](.assets/images2015.cnblogs.com&app=2002&size=f9999,10000&q=a80&n=0&g=0n&fmt=jpeg)
+
+em ex 和百分数相对元素的font-size值计算。
+
+**行高的继承**
+
+块级元素之间继承：从父元素继承 line-height值时，根据父元素的字号计算。
+
+#### 6.2.2 纵向对齐文本 ####
+
+css中的 [vertical-align](###vertical-align###)属性只能用于行内元素和置换元素。
+
+baseline 强制元素的基线与父元素的基线对齐。
+
+bottom：把元素所在行内框的底边与行框的底边对齐。
+
+### 6.3 单词间距和字符间距 ###
+
+#### 6.3.1 单词间距 ####
+
+[word-spacing](###word-spacing###) 属性的值为长度，可正可负。
+
+指定的长度值追加到单词的标准间距上。
+
+#### 6.3.2 字符间距 ####
+
+[letter-spacing](###letter-spacing###) 属性修改字符或者字母之间的间距。
+
+转换文本的大小写形式： [text-transform](###text-transform###)
+
+### 6.7 文本阴影 ###
+
+css属性： [text-shadow](###text-shadow###)
+
+可以为文本定义一个或多个阴影。每个阴影由一个可选的颜色和三个长度值定义。
+
+第一个长度设定横向偏移
+
+第二个长度设定纵向偏移
+
+第三个长度设定阴影的模糊半径 (blur radius)
+
+### 6.8 处理空白 ###
+
+[white-space](###white-space###) 影响用户代理对文档源码中空格，换行符和制表符的处理方式。
+
+对待单词之间以及文本之间空白的方式：
+
+- pre: 小心处理空格和换行。
+- nowrap: 禁止元素中的文本换行。
+
+### 6.9 换行和断字 ###
+
+css属性 [hyphens](###hyphens###)，
+
+使用默认值normal时，只有在手动插入的连字符(U+00AD 或 &shy) 处断字。
+
+使用none时，手动也不断字。
+
+断字属性还受css属性 [word-break](###word-break###) 属性的作用是控制不同语言处理文本软换行的方式，软换行由用户代理决定，但是使用该属性可以自行控制：
+
+- break-all 软换行可能出现在任何字符之间。
+- keep-all 禁止在字符之间软换行。
+
+CJK语言是什么？
+
+**文本换行**
+
+如果文本超出了所在容器怎么办？
+
+[overflow-wrap](###overflow-wrap###)
+
+- normal: 在单词之间换行
+- break-word：在单词的内部换行
+
+### 6.10 书写模式 ###
+
+设置书写模式： [writing-mode](###writing-mode###)
+
+默认值 horizont-tb的意思：行内方向为横向，块级方向为从上到下。
+
+改变文本方向: [text-orientation](###text-orientation###)
 
