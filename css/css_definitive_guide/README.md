@@ -303,6 +303,15 @@
 - **继承性**：:heavy_check_mark:
 - **动画性**：:heavy_check_mark:
 
+### box-sizing ###
+
+- **取值**： `content-box | padding-box | border-box`
+- **初始值**：content-box
+- **适用于**： 能指定width或height的所有元素
+- **计算值**：指定的值
+- **继承性**：:x:
+- **动画性**：:x:
+
 ## 1. CSS & Document ##
 
 ### 1.2 元素 ###
@@ -928,4 +937,98 @@ CJK语言是什么？
 默认值 horizont-tb的意思：行内方向为横向，块级方向为从上到下。
 
 改变文本方向: [text-orientation](###text-orientation###)
+
+## 7. 视觉格式化基础 ##
+
+### 7.1 元素框基础 ###
+
+#### 7.1.1 概念 ####
+
+- 常规流动
+- 非置换元素：内容包含在文档中的元素
+- 置换元素：为其他内容占位的元素
+- 根元素
+- 块级框
+- 行内框
+- 行内块级框：内部特征像块级框，外部特征像行内框。
+
+#### 7.1.2 容纳块 ####
+
+容纳块是元素框体的 布局上下文。
+
+### 7.2 调整元素的显示方式 ###
+
+css属性 [display](###display###)
+
+#### 7.2.1 改变显示方式 ####
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Demo</title>
+    <style>
+        nav a {
+            display: block;
+        }
+
+    </style>
+</head>
+<body>
+
+<nav>
+    <a href="https://www.baidu.com" target="_blank">Baidu1</a>
+    <a href="https://www.baidu.com" target="_blank">Baidu2</a>
+    <a href="https://www.baidu.com" target="_blank">Baidu3</a>
+    <a href="https://www.baidu.com" target="_blank">Baidu4</a>
+    <a href="https://www.baidu.com" target="_blank">Baidu5</a>
+</nav>
+
+</body>
+</html>
+```
+
+把链接变成块级元素后，整个元素框都变成链接了。
+
+#### 7.2.2 块级框 ####
+
+![img](.assets/aliyunzixunbucket.oss-cn-beijing.aliyuncs.com&app=2002&size=f9999,10000&q=a80&n=0&g=0n&fmt=jpeg)
+
+默认块级框的宽度width等于左内边界到右内边界的距离。
+
+高度height等于上内边界到下内边界的距离。
+
+这些属性的处理方式可以使用 [box-sizing](###box-sizing###)调整
+
+#### 7.2.3 横向格式化 ####
+
+```html
+<p style="width: 200px; padding: 10px; margin: 20px;background: red">wideness?</p>
+```
+
+元素框的可见区域是220px宽(200px + 10px * 2),外边距又在元素的两侧添加20px，所以元素的总体宽度为260px。
+
+在属性为content-box 和 border-box的常规流动方式下，块级框各组成部分的横向尺寸始终等于容纳块的宽度。
+
+#### 7.2.4 横向格式化属性 ####
+
+有七个： margin-left, border-left, padding-left, width, padding-right, border-right, margin-right。
+
+三个属性值能设为auto: width, margin-left, margin-right。其余的要么为具体的值，要么使用默认值。
+
+#### 7.2.5 使用auto ####
+
+在 width, margin-left, margin-right中，
+
+- 如果把一个设为auto，另外两个设为具体的值，那么设为auto的那个属性的具体长度要能满足元素框的宽度等于父元素的宽度。
+- 如果三个为具体的值，那么margin-right重置为auto
+- 左右外边距为auto，那么width的值满足总宽度，自动确定宽度。
+- 左右外边距设为auto，width具体的值：元素在父元素内居中显示。
+- 某个外边距和width设为auto：设为auto的那个外边距等于0
+- 三个为auto：width最大宽度，外边距为0
+
+
+
+
 
