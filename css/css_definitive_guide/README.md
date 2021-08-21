@@ -1028,7 +1028,77 @@ css属性 [display](###display###)
 - 某个外边距和width设为auto：设为auto的那个外边距等于0
 - 三个为auto：width最大宽度，外边距为0
 
+#### 7.2.7 负外边距 ####
 
+```css
+p {
+    margin-left: 10px;
+    width: auto;
+    margin-right: -50px;
+    background: red;
+    border: 3px solid gray;
+}
+```
 
+此时p的总宽度为 10px+3px+0+534px+0+3px-50px=500px;
 
+```css
+p {
+    margin-left: 10px;
+    width: 600px;
+    margin-right: auto;
+    background: red;
+    border: 3px solid gray;
+}
+```
+
+设为auto的右外边距也可能得到负值：10px+3px+0+600px+0+3px-116px=500px;
+
+只有外边距的值可以小于零
+
+#### 7.2.8 百分数 ####
+
+需要理解百分数和长度单位混合使用的情况。
+
+边框不接受百分数，只能设为长度值。
+
+#### 7.2.9 置换元素 ####
+
+当width为auto时，置换元素的width等于内容自身的宽度。
+
+明确为width提供一个值可以覆盖这个规则。
+
+如果置换元素的width与自身宽度不同，height值会自动按比例变化。
+
+#### 7.2.10 纵向格式化 ####
+
+元素的内容决定了元素的默认高度。
+
+可以为任何块级元素设定具体的高度。得到的结果取决于多个因素，假如指定的高度大于显示内容所需的高度，此时，多出的高度看起来像是内边距。
+
+和 overflow 属性也有关系。
+
+height默认定义内容区的高度，而不是元素框可见区域的高度。元素框的上下内边距，边框的外边距在高度的基础上增加。
+
+**纵向格式化属性**
+
+margin-top, border-top, padding-top, height, padding-bottom, border-bottom, margin-bottom
+
+七个值加在一起等于块级框的容纳块的高度。
+
+可以设为auto的属性：height和margin-top, margin-bottom
+
+在常规流动下，如果把块级框的margin-top 或 margin-bottom 设为auto，二者都自动计算为0
+
+如果把块级框的高度设为百分数，百分数是相对于框体的容纳块的高度而言的。
+
+如果未明确声明容纳块的高度，那么百分数高度将被重置为auto。
+
+**自动调整高度**
+
+默认：高度是从最上边的子元素上边框外侧到最下边那个块级子代元素的下边框外侧之间的距离。子元素的外边距在父元素的外部。
+
+如果块级元素有**上内边距或下内边距，或者有上边框或下边框**，那么其高度是从最上边那个子元素的上外边距的外边界到最下边那个子元素的下外边距的外边界之间的距离。
+
+**折叠纵向外边距**
 
