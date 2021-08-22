@@ -423,6 +423,80 @@
 - **继承性**：:heavy_check_mark:
 - **动画性**：:heavy_check_mark:
 
+### background-color ###
+
+- **取值**： `<color>`
+- **初始值**：transparent
+- **适用于**：所有元素
+- **计算值**：指定的值
+- **继承性**：:x:
+- **动画性**：:heavy_check_mark:
+
+### background-clip ###
+
+- **取值**： `[border-box | padding-box | content-box | text]#`
+- **初始值**：border-box
+- **适用于**：所有元素
+- **计算值**：指定的值
+- **继承性**：:x:
+- **动画性**：:x:
+
+### background-image ###
+
+- **取值**： `[<image># | none`
+- **初始值**：none
+- **适用于**：所有元素
+- **计算值**：指定的值
+- **继承性**：:x:
+- **动画性**：:x:
+
+### background-position ###
+
+- **取值**： `<position>#`
+- **初始值**：0% 0%
+- **适用于**：块级元素和置换元素
+- **百分数**：指代元素或源图像上相应的点
+- **计算值**：指定`<length>`时是绝对长度偏移，否则是百分数值
+- **继承性**：:x:
+- **动画性**：:heavy_check_mark:
+
+### background-origin ###
+
+- **取值**： `[border-box | padding-box | content-box | text]#`
+- **初始值**：padding-box
+- **适用于**：所用元素
+- **计算值**：指定的值
+- **继承性**：:x:
+- **动画性**：:x:
+
+### background-repeat ###
+
+- **取值**： `<repeat-style>#`
+- **展开**：`<repeat-style> = repeat-x |repeat-y | [repeat | space | round | no-repeat]{1,2}`
+- **初始值**：repeat
+- **适用于**：所用元素
+- **计算值**：指定的值
+- **继承性**：:x:
+- **动画性**：:x:
+
+### background-attachment ###
+
+- **取值**： `[scroll | fixed | local]#`
+- **初始值**：scroll
+- **适用于**：所用元素
+- **计算值**：指定的值
+- **继承性**：:x:
+- **动画性**：:x:
+
+### background-size ###
+
+- **取值**： `[[<length> | <percentage> | auto]{1,2}|cover|contain]#`
+- **初始值**：auto
+- **适用于**：所用元素
+- **计算值**：声明的值
+- **继承性**：:x:
+- **动画性**：:heavy_check_mark:
+
 ## 1. CSS & Document ##
 
 ### 1.2 元素 ###
@@ -1443,4 +1517,29 @@ css属性： [color](###color###)
 边框采用前景色的根源在于一个特殊的颜色关键字： currentColor
 
 ### 9.2 背景 ###
+
+- 背景色：[background-color](###background-color###)
+- 裁剪背景：[background-clip](###background-clip###) 控制背景延伸到何处，设为text时，可以把背景裁剪到文本线条，文本用背景填充。
+- 背景图：[background-image](###background-image###)，使用背景图时最好同时指定背景色，这样至少能保证文本是可见的。
+- 背景定位：[background-position](###background-position###) 指定图像的具体位置。
+
+改变定位框：如果不想让位置相对元素内边距的外边界计算呢？ [background-origin](###background-origin###)
+
+背景重复方式： [background-repeat](###background-repeat###)
+
+背景粘附：[background-attachment](###background-attachment###) 
+
+#### 9.2.8 背景图的尺寸 ####
+
+[background-size](###background-size###)
+
+#### 9.2.10 多个背景 ####
+
+```css
+section {background-image: url(i/bg01.png), url(i/bg02.gif), url(i/bg03.jpg);
+       background-repeat: no-repeat;
+       padding: 2em 4em;}
+```
+
+### 9.3 渐变 ###
 
