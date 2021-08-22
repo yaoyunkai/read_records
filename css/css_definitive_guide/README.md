@@ -497,6 +497,15 @@
 - **继承性**：:x:
 - **动画性**：:heavy_check_mark:
 
+### box-shadow ###
+
+- **取值**： `none | [inset? && <length>{2,4}&&<color>?]#`
+- **初始值**：none
+- **适用于**：所用元素
+- **计算值**：`<length>`的值计算为绝对长度值。
+- **继承性**：:x:
+- **动画性**：:heavy_check_mark:
+
 ## 1. CSS & Document ##
 
 ### 1.2 元素 ###
@@ -1542,4 +1551,38 @@ section {background-image: url(i/bg01.png), url(i/bg02.gif), url(i/bg03.jpg);
 ```
 
 ### 9.3 渐变 ###
+
+线性渐变和径向渐变，这两个又分为循环渐变和不循环渐变。
+
+渐变是图像。
+
+#### 9.3.1 线性渐变 ####
+
+指沿线性向量填充得到的渐变，这个向量称为梯度线：
+
+```css
+background-image: linear-gradient(purple, gold);
+background-image: linear-gradient(90deg, purple, gold);
+background-image: linear-gradient(to left, purple, gold);
+background-image: linear-gradient(-135deg, purple, gold, navy);
+background-image: linear-gradient(to bottom left, purple, gold, navy);
+```
+
+渐变的默认方向：to bottom
+
+线性渐变的基本句法：
+
+```css
+linear-gradient(
+	[[<angle> | to <side-or-quadrant> ],]? [<color-stop> [, <color-hint>]?]#, <color-stop>
+)
+```
+
+#### 9.3.2 径向渐变 ####
+
+radial-gradient
+
+### 9.4 盒子投影 ###
+
+[box-shadow](###box-shadow###)
 
