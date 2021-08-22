@@ -323,6 +323,106 @@
 - **继承性**：:x:
 - **动画性**：:x:
 
+### width ###
+
+- **取值**： `<length> | <precentage> | auto`
+- **初始值**：auto
+- **适用于**：所有元素(特定)
+- **继承性**：:x:
+- **动画性**：:heavy_check_mark:
+
+### height ###
+
+- **取值**： `<length> | <precentage> | auto`
+- **初始值**：auto
+- **适用于**：所有元素(特定)
+- **继承性**：:x:
+- **动画性**：:heavy_check_mark:
+
+### padding ###
+
+- **取值**： `[<length> | <percentage> ]{1,4}`
+- **初始值**：简写形式没有
+- **适用于**：所有元素(特定)
+- **百分数**：相对于容纳块的宽度
+- **继承性**：:x:
+- **动画性**：:heavy_check_mark:
+
+### border-style ###
+
+- **取值**： `[ none | hidden | solid | dotted | dashed | double | groove | ridge | inset | outset ]{1,4}`
+- **初始值**：简写形式没有
+- **适用于**：所有元素
+- **继承性**：:x:
+- **动画性**：:x:
+
+### border-width ###
+
+- **取值**： `[thin | medium | thick | <length> ]{1,4}`
+- **初始值**：简写形式没有
+- **适用于**：所有元素
+- **继承性**：:x:
+- **动画性**：:heavy_check_mark:
+
+### border-color ###
+
+- **取值**： `<color>{1,4}`
+- **初始值**：简写形式没有
+- **适用于**：所有元素
+- **继承性**：:x:
+- **动画性**：:heavy_check_mark:
+
+### border ###
+
+- **取值**： `[<border-width> || <border-style> || <border-color>]`
+- **初始值**：参考各个单独的属性
+- **适用于**：所有元素
+- **继承性**：:x:
+- **动画性**：参考各个单独的属性
+
+### border-radius ###
+
+- **取值**： `[<length> | <percentage>]{1,4}[/ [<length> | <percentage>]{1,4}]?`
+- **初始值**：0
+- **适用于**：除表格内的元素之外的所有元素
+- **继承性**：:x:
+- **动画性**：:heavy_check_mark:
+
+### border-image-source ###
+
+- **取值**： `none | <image>`
+- **初始值**：none
+- **适用于**：所有元素(特定)
+- **继承性**：:x:
+- **动画性**：:x:
+
+### outline-style ###
+
+- **取值**： `auto | none | solid | dotted | dashed | double | groove | ridge | inset | outset`
+- **初始值**：none
+- **适用于**：所有元素
+- **计算值**：指定的值
+- **继承性**：:x:
+- **动画性**：:x:
+
+### outline ###
+
+- **取值**： `[<outline-color> || <outline-style> || <outline-width>]`
+- **初始值**：none
+- **适用于**：所有元素
+- **计算值**：指定的值
+- **继承性**：:x:
+- **动画性**：参考各个单独的属性
+
+### color ###
+
+- **取值**： `<color>`
+- **初始值**：用代理指定
+- **适用于**：所有元素
+- **计算值**：指定的值
+- **继承性**：:heavy_check_mark:
+- **动画性**：:heavy_check_mark:
+
 ## 1. CSS & Document ##
 
 ### 1.2 元素 ###
@@ -1243,4 +1343,104 @@ inline-block，在一行中的布局方式跟图像一样，实际上 行内块�
 行内块级元素的底边默认是与文本行的基线对齐的，而且内部不会断行。
 
 ## 8. 内边距、边框、轮廓和外边距 ##
+
+### 8.1 基本元素框 ###
+
+#### 8.1.1 宽度和高度 ####
+
+width和height无法应用到行内非置换元素上。
+
+[width](###width###)
+
+[height](###height###)
+
+### 8.2 内边距 ###
+
+css属性： [padding](###padding###)
+
+padding各个值得顺序：top right bottom left，从上边开始，顺时针转动。
+
+#### 8.2.1 复制 ####
+
+- 如果只为padding提供三个值，第四个值复制第二个值；
+- 如果提供两个值，第四个值复制第二个值，第三个值复制第一个值。
+- 如果只提供一个值，其他三边都复制第一个值。
+
+### 8.3 边框 ###
+
+边框有三个要素：宽度，样式，颜色。
+
+边框宽度的默认值为medium
+
+边框的默认颜色是元素自身的前景色
+
+#### 8.3.1 边框的式样 ####
+
+css属性： [border-style](###border-style###)
+
+一个边框也可以有多个样式，可以为上下左右分别定义样式。
+
+还可以单独定义某一边的样式： border-top-style
+
+#### 8.3.2 边框宽度 ####
+
+css属性： [border-width](###border-width###)
+
+#### 8.3.3 边框颜色 ####
+
+css属性：[border-color](###border-color###)
+
+以上的三个属性均有每个边的单独属性。
+
+还有 border-top, border-right, border-bottom, border-left
+
+还有整个边框： [border](###border###)
+
+#### 8.3.7 圆角边框 ####
+
+可以使用 [border-radius](###border-radius###) 定义一个或两个圆角半径。
+
+圆角的半径是一个圆或椭圆的半径，圆或椭圆的四分之一用作边框的圆角。
+
+图像边框： [border-image-source](###border-image-source###)，同时图像边框也需要边框宽度。
+
+border-image-slice
+
+border-image-width
+
+border-image-outset
+
+border-image-repeat
+
+border-image
+
+### 8.4 轮廓 ###
+
+实际使用中，轮廓一般直接绘制在边框外侧，轮廓与边框的区别：
+
+- 轮廓不占空间
+- 轮廓可以不是矩形
+- 用户代理通常在元素处于 :focus 状态时渲染轮廓
+
+轮廓样式：[outline-style](###outline-style###)
+
+轮廓宽度：outline-width
+
+轮廓颜色：outline-color
+
+轮廓简写属性： [outline](###outline###)
+
+## 9. 颜色、背景和渐变 ##
+
+### 9.1 颜色 ###
+
+任何元素包括前景色和背景色。
+
+#### 9.1.1 前景色 ####
+
+css属性： [color](###color###)
+
+边框采用前景色的根源在于一个特殊的颜色关键字： currentColor
+
+### 9.2 背景 ###
 
