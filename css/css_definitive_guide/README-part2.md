@@ -326,6 +326,22 @@
 
 **动画性**：:heavy_check_mark:
 
+### grid-template-rows ###
+
+**取值**：`none|<track-list>|<auto-track-list>`
+
+**初始值**：none
+
+**适用于**：栅格容器
+
+**百分数**：相对于容器的轴尺寸计算
+
+**计算值**：指定的值
+
+**继承性**：:x:
+
+**动画性**：:x:
+
 ## 10. 浮动及其形状 ##
 
 ### 10.1 浮动 ###
@@ -782,4 +798,104 @@ flex属性中的 [flex-basis](###flex-basis###) 定义弹性元素的初始尺�
 ### 12.16 order属性 ###
 
 css属性： [order](###order###)
+
+## 13. 栅格系统 ##
+
+### 13.1 创建栅格容器 ###
+
+第一步：定义一个栅格容器(grid container), 栅格容器为其中的内容定义一个栅格格式化上下文(grid formatting context).
+
+栅格容器的子元素是栅格元素(grid item)。
+
+栅格有两种：常规栅格(grid)和行内栅格(inline-grid)。
+
+栅格容器不是块级容器：
+
+- 浮动元素不会打乱栅格容器。
+
+- 栅格容器的外边距不与其后代的外边距折叠。
+
+有些css属性和功能不能用在栅格容器和栅格元素上：
+
+- 栅格容器的column属性都被忽略
+- 栅格容器没有 `::first-line` 和 `::first-letter` 伪元素。
+- 栅格元素上的float和clear属性被忽略
+- vertical-align属性对栅格元素不起作用。
+
+### 13.2 基本概念 ###
+
+栅格元素是在栅格格式化上下文中参与栅格布局的东西。可以是子元素也可以是匿名文本。
+
+- 栅格线。
+
+- 栅格轨道(grid track)：指两条相邻的栅格线之间夹住的整个区域，栅格轨道的尺寸由栅格线的位置确定。
+- 栅格单元(grid cell)：值四条栅格线限定的区域。这是栅格布局中区域的最小单位。没有属性能把一个栅格元素放在指定的栅格单元里。
+- 栅格区域(grid area): 任何四条栅格线限定的矩形区域。
+
+栅格元素可以重叠，栅格线可以重叠。
+
+如果栅格元素在轨道的外部，那么栅格系统将会自动天剑栅格线和轨道。
+
+### 13.3 放置栅格线 ###
+
+[grid-template-rows](###grid-template-rows###), grid-template-columns属性可以大致定义栅格模板(grid template, CSS规范称之为explicit grid, 显式栅格)中栅格线。
+
+栅格线始终可以使用数字，也可以为其命令。
+
+#### 13.3.1 宽度固定的栅格轨道 ####
+
+栅格线之间的距离不随栅格轨道中的内容的变化而变化。
+
+```css
+.d-grid {
+    display: grid; 
+    grid-template-columns: 200px 50% 100px; 
+}
+```
+
+```css
+.d-grid {
+    display: grid;
+    /*grid-template-columns: 200px 50% 100px;*/
+    grid-template-columns: [start col-a] 200px [col-b] 50% [col-c] 100px [stop end last];
+}
+```
+
+如上，给栅格线命名：行和列不共用命令空间。
+
+```css
+grid-template-rows: [start masthead] 3em [content] 100% [footer] 2em [stop end];
+```
+
+以上声明方式行轨道将被完全推到容器外部。这种问题的处理方式之一：为行的尺寸设定极值，指明最大值和最小值：
+
+```css
+grid-template-rows: [start masthead] 3em [content] minmax(3em, 100%) [footer] 2em [stop end];
+```
+
+以上得出，行的高度将会在3em和容器的高低之间。
+
+第二种方式是使用 calc进行计算。
+
+#### 13.3.2 弹性栅格轨道 ####
+
+弹性栅格轨道的尺寸基于弹性容器中非弹性轨道以外的空间确定，或者基于整个轨道中的具体内容而定。
+
+**份数单位**
+
+`fr`单位
+
+```css
+grid-template-columns: [A] 1fr [B] 1fr [C] 1fr [D] 1fr [E];
+```
+
+可用空间除以fr值之和，个轨道的尺寸等于fr值所对应的份数。
+
+```css
+grid-template-columns: 15em 1fr 10%;
+```
+
+先为第一个和第三个轨道分配固定的宽度，余下的空间都分给第二个轨道。
+
+minmax表达式的最小值部分不允许使用fr单位。
 
