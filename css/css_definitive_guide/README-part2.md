@@ -356,6 +356,34 @@
 
 **动画性**：:x:
 
+### grid-row-start ###
+
+**取值**：`auto|<custom-ident>|[<integer>&&<custom-ident>?]|[span&&[<integer>||<custom-ident>]]`
+
+**初始值**：auto
+
+**适用于**：栅格元素和绝对定位元素
+
+**计算值**：指定的值
+
+**继承性**：:x:
+
+**动画性**：:x:
+
+### grid-row ###
+
+**取值**：`<grid-line>[/<grid-line>]?`
+
+**初始值**：auto
+
+**适用于**：栅格元素和绝对定位元素
+
+**计算值**：指定的值
+
+**继承性**：:x:
+
+**动画性**：:x:
+
 ## 10. 浮动及其形状 ##
 
 ### 10.1 浮动 ###
@@ -996,4 +1024,69 @@ grid-template-rows: [header-start] 3em [header-end content-start] 1fr [content-e
 ```
 
 ### 13.4 在栅格中附加元素 ###
+
+#### 13.4.1 使用列线和行线 ####
+
+把元素附加到栅格线上的四个属性： [grid-row-start](###grid-row-start###), grid-row-end, grid-column-start, grid-column-end
+
+如果省略结束栅格线，那么结束栅格线使用序列中的下一条栅格线。
+
+```css
+.one {
+    grid-row-start: 2;
+    grid-row-end: 4;
+    grid-column-start: 2;
+    grid-column-end: 4;
+    background-color: green;
+}
+.two {
+    grid-row-start: 1;
+    grid-row-end: 3;
+    grid-column-start: 5;
+    grid-column-end: 10;
+    background-color: red;
+}
+.three {
+    grid-row-start: 4;
+    /*grid-row-end: 5;*/
+    grid-column-start: 6;
+    /*grid-column-end: 7;*/
+    background-color: yellow;
+}
+```
+
+对于三还有一种相同的方式：
+
+```css
+grid-row-start: 4;
+grid-row-end: span 1;
+grid-column-start: 6;
+grid-column-end: span 1;
+background-color: yellow;
+```
+
+span 向确定了编号的栅格线的反方向计数。
+
+栅格线的编号可以使用负值，不过只有通过`grid-template-*`定义的才行
+
+还可以使用编号，如果多条栅格线使用同一个名称，还要加上编号。
+
+此外还有一种引用栅格线名称的方式，通过栅格区域隐式创建的栅格线名称。
+
+#### 13.4.2 行和列的简写属性 ####
+
+相应的简写属性： [grid-row](###grid-row###), grid-column
+
+```css
+grid-row: R 3 / 7;
+grid-column: col-B / span 2;
+```
+
+如果没有斜线的值，结束栅格线取决于开始栅格线的值。栅格元素将从指定名称的栅格线开始一直延伸到下一条同名栅格线。
+
+如果只提供第一个数字，那么第二个数字被设为auto。
+
+`grid-template-areas`的使用方式。
+
+#### 13.4.3 隐式栅格 ####
 
