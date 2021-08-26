@@ -342,6 +342,20 @@
 
 **动画性**：:x:
 
+### grid-template-areas ###
+
+**取值**：`none|<string>`
+
+**初始值**：none
+
+**适用于**：栅格容器
+
+**计算值**：指定的值
+
+**继承性**：:x:
+
+**动画性**：:x:
+
 ## 10. 浮动及其形状 ##
 
 ### 10.1 浮动 ###
@@ -898,4 +912,88 @@ grid-template-columns: 15em 1fr 10%;
 先为第一个和第三个轨道分配固定的宽度，余下的空间都分给第二个轨道。
 
 minmax表达式的最小值部分不允许使用fr单位。
+
+**根据内容设定轨道的尺寸**
+
+可以使用 min-content 和 max-content。
+
+max-content：占据内容所需的最大空间。
+
+这两个关键字的特性：将应用于整个栅格轨道上，如果把一列的尺寸设为max-content, 那么整个轨道的宽度都与列中最宽的内容一样。
+
+每个列轨道的宽度都与轨道中最宽的图像相等。
+
+还有一个关键字auto，用作最小值时，视作栅格元素的最小尺寸，既有min-width或min-height定义的值。
+
+#### 13.3.3 根据轨道中的内容适配 ####
+
+还可以使用 `fit-content()` 函数以简练的方式表达特定类型的尺寸模式。
+
+该函数参数为一个长度或者一个百分数。
+
+```css
+grid-template-columns: 2fr fit-content(150px) 2fr;
+grid-template-columns: 2fr fit-content(50%) 2fr;
+
+fit-content(argument) => min(max-content, max(min-content, argument))
+```
+
+先从min-content和argument中找出较大的那个值，然后与max-content的值相比，找出较小的。
+
+fit-content参数设定的值是上限，而不是定值。
+
+#### 13.3.4 重复栅格线 ####
+
+使用`repeat()`
+
+例如，想每隔5em放置一列栅格线，一共有10个列轨道，第一个所示：
+
+```css
+grid-template-columns: repeat(10, 5em);
+grid-template-columns: repeat(3, 2em 1fr 1fr);
+grid-template-columns: repeat(3, 2em 1fr 1fr) 2em;
+grid-template-columns: repeat(4, 10px [col-start] 250px [col-end]) 10px;
+```
+
+**自动填充的轨道**
+
+有两个关键字： auto-fit 和 auto-fill
+
+直到填满整个栅格轨道容器为止：
+
+```css
+grid-template-columns: repeat(auto-fill, [top] 5em [bottom]);
+```
+
+局限：只能有一个可选的栅格线名称、一个尺寸固定的轨道和另一个可选的栅格线名称。
+
+但是如果使用auto-fit，没有栅格元素的轨道将被剔除。剔除轨道后留下的空间根据 align-content和justify-content的值处理。
+
+#### 13.3.5 栅格区域 ####
+
+属性：[grid-template-areas](###grid-template-areas)
+
+```css
+grid-template-areas: 
+        "h h h h" 
+        "l c c r"
+        "l f f f";
+```
+
+这样，每个标识符表示一个栅格单元。
+
+如果只想把部分栅格单元定义为栅格区域的一部分，可以使用一个或者多个 `.` 字符占位。
+
+该属性和 grid-template-columns，gird-templdate-rows一起使用，可以使具名栅格区域创建的列和行有轨道尺寸。如果提供的轨道尺寸数量比区域轨道多，多出的轨道将放在具名区域后面。
+
+命名栅格区域会自动为首尾两条栅格线命名。 `xx-start` `xx-end`
+
+这种隐式命名机制还可以方向操作：
+
+```css
+grid-template-columns: [header-start footer-start] 1fr [content-start] 1fr [content-end] 1fr [header-end footer-end];
+grid-template-rows: [header-start] 3em [header-end content-start] 1fr [content-end footer-start] 3em [footer-end];
+```
+
+### 13.4 在栅格中附加元素 ###
 
