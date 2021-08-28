@@ -384,6 +384,90 @@
 
 **动画性**：:x:
 
+### grid-area ###
+
+**取值**：`<grid-line>[/<grid-line>]{0,3}`
+
+**初始值**：见各个单独的属性
+
+**适用于**：栅格元素和绝对定位元素
+
+**计算值**：指定的值
+
+**继承性**：:x:
+
+**动画性**：:x:
+
+### grid-auto-flow ###
+
+**取值**：`[row|column] || dense`
+
+**初始值**：row
+
+**适用于**：栅格容器
+
+**计算值**：指定的值
+
+**继承性**：:x:
+
+**动画性**：:x:
+
+### grid-auto-rows ###
+
+**取值**：`<track-breadth>|minmax(<track-breadth>,<track-breadth>)`
+
+**初始值**：auto
+
+**适用于**：栅格容器
+
+**计算值**：取决于具体的轨道尺寸
+
+**继承性**：:x:
+
+**动画性**：:x:
+
+### grid ###
+
+**取值**：`none|subgird|[<grid-template-rows>/<grid-template-columns>]|[<line-names>? <string> <track-size>? <line-names>?]+ [/ <track-list>]?|[<grid-auto-flow> [<grid-auto-rows> [/ <grid-auto-columns>]?]?]]`
+
+**初始值**：参考各单独属性
+
+**适用于**：栅格容器
+
+**计算值**：参考各单独属性
+
+**继承性**：:x:
+
+**动画性**：:x:
+
+### grid-row-gap ###
+
+**取值**：`<length>|<percentage>`
+
+**初始值**：0
+
+**适用于**：栅格容器
+
+**计算值**：绝对长度
+
+**继承性**：:x:
+
+**动画性**：:heavy_check_mark:
+
+### grid-gap ###
+
+**取值**：`<grid-row-gap> <grid-column-gap>`
+
+**初始值**：0 0
+
+**适用于**：栅格容器
+
+**计算值**：声明的值
+
+**继承性**：:x:
+
+**动画性**：:heavy_check_mark:
+
 ## 10. 浮动及其形状 ##
 
 ### 10.1 浮动 ###
@@ -1089,4 +1173,99 @@ grid-column: col-B / span 2;
 `grid-template-areas`的使用方式。
 
 #### 13.4.3 隐式栅格 ####
+
+如果栅格元素(或其一部分)超出了显式定义的栅格呢？
+
+```css
+#grid {
+    grid-template-columns: repeat(6, 4em);
+    grid-template-rows: 2em 2em;
+}
+
+.box01 {
+    grid-column: 1;
+    grid-row: 1 / 4;
+}
+```
+
+遇到这种情况，浏览器会再创建一条行线。这条栅格线，以及由此而生的一个行轨道都是隐式栅格的一部分。
+
+跨度是从显式栅格开始计数的，然后向隐式栅格延伸，但是不能从隐式栅格开始计数。
+
+#### 13.4.5 使用区域 ####
+
+通过一个属性[grid-area](###grid-area###)引用栅格区域。
+
+这个属性可以和方便的把grid-template-areas声明结合使用。
+
+栅格线值的顺序是：row-start, column-start, row-end, column-end
+
+#### 13.4.6 栅格元素重复 ####
+
+重叠时会分层。
+
+### 13.5 栅格流 ###
+
+如果不明确指定，栅格元素将自动放入栅格中。
+
+在栅格流的作用下，栅格元素将放在第一个适合它的区域中。最简单的情况是，按顺序一个一个把栅格元素放入栅格轨道中。
+
+栅格流主要分为两种模式：行优先和列优先，不过二者都可以通过密集流(denseflow)增强。
+
+栅格流通过[grid-auto-flow](###grid-auto-flow###)设置
+
+栅格流放置的其实是栅格区域，然后再把栅格元素附加到栅格区域中。
+
+### 13.6 自动增加栅格线 ###
+
+当栅格元素超出边界时，根据布局增加所需的行或者列。
+
+控制自动增加的尺寸通过 [grid-auto-rows](###grid-auto-rows###), grid-auto-columns 属性
+
+设定自动创建的行或列轨道时的尺寸时，可以提供一个尺寸值，也可以提供一对极值。
+
+### 13.7 grid简写属性 ###
+
+css属性 [grid](###grid###)
+
+如果定义了栅格模板，那么栅格流和自动增加的轨道的尺寸都归为默认值。
+
+```css
+grid:
+"header header header header" 3em
+". content sidebar ." 1fr
+"footer footer footer footer" 5em /
+2em 3fr minmax(10em, 1fr) 2em;
+```
+
+### 13.8 释放栅格空间 ###
+
+#### 13.8.1 栏距 ####
+
+栏距(gutter)是两个栅格轨道之间的距离。栏距能在栅格单元之间添加间隔。一个轴上只能设定一个间隔值。
+
+栏距使用[grid-row-gap](###grid-row-gap###)和grid-column-gap属性设定。(row-gap, column-gap)
+
+在计算栅格轨道的尺寸时，栏距被视作栅格轨道，因此实际上比例类型的栅格轨道的大小将会变小。
+
+栏距的简写：[grid-gap](###grid-gap###)，现已改名为gap
+
+#### 13.8.2 栅格元素与盒模型 ####
+
+元素在外边距的边界处附加到栅格中。
+
+计算栅格轨道的尺寸时将忽略栅格元素的外边距，这表示，不管栅格元素的外边距多大，都不会改变min-content列的尺寸。
+
+### 13.9 栅格的对齐方式 ###
+
+对其属性的作用:
+
+| 属性            | 对齐的目标               | 适用于   |
+| --------------- | ------------------------ | -------- |
+| justify-self    | 行内方向上的一个栅格元素 | 栅格元素 |
+| justify-items   | 行内方向上的全部栅格元素 | 栅格容器 |
+| justify-content | 行内方向上的整个栅格     | 栅格容器 |
+| align-self      | 块级方向上的一个栅格元素 | 栅格元素 |
+| align-items     | 块级方向上的全部栅格元素 | 栅格容器 |
+| align-content   | 块级方向上的整个栅格     | 栅格容器 |
 
