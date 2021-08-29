@@ -468,6 +468,76 @@
 
 **动画性**：:heavy_check_mark:
 
+### caption-side ###
+
+**取值**：`top|bottom`
+
+**初始值**：top
+
+**适用于**：display属性为table-caption的元素
+
+**计算值**：声明的值
+
+**继承性**：:heavy_check_mark:
+
+**动画性**：:x:
+
+### border-collapse ###
+
+**取值**：`collapse|separate|inherit`
+
+**初始值**：separate
+
+**适用于**：display属性为table或者table-inline的元素
+
+**计算值**：声明的值
+
+**继承性**：:heavy_check_mark:
+
+**动画性**：:x:
+
+### border-spacing ###
+
+**取值**：`<length> <length>?`
+
+**初始值**：0
+
+**适用于**：display属性为table或者table-inline的元素
+
+**计算值**：两个绝对长度
+
+**继承性**：:heavy_check_mark:
+
+**动画性**：:heavy_check_mark:
+
+### empty-cells ###
+
+**取值**：`show|hide`
+
+**初始值**：show
+
+**适用于**：display属性为table-cell的元素
+
+**计算值**：指定的值
+
+**继承性**：:heavy_check_mark:
+
+**动画性**：:x:
+
+### table-layout ###
+
+**取值**：`auto|fixed`
+
+**初始值**：auto
+
+**适用于**：display属性为table或者table-inline的元素
+
+**计算值**：指定的值
+
+**继承性**：:heavy_check_mark:
+
+**动画性**：:x:
+
 ### Transform ###
 
 **取值**：`<transform-list>|none`
@@ -1382,6 +1452,130 @@ grid:
 | align-content   | 块级方向上的整个栅格     | 栅格容器 |
 
 ## 14. 表格布局 ##
+
+不管单元格中的内容是什么，一行中的所有单元格都具有相同的高度。在同一列中，单元格的宽度也是一样宽。
+
+### 14.1 表格格式化 ###
+
+了解表格的基本构成，以及表格中元素之间的关系。
+
+#### 14.1.1 表格的视觉排布 ####
+
+表格元素和表格内容元素是两个不同的概念。
+
+在css中，表格内部元素生成矩形框，有内容、内边距和边框，但是没有外边距。
+
+这些规则的基础是单元格，即由绘制表格的栅格线围成的区域。
+
+每个单元格的边界都沿着栅格单元的边界放置。
+
+**表格排布规则**
+
+- 一个行框(row box)包含一个由栅格单元构成的行，表格中的全部行框按出现在文档源码中的顺序从上到下排列。因此，表格中栅格行的数量与行元素的数量相等。
+- 一个行组(row group) 框包含的栅格单元就是行组中各行框包含的栅格单元。
+- 一个列框(column box)包含一个或多个由栅格单元构成的列。
+- 一个列组(column group)框包含的栅格单元就是列组中各列框包含的栅格单元。
+- 虽然单元格可能跨多行或多列，但是css没有定义具体方式。这一方面由编写文档的语言完成。
+- 单元格的矩形框不能超出表格或行组的最后一个行框。
+
+一列中的所有栅格单元具有相同的宽度。一行中的所有栅格单元具有相同的高度。
+
+#### 14.1.2 设定显示方式的值 ####
+
+- table: 把元素定义为块级表格。 对应 `table`
+- inline-table：把元素定义为行内表格。
+- table-row：把元素定义为有单元格构成的行。对应 `tr`
+- table-row-group: 把元素定义为由一行或多行构成的行组。对应 `tbody`
+- table-header-group: 表头行组始终显示在其他行和行组前面，并且显示在上表题后面。对应 `thead`
+- table-footer-group: 表脚行组始终显示在其他行和行组后面，并且显示在下表题前面。对应 `tfoot`
+- table-column: 把元素声明为由单元格构成的列。对应 `col`
+- table-column-group: 把元素声明为有一列或多列构成的列组。对应 `colgroup`
+- table-cell: 把元素定义为表格中的一个单元格。 HTML中的 `th` 和 `td` 都是应用table-cell的元素。
+- table-caption: 定义表题。
+
+``` css
+table {display: table;}
+tr {display: table-row;}
+thead {display: table-header-group;}
+tbody {display: table-row-group;}
+tfoot {display: table-footer-group;}
+col {display: table-column;}
+colgroup {display: table-column-group;}
+td, th {display: table-cell;}
+caption {display: table-caption;}
+```
+
+表格是以行主导的，列则从行中单元格的布局衍生出来。
+
+在css中，行和行组只能应用四个与表格无关的属性：border，background，width，visibility。
+
+#### 14.1.3 匿名表格对象 ####
+
+css定义了一种插入机制：以匿名对象的形式插入 "缺少的" 表格组件。
+
+- 如果table-cell的父元素不是table-row，在table-cell和其父元素之间插入一个匿名的table-row对象。
+- 如果table-row元素的父元素不是table，inline-table，table-row-group，在其和其父元素之间插入一个匿名table元素。
+- table-column插入table
+- table-row-group插入table
+- table-row-group的子元素不是table-row，插入table-row。
+- table-row的子元素不是table-cell，插入table-cell。
+
+#### 14.1.4 表格中的层 ####
+
+为了完整表示一个表格，css定义了6个独立的层。
+
+从外到内是：单元格，行，行组，列，列组，表格。
+
+#### 14.1.5 表题 ####
+
+[caption-side](###caption-side###)可以把表题放在表格上方或者下方。
+
+表题的宽度由table元素中的内容的宽度决定。
+
+### 14.2 单元格的边框 ###
+
+css中有两种完全不同的边框模型：分离边框模型和折叠边框模型，可以通过[border-collapse](###border-collapse###)设置边框模型。
+
+#### 14.2.1 分离单元格的边框 ####
+
+在这种模型中，表格中的每个单元格都与其他单元格相隔一定的距离，而且单元格之间的边框不会折叠在一起。
+
+把单元格的边框分开以后，还可以让边框相隔一定的距离：[border-spacing](###border-spacing###),第一个值是横向间隔，第二个值是纵向间隔。
+
+间隔值在外侧的单元格和table元素之间也存在。
+
+在分离边框模型中，不能为行，行组，列和列组设定边框。
+
+**处理空单元格**
+
+空单元格的处理方式：[empty-cells](###empty-cells###)
+
+#### 14.2.2 折叠单元格的边框 ####
+
+当border-collapse的值为collapse时：
+
+- table元素不能有内边距，所以表格四周的边框与最外层的单元格之间没有间隔。
+- 边框可以应用于单元格，行，行组，列和列组。
+- 单元格的边框之间肯定没有间隔。
+- 折叠的边框居中放在单元格之间假想的栅格线上。
+
+### 14.3 表格的尺寸 ###
+
+表格的宽度有两种方式：固定宽度布局和自动宽度布局。表格的高度都自动计算。
+
+#### 14.3.1 宽度 ####
+
+[table-layout](###table-layout###)确定宽度的布局方式.
+
+固定布局下，列的宽度由表格的第一行决定，后续各行中的单元格都与第一行确定的列宽度保持一致。
+
+#### 14.3.2 高度 ####
+
+#### 14.3.3 对齐方式 ####
+
+横向对齐单元格中的内容：text-align.
+
+单元格中内容的纵向对齐方式：vertical-align.
 
 ## 15. 列表和生成的内容 ##
 
