@@ -538,6 +538,48 @@
 
 **动画性**：:x:
 
+### transition-property ###
+
+**取值**：`none|[all|<property-name>]#`
+
+**初始值**：all
+
+**适用于**：所有元素，以及`:before` 和 `:after` 伪元素
+
+**计算值**：指定的值
+
+**继承性**：:x:
+
+**动画性**：:x:
+
+### transition-duration ###
+
+**取值**：`<time>#`
+
+**初始值**：0s
+
+**适用于**：所有元素，以及`:before` 和 `:after` 伪元素
+
+**计算值**：指定的值
+
+**继承性**：:x:
+
+**动画性**：:x:
+
+### transition-timing-function ###
+
+**取值**：`<time-function>#`
+
+**初始值**：ease
+
+**适用于**：所有元素，以及`:before` 和 `:after` 伪元素
+
+**计算值**：指定的值
+
+**继承性**：:x:
+
+**动画性**：:x:
+
 ## 10. 浮动及其形状 ##
 
 ### 10.1 浮动 ###
@@ -1390,4 +1432,61 @@ grid:
 使用[transform-origin](###transform-origin###)修改这一默认行为。
 
 ## 17. 过渡 ##
+
+### 17.1 CSS过渡 ###
+
+css过渡能控制一段时间内属性的值如何变成另一个值。
+
+### 17.2 定义过渡的属性 ###
+
+在css中，过渡使用四个属性定义：
+
+```css
+transition-property: color;
+transition-duration: 200ms;
+transition-timing-function: ease-in;
+transition-delay: 50ms;
+```
+
+#### 17.2.1 限制受过渡影响的属性 ####
+
+[transition-property](###transition-property###)属性指定想应用过渡效果的CSS属性属性名称。
+
+```css
+transition-property: all, border-radius, opacity;
+transition-duration: 1s, 2s, 3s;
+```
+
+这样可以为少数的属性设置独特的时间、速度或者步调。
+
+可以使用none禁用所有属性的过渡效果。
+
+**过渡事件**
+
+在过渡结束后会触发过渡事件 `transitionend`，简写属性中每个支持动画的属性有各自的过渡事件。
+
+#### 17.2.2 设置过渡持续时间 ####
+
+[transition-duration](###transition-duration###)属性的值事宜逗号分隔的时间长度列表，单位为秒(s)或者毫秒(ms)。
+
+持续时间在100到200毫秒之间的过渡效果最好
+
+#### 17.2.3 调整过渡的内部时序 ####
+
+css属性: [transition-timing-function](###transition-timing-function###)
+
+三次方贝塞尔函数的别名。
+
+**步进时序**
+
+此外，还可以使用步进时序函数。规范预定义了两个步进值
+
+| 时序函数        | 定义                                                 |
+| --------------- | ---------------------------------------------------- |
+| step-start      | 整个过渡都处在最终关键帧上。等同于 `steps(1, start)` |
+| step-end        | 整个过渡都处在初始关键帧上。等同于 `steps(1, end)`   |
+| steps(n, start) | 显示n个镜头，其中第一个固定镜头占整个过渡的百分之n   |
+| steps(n, end)   | 显示nge固定镜头，前百分之n的时间处于初始值状态       |
+
+如果只在全局状态中声明过渡，所有的属性的变化都会引用同一个过渡属性。
 
