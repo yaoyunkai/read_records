@@ -692,6 +692,76 @@
 
 **动画性**：:x:
 
+### animation-name ###
+
+**取值**：`[<single-animation-name>|none]#`
+
+**初始值**：none
+
+**适用于**：所有元素，以及`:before` 和 `:after` 伪元素
+
+**计算值**：指定的值
+
+**继承性**：:x:
+
+**动画性**：:x:
+
+### animation-duration ###
+
+**取值**：`<time>#`
+
+**初始值**：0s
+
+**适用于**：所有元素，以及`:before` 和 `:after` 伪元素
+
+**计算值**：指定的值
+
+**继承性**：:x:
+
+**动画性**：:x:
+
+### animation-iteration-count ###
+
+**取值**：`[<number>|infinite]#`
+
+**初始值**：1
+
+**适用于**：所有元素，以及`:before` 和 `:after` 伪元素
+
+**计算值**：指定的值
+
+**继承性**：:x:
+
+**动画性**：:x:
+
+### animation-direction ###
+
+**取值**：`[normal|reverse|alternate|alternate-reverse]#`
+
+**初始值**：normal
+
+**适用于**：所有元素，以及`:before` 和 `:after` 伪元素
+
+**计算值**：指定的值
+
+**继承性**：:x:
+
+**动画性**：:x:
+
+### animation-delay ###
+
+**取值**：`<time>#`
+
+**初始值**：0s
+
+**适用于**：所有元素，以及`:before` 和 `:after` 伪元素
+
+**计算值**：指定的值
+
+**继承性**：:x:
+
+**动画性**：:x:
+
 ## 10. 浮动及其形状 ##
 
 ### 10.1 浮动 ###
@@ -1747,4 +1817,58 @@ css属性: [transition-timing-function](###transition-timing-function###)
 ### 18.1 定义关键帧 ###
 
 若想为元素添加动画效果，要有一个关键帧，而这有要求有一个具名关键帧动画。
+
+首先，要使用 `@keyframes` 规则定义可复用的css关键帧动画，并为动画起个名称。然后，通过这个名称把对应的动画效果应用到元素或伪元素上。
+
+一个 `@keyframes` 规则有一个动画标识符，以及一到多个关键帧块。每个关键帧有一到多个关键帧选择符，声明属性及其值。
+
+```css
+@keyframes color-pop {
+    0% {
+        color: black;
+        background-color: white;
+    }
+    33% {
+        color: gray;
+        background-color: yellow;
+    }
+    100% {
+        color: white;
+        background-color: orange;
+    }
+}
+```
+
+### 18.2 设置关键帧动画 ###
+
+关键帧选择符：keyframe_selector, 指明声明的属性应用到动画的那个时间点，即动画播放到某个时刻希望属性为什么值。
+
+#### 18.3.1 省略from和to值 ####
+
+如果未设置from或者to关键帧，那么用户代理将使用元素的初始属性设置。
+
+### 18.4 把动画应用到元素上 ###
+
+指明动画的名称和持续时间
+
+- 单独声明各个属性
+- 使用animation简写属性一次性声明全部属性
+
+#### 18.4.1 指定动画名称 ####
+
+[animation-name](###animation-name###)指定想应用的关键帧动画的名称。
+
+#### 18.4.2 定义动画的时长 ####
+
+关键帧中的属性都会经历变化，而且animationstart和animationend事件也会触发。
+
+[animation-duration](###animation-duration###)属性定义动画迭代一次用时多久。
+
+#### 18.4.3 声明动画的迭代次数 ####
+
+css属性：[animation-iteration-count](###animation-iteration-count###)
+
+#### 18.4.4 设置动画的播放方向 ####
+
+css属性: [animation-direction](###animation-direction###)
 
