@@ -1,1 +1,4 @@
 personal/
+
+*.pyc
+__pycache__/
