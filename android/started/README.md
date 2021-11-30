@@ -258,3 +258,268 @@ The `android:orientation` can be:
     android:onClick="showToast"
 ```
 
+### 1.3 Text and scrolling views ###
+
+本章描述应用程序中最常用的View子类之一:TextView，它在屏幕上显示文本内容。TextView可以用来显示一条消息，一个来自数据库的响应，甚至是整个杂志风格的文章，用户可以滚动。本章还展示了如何创建文本和其他元素的滚动视图。
+
+#### TextView ####
+
+您可以通过使用它的资源id在您的Java代码中引用一个TextView，以便从您的代码中更新文本或其属性。如果你想让用户编辑文本，使用EditText，一个允许文本输入和编辑的TextView的子类。你学习关于EditText在另一课。
+
+**TextView的attributes**
+
+您可以使用TextView的XML属性来控制：
+
+- TextView在布局中的位置(像任何其他视图一样)
+- TextView本身如何显示，比如使用背景颜色
+- 文本在TextView中是什么样子的，比如初始文本及其样式、大小和颜色
+
+最常用的属性与TextView是以下:
+
+- `android:text`
+- `android:textColor` 设置文本的颜色。您可以将该属性设置为颜色值、预定义资源或主题。颜色资源和主题将在其他章节中描述。
+- `android:textAppearance` 文本的外观，包括颜色、字体、样式和大小。将此属性设置为预定义的样式资源或主题，这些资源或主题已经定义了这些值。
+- `android:textSize` 设置文本大小,Use `sp` (scaled-pixel) sizes such as `20sp` or `14.5sp`, or set the attribute to a predefined resource or theme.
+- `android:textStyle` Use `normal`, `bold`, `italic`, or `bold`|`italic`.
+- `android:typeface` Use `normal`, `sans`, `serif`, or `monospace`.
+- `android:lineSpacingExtra` 在文本行之间设置额外的间距。使用sp(缩放像素)或dp(设备无关像素)大小，或将属性设置为预定义的资源或主题。
+- `android:autoLink` 控制url和电子邮件地址等链接是否自动找到并转换为可点击(可触摸)链接。
+  - none
+  - web
+  - email
+  - phone
+  - map
+  - all
+
+**在文本中使用嵌入标签 Using embedded tags in text**
+
+在这两种情况下，文本都可能包含嵌入的HTML标记或其他文本格式化代码。为了在文本视图中正确显示，文本必须按照以下规则进行格式化:
+
+- 输入\n表示行尾，输入另一个\n表示空行。您需要添加行尾字符，以防止段落相互冲突。
+- 如果你的文本中有撇号(')，你必须在它前面加一个反斜杠(\')来转义它。如果文本中有双引号，也必须转义它(\")。
+- Enter the HTML and **</b>** tags around words that should be in bold.
+- Enter the HTML and **</i>** tags around words that should be in italics.
+
+**在代码中引用TextView**
+
+1. You use the [`findViewById()`](https://developer.android.com/reference/android/view/View.html#findViewById(int)) method of the `View` class, and refer to the view you want to find using this format
+2. After retrieving the `View` as a `TextView` member variable, you can then set the text to new text (in this case, `mCount_text`) using the [`setText()`](https://developer.android.com/reference/android/widget/TextView.html#setText(java.lang.CharSequence)) method of the `TextView` class
+
+#### Scrolling views ####
+
+The [`ScrollView`](https://developer.android.com/reference/android/widget/ScrollView.html) class provides the layout for a vertical scrolling view. (For horizontal scrolling, you would use [`HorizontalScrollView`](https://developer.android.com/reference/android/widget/HorizontalScrollView.html).) `ScrollView` is a subclass of [`FrameLayout`](https://developer.android.com/reference/android/widget/FrameLayout.html), which means that you can place only *one* `View` as a child within it; that child contains the entire contents to scroll.
+
+即使你只能在一个ScrollView中放置一个子视图，子视图也可以是一个ViewGroup，它具有子视图元素的层次结构，比如LinearLayout。对于ScrollView中的视图来说，一个很好的选择是LinearLayout，它是按照垂直方向排列的。
+
+**性能**
+
+ScrollView的所有内容(例如带有View元素的ViewGroup)占用内存和视图层次结构，即使部分内容没有显示在屏幕上。
+
+Consider using flatter layouts such as [`RelativeLayout`](https://developer.android.com/reference/android/widget/RelativeLayout.html) or [`GridLayout`](https://developer.android.com/reference/android/widget/GridLayout.html) to improve performance.
+
+To display long lists of items, or images, consider using a [`RecyclerView`](https://developer.android.com/reference/android/support/v7/widget/RecyclerView.html), which is covered in another lesson.
+
+*RelativeLayout* *GridLayout* *RecyclerView*
+
+**ScrollView with a TextView**
+
+要在屏幕上显示可滚动的杂志文章，您可以使用RelativeLayout，其中包括用于文章标题的单独TextView、用于文章副标题的另一个TextView和用于滚动文章文本的第三个TextView(见下图)，这些都是在ScrollView中设置的。屏幕上唯一可以滚动的部分是带有文章文本的ScrollView。
+
+![ The layout with a ScrollView](.assets/dg_layout_diagram1.png)
+
+**ScrollView with a LinearLayout**
+
+一个ScrollView只能包含一个子视图;然而，这个视图可以是一个ViewGroup，它包含几个视图元素，比如LinearLayout。你可以在ScrollView中嵌套一个ViewGroup，比如LinearLayout，从而滚动LinearLayout中的所有内容。
+
+![ A LinearLayout Inside the ScrollView](.assets/dg_layout_diagram2.png)
+
+对于LinearLayout：
+
+- android:layout_width : match_parent
+- android:layout_height: wrap_content
+
+因为ScrollView只支持垂直滚动 你必须设置LinearLayout orientation属性为 vertical
+
+## 2. Activities & intents ##
+
+### 2.1 Activities and intents ###
+
+#### About activities ####
+
+acivity代表应用程序中带有用户可以交互的界面的单个屏幕.
+
+通常，应用程序中的一个activity被指定为“主”活动，例如MainActivity。用户在第一次启动应用程序时看到主活动。每个活动可以启动其他活动来执行不同的操作。
+
+每当一个新的活动启动时，前一个活动就会停止，但系统会将该活动保留在一个堆栈中(“back stack”)。当用户完成当前活动并按下Back按钮时，该活动将从堆栈中弹出并销毁，前一个活动将继续。
+
+当一个活动因为一个新的活动开始而停止时，第一个活动通过活动生命周期回调方法被通知。
+
+#### 创建activity ####
+
+**Create the Activity**
+
+the [`AppCompatActivity`](https://developer.android.com/reference/android/support/v7/app/AppCompatActivity.html) class类可以让你使用最新的Android应用功能，比如应用栏和材质设计，同时还可以让你的应用与运行旧版本Android的设备兼容。
+
+```java
+public class MainActivity extends AppCompatActivity {
+   @Override
+   protected void onCreate(Bundle savedInstanceState) {
+       super.onCreate(savedInstanceState);
+       setContentView(R.layout.activity_main);
+   }
+}
+```
+
+了解activity的lifecycle
+
+**Declare the Activity in AndroidManifest.xml**
+
+Each `Activity` in your app must be declared in the `AndroidManifest.xml` file
+
+The <activity> element includes a number of attributes to define properties of the Activity such as its label, icon, or theme. The only required attribute is android:name, which specifies the class name for the Activity (such as MainActivity). 
+
+The <activity> element can also include declarations for Intent filters. The Intent filters specify the kind of Intent your Activity will accept.
+
+`Intent` filters must include at least one `<action>` element, and can also include a `<category>` and optional `<data>`.
+
+#### intent介绍 ####
+
+Each activity is started or activated with an [`Intent`](https://developer.android.com/reference/android/content/Intent.html), which is a message object that makes a request to the Android runtime to start an activity or other app component in your app or in some other app.
+
+当你的应用程序第一次从设备主屏幕启动时，Android运行时发送一个Intent给你的应用程序来启动你的应用程序的主活动(在AndroidManifest.xml文件中用main动作和LAUNCHER类别定义的那个)。要在你的应用程序中启动另一个活动，或者请求设备上其他可用的活动执行一个动作，你构建自己的意图并调用startActivity()方法来发送意图。
+
+除了启动一个活动，意图还可以用于在一个活动和另一个活动之间传递数据。当您创建一个意图来启动一个新活动时，您可以包含关于您希望新活动操作的数据的信息。例如，一个显示消息列表的email Activity可以向显示该消息的Activity发送一个Intent。显示活动需要关于要显示的消息的数据，您可以在意图中包含该数据。
+
+**intent types**
+
+- 显式意图:使用活动的完全限定类名指定接收活动(或其他组件)。您可以使用显式意图在自己的应用程序中启动组件(例如，在UI中在屏幕之间移动)，因为您已经知道该组件的包和类名。
+- 隐式意图:你不指定一个特定的活动或其他组件来接收意图。相反，您声明一个通用的操作来执行，Android系统将您的请求匹配到一个活动或其他可以处理请求的操作的组件。您将在另一个实践中了解更多关于使用隐式意图的内容。
+
+**Intent objects and fields**
+
+对于一个显式意图，关键字段包括以下内容:
+
+- Activity类(针对显式Intent)。这是应该接收Intent的Activity或其他组件的类名;使用Intent构造函数或setComponent()、setComponentName()或setClassName()方法来指定类。
+- Intent data。Intent数据字段包含了你想要接收Activity作为Uri对象操作的数据的引用
+- intent extras. 这些键值对携带接收activity完成请求操作所需的信息。
+- intent flgas. These are additional bits of metadata, defined by the `Intent` class.这些标志可能会指示Android系统如何启动一个Activity或者在Activity启动后如何处理它。
+
+#### Starting an Activity with an explicit Intent ####
+
+```java
+Intent messageIntent = new Intent(this, ShowMessageActivity.class);
+startActivity(messageIntent);
+```
+
+The intent constructor takes two arguments for an explicit `Intent`:
+
+- An application context. In this example, the `Activity` class provides the context (`this`).
+- The specific component to start (`ShowMessageActivity.class`).
+
+已启动的活动保持在屏幕上，直到用户点击设备上的后退按钮，此时该活动关闭并被系统回收，而原来的活动恢复。
+
+ You can also manually close the started `Activity` in response to a user action (such as a `Button` click) with the [`finish()`](https://developer.android.com/reference/android/app/Activity.html#finish()) method:
+
+```java
+public void closeActivity (View view) {
+    finish();
+}
+```
+
+#### Passing data from one Activity to another ####
+
+除了简单地从另一个活动启动一个活动之外，你还可以使用Intent将信息从一个活动传递到另一个活动。你用来启动一个Activity的Intent对象可以包含Intent数据(一个要操作的对象的URI)，或者Intent额外数据，这些都是Activity可能需要的额外数据。
+
+In the first (sending) `Activity`, you:
+
+1. Create the `Intent` object.
+2. Put data or extras into that `Intent`.
+3. Start the new `Activity` with `startActivity()`.
+
+In the second (receiving) `Activity`, you:
+
+1. Get the `Intent` object the `Activity` was started with.
+2. Retrieve the data or extras from the `Intent` object.
+
+**When to use Intent data or Intent extras**
+
+数据和额外数据之间有几个关键的区别，这些区别决定了您应该使用哪一个。
+
+intent data 只能保存一条信息:表示要操作的数据位置的URI。
+
+- 当您只有一条信息需要发送到已启动的活动。
+- 当该信息是可以用URI表示的数据位置时。
+
+intent extra: 您想要传递给已启动的活动的任何其他任意数据。`Intent` extras are stored in a [`Bundle`](https://developer.android.com/reference/android/os/Bundle.html) object as key and value pairs.value can be any primitive or object type (objects must implement the [`Parcelable`](https://developer.android.com/reference/android/os/Parcelable.html) interface).  putExtra & putExtras
+
+- 如果您想要传递多个信息到已启动的活动。
+- 如果您想传递的任何信息不能通过URI表示。
+
+**Add data to the Intent**
+
+*<u>setData</u>*
+
+```java
+Intent messageIntent = new Intent(this, ShowMessageActivity.class);
+
+// A web page URL
+messageIntent.setData(Uri.parse("http://www.google.com")); 
+// a Sample file URI
+messageIntent.setData(Uri.fromFile(new File("/sdcard/sample.jpg")));
+// A sample content: URI for your app's data model
+messageIntent.setData(Uri.parse("content://mysample.provider/data")); 
+// Custom URI 
+messageIntent.setData(Uri.parse("custom:" + dataID + buttonId));
+```
+
+**Add extras to the Intent**
+
+从原始activity中向显式的Intent添加额外的Intent:
+
+- 确定要用于将信息放入额外组件的键，或者定义自己的键。每条信息都需要它自己唯一的密钥。
+- 使用putExtra()方法将你的键/值对添加到Intent附加项中。你可以选择创建一个Bundle对象，将你的数据添加到Bundle中，然后将Bundle添加到Intent中。
+
+Intent类包含了你可以使用的额外键，它们被定义为以单词EXTRA_开头的常量。
+
+你也可以定义你自己的Intent额外的键。按照惯例，你将Intent额外键定义为以EXTRA_开头的静态变量。为了保证键是唯一的，键本身的字符串值应该以应用程序的完全限定类名作为前缀。
+
+```java
+public final static String EXTRA_POSITION_X = "com.example.mysampleapp.X";
+public final static String EXTRA_POSITION_Y = "com.example.mysampleapp.Y";
+
+// first way
+messageIntent.putExtra(EXTRA_MESSAGE, "this is my message");
+messageIntent.putExtra(EXTRA_POSITION_X, 100);
+messageIntent.putExtra(EXTRA_POSITION_Y, 500);
+
+// second way
+Bundle extras = new Bundle();
+extras.putString(EXTRA_MESSAGE, "this is my message");
+extras.putInt(EXTRA_POSITION_X, 100);
+extras.putInt(EXTRA_POSITION_Y, 500);
+messageIntent.putExtras(extras);
+```
+
+**Retrieve the data from the Intent in the started Activity**
+
+当你用Intent启动一个Activity时，启动的Activity可以访问Intent和它包含的数据。
+
+要获取Activity(或其他组件)启动时的Intent，使用getIntent()方法:
+
+```java
+Intent intent = getIntent();
+
+// get the URI
+Uri locationUri = intent.getData();
+
+// get the extra data
+String message = intent.getStringExtra(MainActivity.EXTRA_MESSAGE); 
+int positionX = intent.getIntExtra(MainActivity.EXTRA_POSITION_X);
+int positionY = intent.getIntExtra(MainActivity.EXTRA_POSITION_Y);
+
+Bundle extras = intent.getExtras();
+String message = extras.getString(MainActivity.EXTRA_MESSAGE);
+```
+
+#### Getting data back from an Activity ####
+
