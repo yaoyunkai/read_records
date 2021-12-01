@@ -523,3 +523,135 @@ String message = extras.getString(MainActivity.EXTRA_MESSAGE);
 
 #### Getting data back from an Activity ####
 
+当你用Intent启动一个Activity时，原始Activity会被暂停，而新的Activity会一直在屏幕上，直到用户点击Back按钮，或者你在点击处理程序中调用finish()方法或其他函数来结束用户参与这个Activity。
+
+To launch a new `Activity` and get a result back, do the following steps in your originating `Activity`:
+
+1. Instead of launching the `Activity` with `startActivity()`, call [`startActivityForResult()`](https://developer.android.com/reference/android/app/Activity.html#startActivityForResult(android.content.Intent, int)) with the `Intent` and a request code.
+2. Create a new `Intent` in the launched `Activity` and add the return data to that `Intent`.
+3. Implement `onActivityResult()` in the originating `Activity` to process the returned data.
+
+**Use startActivityForResult() to launch the Activity** in original act
+
+```java
+startActivityForResult(messageIntent, TEXT_REQUEST);
+
+public static final int PHOTO_REQUEST = 1;
+public static final int PHOTO_PICK_REQUEST = 2;
+public static final int TEXT_REQUEST = 3;
+```
+
+请求代码是一个整数，用于标识请求，并可用于在处理返回数据时区分结果。
+
+**Return a response from the launched Activity** in launched act
+
+从启动的Activity返回到原始Activity的响应数据在Intent中被发送，要么在data中，要么在extra的。
+
+To return data from the launched `Activity`, create a new empty `Intent` object.
+
+返回结果Intent不需要一个类或组件名来结束在正确的位置。Android系统为你将响应返回到原始的Activity。
+
+然后像往常一样将返回数据放入Intent中。在接下来的代码中，返回消息是一个带有EXTRA_RETURN_MESSAGE键的Intent额外消息。
+
+Use the `setResult()` method with a response code and the `Intent` with the response data.
+
+```java
+Intent returnIntent = new Intent();
+
+public final static String EXTRA_RETURN_MESSAGE = "com.example.mysampleapp.RETURN_MESSAGE";
+
+returnIntent.putExtra(EXTRA_RETURN_MESSAGE, mMessage);
+setResult(RESULT_OK,replyIntent);
+```
+
+The response codes are defined by the [`Activity`](https://developer.android.com/reference/android/app/Activity.html) class, and can be
+
+- `RESULT_OK`: The request was successful.
+- `RESULT_CANCELED`: The user canceled the operation.
+- `RESULT_FIRST_USER`: For defining your own result codes.
+
+You use the result code in the originating `Activity`.
+
+Finally, call `finish()` to close the `Activity` and resume the originating `Activity`:
+
+```java
+finish();
+```
+
+**Read response data in onActivityResult()** in original act
+
+现在启动的Activity已经将数据发送回带有Intent的原始Activity，第一个Activity必须处理这些数据。要处理原始活动中的返回数据，实现onActivityResult()回调方法。
+
+```java
+public void onActivityResult(int requestCode, int resultCode,  Intent data) {
+    super.onActivityResult(requestCode, resultCode, data);
+    if (requestCode == TEXT_REQUEST) {
+        if (resultCode == RESULT_OK) {
+            String reply = 
+               data.getStringExtra(SecondActivity.EXTRA_RETURN_MESSAGE);
+               // process data
+        }
+    }
+}
+```
+
+onActivityResult()的三个参数包含处理返回数据所需的所有信息。
+
+- requestCode: 使用startActivityForResult()启动activity时设置的request code。
+- resultcode: the result code set in the launched `Activity`
+- intent data:
+
+#### Activity navigation ####
+
+Android系统支持两种不同形式的导航策略。
+
+- 后退(时态)导航，由设备后退按钮和后退堆栈提供。
+- 向上(祖先)导航，由你提供作为一个选项在应用程序栏。
+
+**Back navigation, tasks, and the back stack**
+
+返回导航允许您的用户通过点击设备返回按钮返回到前一个活动。后退导航也被称为时间导航，因为后退按钮会以相反的时间顺序浏览最近浏览过的屏幕的历史。
+
+因为一个应用程序可以在一个应用程序内部和外部启动一个Activity, back stack包含了每个已经被用户以相反顺序启动的Activity。每当用户按下Back按钮时，堆栈中的每个Activity都会弹出，以显示前一个Activity，直到用户返回到主屏幕。
+
+![ The Activity back stack  ](.assets/diagram_backstack.png)
+
+Android为每个任务提供了一个back stack。任务是用户在执行操作时与每个Activity交互的组织概念，无论它们是在你的应用程序内还是跨多个应用程序。
+
+**Up navigation**
+
+向上导航，有时也被称为祖先或逻辑导航，用于在应用程序中基于屏幕之间明确的层次关系进行导航
+
+**Implement Up navigation with a parent Activity**
+
+使用Android Studio中的标准模板项目，很容易实现向上导航。如果一个Activity是你应用程序Activity层次结构中另一个Activity的子Activity，在AndroidManifest.xml文件中指定那个Activity的父Activity。
+
+Beginning in Android 4.1 (API level 16), declare the logical parent of each `Activity` by specifying the `android:parentActivityName` attribute in the `<activity>` element. 
+
+```xml
+<application
+    android:allowBackup="true"
+    android:icon="@mipmap/ic_launcher"
+    android:label="@string/app_name"
+    android:roundIcon="@mipmap/ic_launcher_round"
+    android:supportsRtl="true"
+    android:theme="@style/AppTheme">
+    <!-- The main activity (it has no parent activity) -->
+    <activity android:name=".MainActivity">
+       <intent-filter>
+            <action android:name="android.intent.action.MAIN" />
+
+            <category android:name="android.intent.category.LAUNCHER" />
+       </intent-filter>
+    </activity>
+    <!-- The child activity) -->
+    <activity android:name=".SecondActivity"
+       android:label = "Second Activity"
+       android:parentActivityName=".MainActivity">
+       <meta-data
+          android:name="android.support.PARENT_ACTIVITY"
+          android:value="com.example.android.twoactivities.MainActivity" />
+       </activity>
+</application>
+```
+
