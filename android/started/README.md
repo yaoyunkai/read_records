@@ -655,3 +655,153 @@ Beginning in Android 4.1 (API level 16), declare the logical parent of each `Act
 </application>
 ```
 
+### 2.2 Activity lifecycle and state ###
+
+#### about the activity lifecycle ####
+
+活动生命周期是活动在其整个生命周期中所处的状态集，从创建活动到销毁活动和系统回收其资源。当用户与你的应用程序和设备上的其他应用程序交互时，活动进入不同的状态。
+
+For example:
+
+- When you start an app, the app's main activity ("Activity 1" in the figure below) is started, comes to the foreground, and receives the user focus.
+- When you start a second activity ("Activity 2" in the figure below), a new activity is created and started, and the main activity is stopped.
+- When you're done with the Activity 2 and navigate back, Activity 1 resumes. Activity 2 stops and is no longer needed.
+- If the user doesn't resume Activity 2, the system eventually destroys it.
+
+![ Activity lifecycle](.assets/activity-stack.png)
+
+#### Activity states and lifecycle callback methods ####
+
+记住，生命周期状态(和回调)是每个Activity，而不是每个app，你可能在每个Activity生命周期的不同点实现不同的行为。
+
+这个图显示了每个Activity状态和回调方法，发生在不同状态之间的Activity转换:
+
+![ Diagram of the App Lifecycle](.assets/basic-lifecycle.png)
+
+**OnCreate**
+
+您的Activity在第一次启动时进入创建状态。当一个Activity第一次被创建时，系统调用onCreate()方法来初始化这个Activity。例如，当用户在主屏幕上点击你的应用程序图标来启动应用程序时，系统会调用onCreate()方法来调用你的应用程序中你已经声明为“launcher”或“main”活动的活动。在这种情况下，主活动onCreate()方法类似于其他程序中的main()方法。
+
+onCreate()方法是你必须在Activity类中实现的唯一必需的回调。在你的onCreate()方法中，你执行了基本的应用程序启动逻辑，这些逻辑应该只发生一次，比如设置用户界面，分配类范围变量，或者设置后台任务。
+
+创建的是暂时的状态;活动只在运行onCreate()时保持在创建状态，然后活动移动到启动状态。
+
+**OnStart**
+
+在你的活动被onCreate()初始化后，系统调用onStart()方法，活动是在启动状态。如果一个已停止的Activity返回前台，也会调用onStart()方法，比如当用户单击Back按钮或Up按钮导航到前一个屏幕时。当Activity被创建时onCreate()只被调用一次，onStart()方法可能在Activity的生命周期中被调用很多次，当用户在你的应用周围导航。
+
+当一个Activity处于启动状态并且在屏幕上可见时，用户不能与它交互，直到onResume()被调用，Activity正在运行，并且Activity在前台。
+
+启动和创建一样，都是暂时状态。在启动之后，Activity移动到resumed(running)状态。
+
+**Activity resumed/running: the onResume() method**
+
+你的活动在初始化时处于恢复状态，在屏幕上可见，准备使用。恢复状态通常被称为运行状态，因为正是在这种状态下用户实际与应用程序交互。
+
+第一次活动启动后，系统调用onResume()方法就在onStart()之后。onResume()方法也可能被多次调用，每次应用程序从暂停状态返回。
+
+只要Activity在前台并且用户正在与它交互，Activity就会保持在resumed状态。活动可以从resumed状态移动到paused状态。
+
+**onPause**
+
+暂停状态可能发生在以下几种情况:
+
+- 活动正在进入后台，但还没有完全停止。这是用户离开Activity的第一个迹象。
+- 活动在屏幕上只部分可见，因为对话框或其他透明的活动覆盖在它上面。
+- 在多窗口或分屏模式下(API 24)， Activity显示在屏幕上，但一些其他Activity有用户焦点。
+
+当活动进入暂停状态时，系统调用onPause()方法。因为onPause()方法是你得到的第一个提示，你可以使用onPause()来停止动画或视频播放，释放任何硬件密集型资源，或提交未保存的活动更改(如一封电子邮件草稿)。
+
+当应用程序经过暂停状态时，它仍然可以在屏幕上看到，并且执行onPause()中的任何延迟都会减慢用户转移到下一个Activity的速度。当应用程序处于停止状态时，实现任何重载操作。
+
+注意，在多窗口模式下(API 24)，你暂停的Activity仍然可以在屏幕上完全可见。在这种情况下，你不希望暂停动画或视频回放，因为你会暂停部分可见的活动。你可以使用Activity类中的inMultiWindowMode()方法来测试你的应用程序是否在多窗口模式下运行。
+
+Your `Activity` can move from the paused state into the resumed state (if the user returns to the `Activity`) or to the stopped state (if the user leaves the `Activity` altogether).
+
+**onStop**
+
+当一个活动在屏幕上不再可见时，它就处于停止状态。这通常是因为用户启动了另一个活动或返回到主屏幕。Android系统在back stack中保留activity实例，如果用户返回该activity，系统将重新启动它。如果资源不足，系统可能会完全终止一个已停止的活动。
+
+当活动停止时，系统调用onStop()方法。实现onStop()方法来保存持久数据并释放你没有在onPause()中释放的资源，包括那些对onPause()来说太重量级的操作。
+
+**onDestroy**
+
+当你的Activity被销毁时，它被完全关闭，Activity实例被系统回收。这种情况有几种:
+
+- 您可以在Activity中调用finish()来手动关闭它。
+- 用户导航回前一个活动。
+- 设备处于低内存状态，系统会回收任何已停止的Activity以释放更多的资源。
+- 设备配置发生变化。
+
+使用onDestroy()来完全清理你的活动后，这样没有组件(如线程)是运行后，活动被摧毁。
+
+注意，在有些情况下，系统会简单地杀死Activity的宿主进程，而不调用这个方法(或任何其他方法)，所以你不应该依赖于onDestroy()来保存任何必需的数据或Activity状态。使用onPause()或onStop()代替。
+
+**onRestart**
+
+重新启动状态是一种暂态，只有在一个已停止的活动再次启动时才会发生。在这种情况下，onRestart()方法在onStop()和onStart()之间被调用。如果你有需要停止或启动的资源，你通常在onStop()或onStart()而不是onRestart()实现该行为。
+
+#### Configuration changes and Activity state ####
+
+当一个配置改变发生，Android系统关闭你的活动，调用onPause()， onStop()，和onDestroy()。然后系统从头开始重新启动活动，调用onCreate()， onStart()和onResume()。
+
+**Activity instance state**
+
+当一个活动被销毁和重新创建时，会对该活动的运行时状态产生影响。当一个活动被暂停或停止时，该活动的状态被保留，因为该活动仍然被保存在内存中。当一个Activity被重新创建时，Activity的状态和任何在该Activity中的用户进度都会丢失 ：
+
+- 默认情况下，会自动保存部分活动状态信息。
+- 用来启动Activity的Intent，以及存储在数据中的信息，在Activity被重新创建的时候仍然是可用的。
+
+Activity状态作为一组键/值对存储在一个名为Activity实例状态的Bundle对象中。系统在Activity停止之前将默认状态信息保存到实例状态Bundle，并将该Bundle传递给新的Activity实例进行恢复。
+
+You can add your own instance data to the instance state `Bundle` by overriding the `onSaveInstanceState()` callback. The state `Bundle` is passed to the `onCreate()` method, so you can restore that instance state data when your `Activity` is created. There is also a corresponding `onRestoreInstanceState()` callback you can use to restore the state data.
+
+**Saving Activity instance state**
+
+To save information to the instance state `Bundle`, use the `onSaveInstanceState()` callback.
+
+```java
+@Override
+public void onSaveInstanceState(Bundle savedInstanceState) {
+    super.onSaveInstanceState(savedInstanceState);
+    // save your state data to the instance state bundle
+}
+
+@Override
+public void onSaveInstanceState(Bundle savedInstanceState) {
+    super.onSaveInstanceState(savedInstanceState);
+
+    // Save the user's current game state
+    savedInstanceState.putInt("score", mCurrentScore);
+    savedInstanceState.putInt("level", mCurrentLevel);
+}
+```
+
+onSaveInstanceState()方法在调用时传递一个Bundle对象(键/值对的集合)。这是实例状态Bundle，您将向其添加自己的活动状态信息。
+
+**Restoring Activity instance state**
+
+一旦您保存了活动实例状态，您还需要在重新创建活动时恢复它。你可以在以下两个地方做到这一点:
+
+- onCreate()回调方法，当Activity被创建时，它被实例状态Bundle调用。
+- onRestoreInstanceState()回调，它在Activity创建后的onStart()之后被调用。
+
+```java
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    // Always call the superclass first
+    super.onCreate(savedInstanceState); 
+
+    // Check if recreating a previously destroyed instance.
+    if (savedInstanceState != null) {
+        // Restore value of members from saved state.
+        mCurrentScore = savedInstanceState.getInt("score");
+        mCurrentLevel = savedInstanceState.getInt("level");
+    } else {
+        // Initialize members with default values for a new instance.
+        // ...
+    }
+    // ... Rest of code
+}
+```
+
