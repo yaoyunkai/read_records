@@ -805,3 +805,243 @@ protected void onCreate(Bundle savedInstanceState) {
 }
 ```
 
+### 2.3 Implicit intents ###
+
+如何发送和接收隐式意图。在隐式意图中，您声明要执行的一般操作，然后系统将您的请求与活动匹配。
+
+#### Understanding an implicit Intent ####
+
+一个更灵活的Intent用法是隐式Intent。您不必指定要运行的确切活动(或其他组件)—相反，您只需在意图中包含关于要执行的任务的足够信息。Android系统匹配你的请求意图中的信息与设备上任何可用的活动，可以执行该任务。如果只有一个匹配的活动，就会启动该活动。如果有多个活动与意图匹配，用户将看到一个应用选择器，并选择他们想要执行任务的应用。
+
+一个Activity将自己注册到系统中，它可以用Intent过滤器来处理一个隐含的Intent，在AndroidManifest.xml文件中声明。
+
+**Intent actions, categories, and data**
+
+An implicit `Intent`, like an explicit `Intent`, is an instance of the [`Intent`](http://developer.android.com/reference/android/content/Intent.html) class.these fields are used by an implicit `Intent`:
+
+- Intent action: 接收活动应该执行的通用操作.可用的Intent动作被定义为Intent类中的常量，并以ACTION_开头。
+- Intent category: 它提供了关于应该处理Intent的组件类别的额外信息。Intent类别是可选的，你可以给Intent添加多个类别。Intent categories也是Intent类中的常量，并以单词CATEGORY_开始。你可以用addCategory()方法给Intent添加类别。
+- data type: 它指示活动应该操作的数据的MIME类型.通常，数据类型是从Intent数据字段中的URI推断出来的，但是你也可以使用setType()方法显式定义数据类型。
+
+Intent动作、类别和数据类型被你在发送活动中创建的Intent对象以及你在接收活动的AndroidManifest.xml文件中定义的Intent过滤器所使用。Android系统使用这些信息来匹配一个隐含的Intent请求和一个Activity或者其他可以处理该Intent的组件。
+
+#### Sending an implicit Intent ####
+
+使用隐式意图启动一个Activity，并将数据从一个Activity传递到另一个Activity，其工作方式与显式意图的工作方式基本相同:
+
+1. In the sending `Activity`, create a new `Intent` object.
+1. Add information about the request to the `Intent` object, such as data or extras.
+1. Send the `Intent` with `startActivity()` (to just start the `Activity`) or `startActivityforResult()` (to start the `Activity` and expect a result back).
+
+当你创建一个隐式Intent对象时，你:
+
+- 不要指定activity
+- Add an `Intent` action or `Intent` categories (or both).
+- Resolve the `Intent` with the system before calling `startActivity()` or `startActivityforResult()`.
+- 显示请求的应用程序选择器(可选)。
+
+**create implicit intent objects**
+
+```java
+Intent sendIntent = new Intent();
+// Intent intent = new Intent(Intent.ACTION_VIEW);
+sendIntent.setAction(Intent.ACTION_SEND);
+sendIntent.putExtra(Intent.EXTRA_TEXT, "Hello world");
+sendIntent.setType("text/plain");
+```
+
+**Resolve the Activity before starting it**
+
+当你定义一个带有特定动作和/或类别的 implicit `Intent`时，设备上可能没有任何活动来处理你的请求。如果你只是发送意图，没有合适的匹配，你的应用程序将崩溃。
+
+要验证一个Activity或其他组件是否可用来接收你的Intent，在系统包管理器中使用resolveActivity()方法，如下所示:
+
+```java
+if (sendIntent.resolveActivity(getPackageManager()) != null) {
+    startActivity(chooser);
+}
+```
+
+**show the app chooser**
+
+```java
+// The implicit Intent object
+Intent sendIntent = new Intent(Intent.ACTION_SEND);
+// Always use string resources for UI text.
+String title = getResources().getString(R.string.chooser_title);
+// Create the wrapper intent to show the chooser dialog.
+Intent chooser = Intent.createChooser(sendIntent, title);
+// Resolve the intent before starting the activity
+if (sendIntent.resolveActivity(getPackageManager()) != null) {
+    startActivity(chooser);
+}
+```
+
+#### Receiving an implicit Intent ####
+
+如果你想在你的应用程序中有一个Activity来响应一个隐含的Intent(来自你自己的应用程序或其他应用程序)，在AndroidManifest.xml文件中声明一个或多个Intent过滤器。
+
+一个显式的Intent总是被传递给它的目标，不管组件声明了什么Intent过滤器。相反，如果一个Activity没有包含Intent过滤器，它只能在显式的Intent下启动。
+
+一旦你的Activity被一个隐式Intent成功启动，你可以像处理一个显式Intent一样处理这个Intent和它的数据，通过:
+
+1. Getting the `Intent` object with `getIntent()`.
+1. Getting `Intent` data or extras out of that `Intent`.
+1. Performing the task the `Intent` requested.
+1. Returning data to the calling `Activity` with another `Intent`, if needed.
+
+**intent filters**
+
+在AndroidManifest.xml文件中使用一个或多个< Intent -filter>元素定义Intent过滤器，嵌套在相应的`<activity>`元素中。在`<intent-filter>`中，指定你的活动可以处理的意图类型。只有当intent对象中的字段匹配该组件的intent过滤器时，Android系统才会将隐式intent与activity或其他应用组件匹配。
+
+一个Intent过滤器可能包含以下元素，它们对应于上面描述的Intent对象中的字段:
+
+- action: The `Intent` action that the activity accepts.
+- data:  The type of data accepted, including the MIME type or other attributes of the data URI (such as scheme, host, port, and path).
+- category: The `Intent` category.
+
+```xml
+<intent-filter>
+    <action android:name="android.intent.action.MAIN" />
+    <category android:name="android.intent.category.LAUNCHER" />
+</intent-filter>
+
+<activity android:name="ShareActivity">
+    <intent-filter>
+        <action android:name="android.intent.action.SEND"/>
+        <category android:name="android.intent.category.DEFAULT"/>
+        <data android:mimeType="text/plain"/>
+    </intent-filter>
+</activity>
+```
+
+MAIN: 表示是程序的主入口
+
+LAUNCHER: that this activity should be listed in the system's app launcher 
+
+**Actions**
+
+```xml
+<intent-filter>
+    <action android:name="android.intent.action.EDIT" />
+    <action android:name="android.intent.action.VIEW" />
+</intent-filter>
+```
+
+**Categories**
+
+```xml
+<intent-filter>
+    <category android:name="android.intent.category.DEFAULT" />
+    <category android:name="android.intent.category.BROWSABLE" />
+</intent-filter>
+```
+
+注意，任何你想要接受隐式意图的Activity都必须包含`android.intent.category.DEFAULT` Intent过滤器。这个类别被应用到Android系统的所有隐式Intent对象。
+
+**Data**
+
+- URI Scheme
+- URI Host
+- URI Path
+- Mime type
+
+#### Sharing data using `ShareCompat.IntentBuilder` ####
+
+```java
+ShareCompat.IntentBuilder
+    .from(this)         // information about the calling activity
+    .setType(mimeType)  // mime type for the data
+    .setChooserTitle("Share this text with: ") //title for the app chooser
+    .setText(txt)       // intent data
+    .startChooser();    // send the intent
+```
+
+#### Managing tasks ####
+
+ If you want to change the normal behavior, Android provides a number of ways to manage tasks and each `Activity` within those tasks, including:
+
+- `Activity` launch modes, to determine how an `Activity` should be launched.
+- Task affinities, which indicate which task a launched `Activity` belongs to.
+
+#### Activity launch modes ####
+
+ Define launch modes for the `Activity` with attributes on the `<activity>` element of the `AndroidManifest.xml` file, or with flags set on the `Intent` that starts that `Activity`.
+
+**Activity attributes**
+
+要定义一个Activity的启动模式，在AndroidManifest.xml文件的< Activity >元素中添加android:launchMode属性。这个例子使用了默认的“standard”启动模式。
+
+```java
+<activity
+   android:name=".SecondActivity"
+   android:label="@string/activity2_name"
+   android:parentActivityName=".MainActivity"
+   android:launchMode="standard">
+   <!-- More attributes ... -->
+</activity>
+```
+
+- standard: 一个新的Activity被启动并添加到当前任务的back stack中,一个activity可以被实例化多次，一个任务可以有同一个活动的多个实例，多个实例可以属于不同的任务。
+- singleTop: 
+- singleTask:
+- singleInstance:
+
+**intent flags**
+
+Intent flags是用来指定接收Intent的activity(或其他app组件)应该如何处理该Intent的选项。Intent标记被定义为Intent类中的常量，并且以单词FLAG_开头。
+
+使用 `setFlag()` `addFlag()`
+
+三个特定的Intent标志用于控制活动启动模式，或者与launchMode属性一起使用，或者代替它。在冲突的情况下，intent标志总是优先于activity launch mode。
+
+- [`FLAG_ACTIVITY_NEW_TASK`](https://developer.android.com/reference/android/content/Intent.html#FLAG_ACTIVITY_NEW_TASK): start the `Activity` in a new task.
+- [`FLAG_ACTIVITY_SINGLE_TOP`](https://developer.android.com/reference/android/content/Intent.html#FLAG_ACTIVITY_SINGLE_TOP): 如果要启动的Activity位于back stack的顶部，将Intent路由到那个已经存在的Activity实例。
+- [`FLAG_ACTIVITY_CLEAR_TOP`](https://developer.android.com/reference/android/content/Intent.html#FLAG_ACTIVITY_CLEAR_TOP):如果要启动的Activity的一个实例已经存在于back stack中，销毁它上面的任何其他Activity，并将Intent路由到那个已经存在的实例。
+
+**Handle a new Intent**
+
+When the Android system routes an `Intent` to an existing `Activity` instance, the system calls the `onNewIntent()` callback method (usually just before the `onResume()` method). 
+
+The `onNewIntent()` method includes an argument for the new `Intent` that was routed to the `Activity`. Override the `onNewIntent()` method in your class to handle the information from that new `Intent`.
+
+```java
+@Override 
+public void onNewIntent(Intent intent) { 
+    super.onNewIntent(intent); 
+    // Use the new intent, not the original one
+    setIntent(intent); 
+}
+```
+
+#### Task affinities ####
+
+Task affinity指示当Activity实例被启动时Activity更倾向于属于哪个Task。
+
+一个Activity从应用程序外部启动的implicit `Intent`属于发送implicit `Intent`的应用程序。
+
+To define a task affinity, add the `android:taskAffinity` attribute to the `<activity>` element in the `AndroidManifest.xml` file.
+
+```xml
+<activity
+   android:name=".SecondActivity"
+   android:label="@string/activity2_name"
+   android:parentActivityName=".MainActivity"
+   android:taskAffinity="com.example.android.myapp.newtask">
+   <!-- More attributes ... -->
+</activity>
+```
+
+任务亲和性的另一个用途是重养育，它允许任务从启动它的活动移动到它具有亲和性的活动。要启用任务重亲，添加一个任务关联属性到`<activity>`元素，并设置android:allowTaskReparenting为true。
+
+```xml
+<activity
+   android:name=".SecondActivity"
+   android:label="@string/activity2_name"
+   android:parentActivityName=".MainActivity"
+   android:taskAffinity="com.example.android.myapp.newtask"
+   android:allowTaskReparenting="true" >
+   <!-- More attributes ... -->
+</activity>
+```
+
