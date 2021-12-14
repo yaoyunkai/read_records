@@ -1045,3 +1045,9 @@ To define a task affinity, add the `android:taskAffinity` attribute to the `<act
 </activity>
 ```
 
+## 4. User interaction ##
+
+### 4.1 Buttons and clickable images ###
+
+#### 交互设计 ####
+
