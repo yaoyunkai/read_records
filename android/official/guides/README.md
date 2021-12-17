@@ -476,6 +476,66 @@ public void onConfigurationChanged(Configuration newConfig) {
 
 该文件必须具有一个根元素，可以是 `<set>`、`<objectAnimator>` 或 `<valueAnimator>`。您可以将动画元素（包括其他 `<set>` 元素）组合到 `<set>` 元素中。
 
+**元素**:
+
+`<set>` 
+
+容纳其他动画元素（`<objectAnimator>`、`<valueAnimator>` 或其他 `<set>` 元素）的容器[AnimatorSet](https://developer.android.google.cn/reference/android/animation/AnimatorSet)
+
+每个 `<set>` 都可以定义自己的 `ordering` 属性。
+
+| 值                 | 说明                     |
+| :----------------- | :----------------------- |
+| `sequentially`     | 依序播放此集合中的动画   |
+| `together`（默认） | 同时播放此集合中的动画。 |
+
+`<objectAnimator>`
+
+在特定的一段时间内为对象的特定属性创建动画。代表 [`ObjectAnimator`](https://developer.android.google.cn/reference/android/animation/ObjectAnimator)。
+
+`android:propertyName` 要添加动画的对象属性，通过其名称引用。
+
+`android:valueTo` 动画属性的结束值。
+
+`android:valueFrom` 动画属性的开始值。
+
+`android:duration` 整数。动画的时间，以毫秒为单位。默认为 300 毫秒。
+
+`android:startOffset` 整数。调用 `start()` 后动画延迟的毫秒数。
+
+`android:repeatCount` 整数。动画的重复次数。
+
+`android:repeatMode` 整数。动画播放到结尾处的行为。
+
+`android:valueType` 关键字。如果值为颜色，则不要指定此属性。
+
+##### 视图动画 #####
+
+视图动画框架可支持补间动画和逐帧动画，两者都可以在 XML 中声明。
+
+#### 颜色状态列表资源 ####
+
+`ColorStateList` 是一个您可以在 XML 中定义的对象，您可以将其作为颜色来应用，但它实际上会更改颜色，具体取决于其应用到的 `View` 对象的状态。
+
+在每次状态更改期间，系统将从上到下遍历状态列表，并且将使用与当前状态匹配的第一项。系统的选择并非基于“最佳匹配”，而仅仅是基于符合状态的最低标准的第一项。
+
+文件位置：`res/color/filename.xml`
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android" >
+    <item
+          android:color="hex_color"
+          android:state_pressed=["true" | "false"]
+          android:state_focused=["true" | "false"]
+          android:state_selected=["true" | "false"]
+          android:state_checkable=["true" | "false"]
+          android:state_checked=["true" | "false"]
+          android:state_enabled=["true" | "false"]
+          android:state_window_focused=["true" | "false"] />
+</selector>
+```
+
 ### 应用清单文件 ###
 
 每个应用项目必须在[项目源设置](https://developer.android.google.cn/studio/build#sourcesets)的根目录中加入 `AndroidManifest.xml` 文件（且必须使用此名称）。 清单文件会向 Android 构建工具、Android 操作系统和 Google Play 描述应用的基本信息。
@@ -515,4 +575,110 @@ APK 编译完成后，`package` 属性还可表示应用的通用唯一应用 ID
 如果您决定让代码的命名空间（以及清单中的 `package` 名称）有别于构建文件的 `applicationId`，请务必完全理解[设置应用 ID](https://developer.android.google.cn/studio/build/application-id)的影响。
 
 ##### 应用组件 #####
+
+- `<activity>` 用于 `Activity` 的每个子类。
+- `<service>` 用于 `Service` 的每个子类。
+- `<receiver>` 用于 `BroadcastReceiver` 的每个子类。
+- `<provider>` 用于 `ContentProvider` 的每个子类。
+
+##### Intent 过滤器 #####
+
+应用组件可包含任意数量的 Intent 过滤器（通过 `<intent-filter>` 元素定义），每个过滤器描述该组件的不同功能。
+
+如需了解更多信息，请参阅 [Intent 和 Intent 过滤器](https://developer.android.google.cn/guide/components/intents-filters)文档。
+
+##### 图标和标签 #####
+
+许多清单元素拥有 `icon` 和 `label` 属性，二者分别用于向对应应用组件的用户显示小图标和文本标签。
+
+##### 权限 #####
+
+如要访问敏感用户数据（如联系人和短信）或某些系统功能（如相机和互联网访问），则 Android 应用必须请求相关权限。 每个权限均由唯一标签标识。
+
+```xml
+<manifest ... >
+    <uses-permission android:name="android.permission.SEND_SMS"/>
+    ...
+</manifest>
+```
+
+从 Android 6.0（API 级别 23）开始，用户可以在运行时同意或拒绝某些应用权限。 但是，无论您的应用支持哪个 Android 版本，您都必须使用清单中的 `<uses-permission>` 元素声明所有权限请求。
+
+如需了解更多信息，请参阅[权限概览](https://developer.android.google.cn/guide/topics/permissions/overview)。
+
+##### 设备兼容性 #####
+
+清单文件也可用于声明应用所需的硬件或软件功能类型，以及应用兼容的设备类型。 Google Play 商店不允许在未提供应用所需功能或系统版本的设备上安装应用。
+
+`<uses-feature>`
+
+[`uses-feature`](https://developer.android.google.cn/guide/topics/manifest/uses-feature-element) 元素允许您声明应用所需的硬件和软件功能。 例如，如果您的应用无法在缺少罗盘传感器的设备上实现基础功能，则您可使用以下清单标记将罗盘传感器声明为必需功能：
+
+```xml
+<manifest ... >
+    <uses-feature android:name="android.hardware.sensor.compass"
+                  android:required="true" />
+    ...
+</manifest>
+```
+
+`<uses-sdk>`
+
+每个后续平台版本往往都会新增先前版本未提供的 API。 如要指明与应用兼容的最低版本，您的清单必须包含 [`uses-sdk`](https://developer.android.google.cn/guide/topics/manifest/uses-sdk-element) 标签及其 [`minSdkVersion`](https://developer.android.google.cn/guide/topics/manifest/uses-sdk-element#min) 标签及其 [`minSdkVersion`](https://developer.android.google.cn/guide/topics/manifest/uses-sdk-element#min) 属性。
+
+```groovy
+android {
+  defaultConfig {
+    applicationId 'com.example.myapp'
+
+    // Defines the minimum API level required to run the app.
+    minSdkVersion 15
+
+    // Specifies the API level used to test the app.
+    targetSdkVersion 28
+
+    ...
+  }
+}
+```
+
+如需了解关于 `build.gradle` 文件的更多信息，请阅读[如何配置您的构建](https://developer.android.google.cn/studio/build)。
+
+如要详细了解如何声明应用对不同设备的支持，请参阅[设备兼容性概览](https://developer.android.google.cn/guide/practices/compatibility)。
+
+#### 文件约定 ####
+
+#### 清单元素参考 ####
+
+下表提供 `AndroidManifest.xml` 文件中所有有效元素的参考文档链接。
+
+|                            |                                                              |
+| -------------------------- | ------------------------------------------------------------ |
+| `<action>`                 | 向 Intent 过滤器添加操作。                                   |
+| `<activity>`               | 声明 Activity 组件。                                         |
+| `<activity-alias>`         | 声明 Activity 的别名。                                       |
+| `<application>`            | 应用的声明。                                                 |
+| `<category>`               | 向 Intent 过滤器添加类别名称。                               |
+| `<compatible-screens>`     | 指定与应用兼容的每个屏幕配置。                               |
+| `<data>`                   | 向 Intent 过滤器添加数据规范。                               |
+| `<grant-uri-permission>`   | 指定父级内容提供程序有权访问的应用数据的子集。               |
+| `<instrumentation>`        | 声明支持您监控应用与系统进行交互的 `Instrumentation` 类。    |
+| `<intent-filter>`          | 指定 Activity、服务或广播接收器可以响应的 Intent 类型。      |
+| `<manifest>`               | AndroidManifest.xml 文件的根元素。                           |
+| `<meta-data>`              | 可以提供给父级组件的其他任意数据项的名称-值对。              |
+| `<path-permission>`        | 定义内容提供程序中特定数据子集的路径和所需权限。             |
+| `<permission>`             | 声明安全权限，可用于限制对此应用或其他应用的特定组件或功能的访问。 |
+| `<permission-group>`       | 为相关权限的逻辑分组声明名称。                               |
+| `<permission-tree>`        | 声明权限树的基本名称。                                       |
+| `<provider>`               | 声明内容提供程序组件。                                       |
+| `<receiver>`               | 声明广播接收器组件。                                         |
+| `<service>`                | 声明服务组件。                                               |
+| `<supports-gl-texture>`    | 声明应用支持的一种 GL 纹理压缩格式。                         |
+| `<supports-screens>`       | 声明应用支持的屏幕尺寸，并为大于此尺寸的屏幕启用屏幕兼容模式。 |
+| `<uses-configuration>`     | 指明应用要求的特定输入功能。                                 |
+| `<uses-feature>`           | 声明应用使用的单个硬件或软件功能。                           |
+| `<uses-library>`           | 指定应用必须链接到的共享库。                                 |
+| `<uses-permission>`        | 指定为使应用正常运行，用户必须授予的系统权限。               |
+| `<uses-permission-sdk-23>` | 指明应用需要特定权限，但仅当应用在运行 Android 6.0（API 级别 23）或更高版本的设备上安装时才需要。 |
+| `<uses-sdk>`               | 您可以通过整数形式的 API 级别，表示应用与一个或多个版本的 Android 平台的兼容性。 |
 
