@@ -8,6 +8,16 @@
 
 ### 应用资源 ###
 
+#### [概览](./basic/providing-resources.md) ####
+
+#### [处理配置变更](./basic/runtime-changes.md) ####
+
+#### 本地化 ####
+
+#### 复杂的XML资源 ####
+
+#### [资源类型](./basic/available-resources.md) ####
+
 ### 应用清单文件 ###
 
 ## 设备 ##
