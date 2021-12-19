@@ -32,6 +32,14 @@
 
 #### [任务和返回栈](./core/tasks-and-back-stack.md) ####
 
+#### [进程和应用生命周期](./core/process-lifecycle.md) ####
+
+#### [Parcelable&Bundle](./core/parcelables-and-bundles.md) ####
+
+#### [Fragment](./core/fragments.md) ####
+
+
+
 ### 应用兼容性 ###
 
 ## 游戏 ##
