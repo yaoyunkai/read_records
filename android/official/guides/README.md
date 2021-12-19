@@ -24,7 +24,7 @@
 
 ## 核心主题 ##
 
-### Activity ###
+### [Activity](./core/intro-activities.md) ###
 
 ### 应用兼容性 ###
 
