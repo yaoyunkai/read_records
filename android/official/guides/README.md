@@ -18,7 +18,7 @@
 
 #### [资源类型](./basic/available-resources.md) ####
 
-### 应用清单文件 ###
+### [应用清单文件](./basic/manifest-intro.md) ###
 
 ## 设备 ##
 

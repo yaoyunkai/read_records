@@ -4,23 +4,23 @@
 
 以下是对每个页面的简要说明：
 
-- 动画资源
+- [动画资源](./animation-resource.md)
   定义预先确定的动画。
   补间动画保存在 res/anim/ 中并通过 R.anim 类访问。
   帧动画保存在 res/drawable/ 中并通过 R.drawable 类访问。
-- 颜色状态列表资源
+- [颜色状态列表资源](./color-list-resource.md)
   定义根据 View 状态而变化的颜色资源。
   保存在 res/color/ 中并通过 R.color 类访问。
-- 可绘制资源
+- [可绘制资源](./drawable-resource.md)
   使用位图或 XML 定义各种图形。
   保存在 res/drawable/ 中并通过 R.drawable 类访问。
 - 布局资源
   定义应用界面的布局。
   保存在 res/layout/ 中并通过 R.layout 类访问。
-- 菜单资源
+- [菜单资源](./menu-resource.md)
   定义应用菜单的内容。
   保存在 res/menu/ 中并通过 R.menu 类访问。
-- 字符串资源
+- [字符串资源](./string-resource.md)
   定义字符串、字符串数组和复数形式（并包括字符串格式和样式）。
   保存在 res/values/ 中，并通过 R.string、R.array 和 R.plurals 类访问。
 - 样式资源
