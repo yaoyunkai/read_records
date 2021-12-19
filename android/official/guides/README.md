@@ -26,6 +26,10 @@
 
 ### [Activity](./core/intro-activities.md) ###
 
+#### [Activity生命周期](./core/activity-lifecycle.md) ####
+
+#### [Activity状态变更](./core/state-changes.md) ####
+
 ### 应用兼容性 ###
 
 ## 游戏 ##
