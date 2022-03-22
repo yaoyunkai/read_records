@@ -219,9 +219,49 @@ OK
 
 集合以无序的方式来存储各不相同的元素，下面列出了一些常见的命令：
 
-| 命令 | 描述 |
-| ---- | ---- |
-|      |      |
-|      |      |
-|      |      |
+| 命令        | 描述                                                         |
+| ----------- | ------------------------------------------------------------ |
+| SADD        | `SADD key-name item [item ...]` 将一个或者多个元素添加到集合，返回添加成功的数量 |
+| SCARD       | Integer reply: the cardinality (number of elements) of the set, or 0 if key does not exist. |
+| SDIFF       | `SDIFF key-name [key-name ...]` 返回由第一个集合与所有后续集合之差产生的集合的成员。(列表中包含结果集的成员。) |
+| SDIFFSTORE  | 返回由第一个集合与所有后续集合之差产生的集合的成员列表，并将结果存储在指定的key |
+| SINTER      | 返回由所有给定集合的交集生成的集合的成员。(Array reply: list with members of the resulting set.) |
+| SINTERSTORE | 返回由所有给定集合的交集生成的集合的成员, 并将结果存储在指定的key |
+| SISMEMBER   | 检查member是否存在于集合中，返回1表示存在，0表示不存在。     |
+| SMEMBERS    | 返回存储在key处的集合值的所有成员。(Array reply: all elements of the set.) |
+
+```console
+127.0.0.1:6379[1]> sadd s1 "a" "b" "C" "d"
+(integer) 4
+127.0.0.1:6379[1]> sadd s1 "a" "b" "C" "d"
+(integer) 0
+127.0.0.1:6379[1]> sadd s1 "5"
+(integer) 1
+127.0.0.1:6379[1]> scard s1
+(integer) 5
+127.0.0.1:6379[1]> sadd s2 "a" "b"
+(integer) 2
+127.0.0.1:6379[1]> sdiff s1 s2
+1) "C"
+2) "5"
+3) "d"
+127.0.0.1:6379[1]> sdiffstore s3 s1 s2
+(integer) 3
+127.0.0.1:6379[1]>
+
+127.0.0.1:6379[1]> sinter s1 s2
+1) "b"
+2) "a"
+127.0.0.1:6379[1]> SISMEMBER s1 "a"
+(integer) 1
+127.0.0.1:6379[1]> SISMEMBER s1 "aaa"
+(integer) 0
+127.0.0.1:6379[1]> SMEMBERS s1
+1) "C"
+2) "a"
+3) "d"
+4) "5"
+5) "b"
+127.0.0.1:6379[1]>
+```
 
