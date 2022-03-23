@@ -6,7 +6,7 @@
 
 ## 3. Redis命令 ##
 
-### 3.1 字符串 ###
+### 3.1 字符串 string ###
 
 字符串可以存储的3种类型：
 
@@ -129,7 +129,7 @@ conn.get('demo1')
 Out[10]: b'bb'
 ```
 
-### 3.2 列表 ###
+### 3.2 列表 list ###
 
 列表常用的命令：
 
@@ -211,11 +211,7 @@ OK
 (error) ERR index out of range
 ```
 
-### 3.3 集合 ###
-
-![image-20220322230540153](D:\Projects\Python\simple\code_of_books\redis_in_action\.assets\image-20220322230540153.png)
-
-![image-20220322230559803](D:\Projects\Python\simple\code_of_books\redis_in_action\.assets\image-20220322230559803.png)
+### 3.3 集合 set ###
 
 集合以无序的方式来存储各不相同的元素，下面列出了一些常见的命令：
 
@@ -229,6 +225,10 @@ OK
 | SINTERSTORE | 返回由所有给定集合的交集生成的集合的成员, 并将结果存储在指定的key |
 | SISMEMBER   | 检查member是否存在于集合中，返回1表示存在，0表示不存在。     |
 | SMEMBERS    | 返回存储在key处的集合值的所有成员。(Array reply: all elements of the set.) |
+| SMOVE       | `SMOVE source-key dest-key item` Move a member from one set to another |
+| SPOP        | 从集合中随机弹出一个元素                                     |
+| SRANDMEMBER | `srandmember key [count]`  从集合里面随机地返回一个或者多个元素 |
+| SSCAN       | `SSCAN key cursor [MATCH pattern] [COUNT count]` 增量的扫描set中的元素，cursor默认开始扫描时设为0，pattern为要匹配的元素的模式，count为一次扫描的数量，返回两部分数据，第一部分返回下一次扫描的cursor，第二部分为扫描得到的结果，直到最终cursor返回0. |
 
 ```console
 127.0.0.1:6379[1]> sadd s1 "a" "b" "C" "d"
@@ -264,4 +264,62 @@ OK
 5) "b"
 127.0.0.1:6379[1]>
 ```
+
+### 3.4 散列 hash ###
+
+与python对应的类型 dict
+
+用于添加和删除键值对的散列操作：
+
+| 命令    | 描述                                            |
+| ------- | ----------------------------------------------- |
+| HSET    | `HSET key field value`                          |
+| HMSET   | `HMSET key field value [field value ...]`       |
+| HDEL    | `HDEL key field [field ...]`                    |
+| HEXISTS | `hexists key feild`                             |
+| HGET    | `HGET key field`                                |
+| HGETALL | `HGETALL key`                                   |
+| HMGET   | `HMGET key field [feild ...]`                   |
+| HKEYS   | `HKEYS key` 获取给定key的所有 field的集合。     |
+| HLEN    | `HLEN field` Get the number of fields in a hash |
+
+### 3.5 有序集合 zset / sort_set ###
+
+分值以IEEE754双精度浮点数的格式存储
+
+| 命令             | 描述                                                         |
+| ---------------- | ------------------------------------------------------------ |
+| ZADD             | `ZADD key [NX|XX] [CH] [INCR] score member [score member ...] ` 向有序集合中添加元素<br />NX: 只添加新元素。不要更新已经存在的元素。<br />XX: 只更新已经存在的元素。不要添加新元素。<br />CH: 更改返回值的表示方式，默认返回新添加的元素的数量，CH表示只返回score值更新的元素的数量 |
+| ZCARD            | 获取已排序集合中的成员数                                     |
+| ZRANK            | `zrank key-name member`  返回成员member在有序集合中的排序。member不存在返回 `nil` |
+| ZREVRANK         | 反向排序                                                     |
+| ZCOUNT           | `ZCOUNT key min max` 返回分值介于min和max之间的成员数量。<br />min和max可以取值为 `-inf` `+inf` `(` 前两个表示最小值和最大值， `(` 表示不包括或者叫开区间 |
+| ZLEXCOUNT        | `ZLEXCOUNT key min max` 返回元素的字母排序介于 min和max之间的成员数量。<br />min和max的可取值为 `-` `+` `[` `(` |
+| ZRANGE           | `zrange key start stop [WITHSCORES]` 返回有序集合中排名介于 start stop之间的成员 <br />start stop 可取值类似于 zount的min max |
+| ZRANGEBYLEX      | 使用元素的字符编码排序来返回成员。                           |
+| ZRANGEBYSCORE    | 使用分值的排序来返回成员                                     |
+| ZREVRANGE        | 同上，只不过使用反向排序。                                   |
+| ZREVRANGEBYLEX   |                                                              |
+| ZREVRANGEBYSCORE |                                                              |
+| ZSCAN            | 同`SSCAN` `SCAN`                                             |
+| ZSCORE           | 返回成员member的分值                                         |
+| ZINTERSTORE      | `ZINTERSTORE destination numkeys key [key ...] [WEIGHTS weight] [AGGREGATE SUM` 对给定的集合执行交集运算。<br />weights: 分值的个数和key的个数必须匹配，聚合运算之前先对score进行weight。<br />返回值是存储到dest-key中的元素个数。 |
+| ZUNIONSTORE      |                                                              |
+| ZREM             | `ZREM key member [member ...]` 移除给定的成员。              |
+| ZREMRANGEBYLEX   |                                                              |
+| ZREMRANGEBYRANK  |                                                              |
+| ZREMRANGEBYSCORE |                                                              |
+| ZINCRBY          | `ZINCRBY key increment member`                               |
+
+### 3.6 glob-style pattern ###
+
+Supported glob-style patterns:
+
+- `h?llo` matches `hello`, `hallo` and `hxllo`
+- `h*llo` matches `hllo` and `heeeello`
+- `h[ae]llo` matches `hello` and `hallo,` but not `hillo`
+- `h[^e]llo` matches `hallo`, `hbllo`, ... but not `hello`
+- `h[a-b]llo` matches `hallo` and `hbllo`
+
+### 3.7 SORT命令 ###
 
