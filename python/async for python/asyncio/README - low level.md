@@ -461,7 +461,7 @@ asyncio.run(main())
 
 异步IO实现TCP、UDP、SSL和子进程管道的传输。传输上可用的方法由传输的类型决定。
 
-![image-20220403150616233](D:\Projects\Python\simple\demos\asynchronous\asyncio\.assets\image-20220403150616233.png)
+![image-20220403150616233](.assets/image-20220403150616233.png)
 
 ### 协议 ###
 
@@ -469,7 +469,7 @@ asyncio 提供了一组抽象基类，它们应当被用于实现网络协议。
 
 抽象基础协议类的子类可以实现其中的部分或全部方法。 所有这些方法都是回调：它们由传输或特定事件调用，例如当数据被接收的时候。 基础协议方法应当由相应的传输来调用。
 
-![image-20220403150654238](D:\Projects\Python\simple\demos\asynchronous\asyncio\.assets\image-20220403150654238.png)
+![image-20220403150654238](.assets/image-20220403150654238.png)
 
 ## 策略 ##
 
@@ -488,5 +488,5 @@ asyncio 提供了一组抽象基类，它们应当被用于实现网络协议。
 
 ### 策略对象 ###
 
-![image-20220403150945101](D:\Projects\Python\simple\demos\asynchronous\asyncio\.assets\image-20220403150945101.png)
+![image-20220403150945101](.assets/image-20220403150945101.png)
 
