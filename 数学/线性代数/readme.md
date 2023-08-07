@@ -40,9 +40,21 @@ $$
 表示以原点为起点，向x轴左边位移2，向Y轴上边位移3
 
 向量的加法：将一个向量移到另一个向量的终点，该向量指向的位置就是向量加法的结果。
-
 $$
-\begin{bmatrix} 1 \\ 2 \end{bmatrix} + \begin{bmatrix} 3 \\ -1 \end{bmatrix} = \begin{bmatrix} 4\\ 1 \end{bmatrix}
+\begin{bmatrix}
+1 \\
+2
+\end{bmatrix}
++
+\begin{bmatrix}
+3 \\
+-1
+\end{bmatrix}
+=
+\begin{bmatrix}
+4 \\
+1
+\end{bmatrix}
 $$
 
 可以将向量看作一种特定的运动，即在空间中朝着某个方向迈出一定的距离
