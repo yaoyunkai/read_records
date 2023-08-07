@@ -28,17 +28,24 @@
 
 向量：
 
-![QianJianTec1691419722916](./.assets/QianJianTec1691419722916-1691419907810-2.svg)
-
+$$
+\begin{bmatrix}
+-2 \\
+3
+\end{bmatrix}
+$$
 
 表示以原点为起点，向x轴左边位移2，向Y轴上边位移3
 
 向量的加法：将一个向量的起点与另一个向量的终点重合，该向量指向的位置就是向量加法的结果。
 
-![QianJianTec1691420166888](./.assets/QianJianTec1691420166888.svg)
-
+$$
+\begin{bmatrix}-2 \\3\end{bmatrix} + \begin{bmatrix}3 \\1\end{bmatrix} = \begin{bmatrix}1 \\4\end{bmatrix}
+$$
 
 可以将向量看作一种特定的运动，即在空间中朝着某个方向迈出一定的距离.
 
 向量的数乘，缩放：也就是将这个标量的数和向量中的每一个坐标相乘。
+
+## 3. 线性组合、张成的空间与基
 
