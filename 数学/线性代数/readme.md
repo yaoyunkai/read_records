@@ -40,9 +40,19 @@ $$
 向量的加法：将一个向量的起点与另一个向量的终点重合，该向量指向的位置就是向量加法的结果。
 
 $$
-\begin{bmatrix}-2 \\ 3\end{bmatrix} + \begin{bmatrix}3 \\ 1\end{bmatrix} = \begin{bmatrix}1 \\ 4\end{bmatrix}
+\begin{bmatrix}
+-2 \\ 
+3
+\end{bmatrix} + 
+\begin{bmatrix}
+3 \\ 
+1
+\end{bmatrix} = 
+\begin{bmatrix}
+1 \\
+4
+\end{bmatrix}
 $$
-
 
 可以将向量看作一种特定的运动，即在空间中朝着某个方向迈出一定的距离.
 
