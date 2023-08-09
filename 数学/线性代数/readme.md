@@ -115,3 +115,38 @@ The basis of a vector space is a set of linearly independent vectoers that span 
 
 ## 4. 矩阵与线性变换
 
+线性变换的概念以及它和矩阵的关系 
+
+接收一个向量并且输出一个向量的变换。
+
+线性变换的要求是：所有的直线通过变换之后还是直线，原点的位置保持不变。可以看做是保持网格线平行且等距分布的变换。
+
+如何使用数值描述线性变换？Linear transformations
+
+![image-20230809211344323](./.assets/image-20230809211344323.png)
+
+ 实际上 只需要记录两个基向量变换后的位置。如果我们运用一些变换，并且跟随者桑个向量的运动，变换后向量v的位置，是-1与变换后的i-hat之积，加上2与变换后的j-hat之积
+
+![image-20230809213329642](./.assets/image-20230809213329642.png)
+
+ 所以当我们知道一个变换时，即给定一个矩阵时，输入任何一个向量，我们都能得出他在变换后的位置，首先变换之后的i-hat和j-hat如下：
+
+$$
+\hat{i} \longrightarrow \begin{bmatrix}1 \\-2\end{bmatrix} \newline \hat{j} \longrightarrow \begin{bmatrix}3 \\0\end{bmatrix} \newline 
+$$
+
+那么任何向量 `[x y]`都可以得出：
+
+$$
+\begin{bmatrix}x \\y\end{bmatrix} \rightarrow x \begin{bmatrix}1 \\-2\end{bmatrix} + y\begin{bmatrix}3 \\0\end{bmatrix} = \begin{bmatrix}1x+3y \\-2x+0y\end{bmatrix}
+$$
+
+从上面的结果可以看到一个二维线性变换仅由四个数字完全确定（2x2矩阵）。所以最终我们可以得到矩阵向量乘法：
+
+![image-20230809214728913](./.assets/image-20230809214728913.png)
+
+一些常见的线性变换：整个空间逆时针旋转90度 `[[0, 1],[-1, 0]]`；剪切 `[[1,0],[1,1]] `
+如果变换后的i-hat和j-hat是线性相关的，比如这样的一个矩阵 `[[2, 1],[-2, -1]]` , 那么这个线性变换将整个二维空间挤压到他们所在的一条直线上：列线性相关(Linearly dependent columns)。
+
+矩阵表示对空间的一种特定的操作。
+
