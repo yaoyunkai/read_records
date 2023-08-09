@@ -132,13 +132,36 @@ The basis of a vector space is a set of linearly independent vectoers that span 
  所以当我们知道一个变换时，即给定一个矩阵时，输入任何一个向量，我们都能得出他在变换后的位置，首先变换之后的i-hat和j-hat如下：
 
 $$
-\hat{i} \longrightarrow \begin{bmatrix}1 \\-2\end{bmatrix} \newline \hat{j} \longrightarrow \begin{bmatrix}3 \\0\end{bmatrix} \newline 
+\hat{i} \longrightarrow 
+\begin{bmatrix}
+1 \\
+-2
+\end{bmatrix} \newline \hat{j} \longrightarrow 
+\begin{bmatrix}
+3 \\
+0
+\end{bmatrix} \newline 
 $$
 
 那么任何向量 `[x y]`都可以得出：
 
 $$
-\begin{bmatrix}x \\y\end{bmatrix} \rightarrow x \begin{bmatrix}1 \\-2\end{bmatrix} + y\begin{bmatrix}3 \\0\end{bmatrix} = \begin{bmatrix}1x+3y \\-2x+0y\end{bmatrix}
+\begin{bmatrix}
+x \\
+y
+\end{bmatrix} \rightarrow x 
+\begin{bmatrix}
+1 \\
+-2
+\end{bmatrix} + y
+\begin{bmatrix}
+3 \\
+0
+\end{bmatrix} = 
+\begin{bmatrix}
+1x+3y \\
+-2x+0y
+\end{bmatrix}
 $$
 
 从上面的结果可以看到一个二维线性变换仅由四个数字完全确定（2x2矩阵）。所以最终我们可以得到矩阵向量乘法：
